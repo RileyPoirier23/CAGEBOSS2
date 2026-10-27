@@ -87,3 +87,14 @@ describe('the parts of Tales of Legacy', () => {
     expect(scenes).toBeGreaterThan(60);
   });
 });
+
+describe('establishing shots', () => {
+  it('reads the scene a line sets', async () => {
+    const { sceneryTags } = await import('../src/ui/sequel/scenery');
+    expect(sceneryTags('A barn outside Moncton. Bleachers for six hundred, a cage Xavier won in a card game and a goat called Commissioner Pete.')).toEqual(['bleachers', 'goat']);
+    expect(sceneryTags('Moncton. Main Street in the rain.')).toEqual(['neon', 'rain']);
+    expect(sceneryTags('The fortieth floor. Glass on three sides. The city very small underneath.')).toContain('skyline');
+    expect(sceneryTags('Shediac wharf. Twelve years ago. A boat called the MARIE-ANNE.')).toEqual(['sea']);
+    expect(sceneryTags('1ton is on his stool.')).toEqual([]);
+  });
+});

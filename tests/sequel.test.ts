@@ -667,3 +667,82 @@ describe('your creations in promoter mode', () => {
     expect(offerCustomFighters(run, [mine])).toBe(0);
   });
 });
+
+describe('the theatre and the album', () => {
+  it('remembers a scene as a recipe and rebuilds it the way it played', async () => {
+    setStorage(memoryKV());
+    const { remember, reels } = await import('../src/sequel/theatre');
+    const { reelScene } = await import('../src/ui/sequel/theatreui');
+    const { chapterOutro } = await import('../src/ui/scenes/storycuts');
+    const save = newStorySave(31);
+    save.chapter = STORY_CHAPTERS.findIndex((c) => c.id === 'brother');
+    remember(save, 'outro', 'THE BROTHER YOU MADE');
+    remember(save, 'outro', 'THE BROTHER YOU MADE');
+    expect(reels()).toHaveLength(1);
+    const again = reelScene(reels()[0])!;
+    expect(again.choices).toBeUndefined();
+    expect(again.shots.map((s) => s.lines.map((l) => l.text))).toEqual(chapterOutro(save).shots.map((s) => s.lines.map((l) => l.text)));
+    // the demo doesn't fill the shelf
+    save.flags.demo = true;
+    remember(save, 'intro', 'X');
+    expect(reels()).toHaveLength(1);
+  });
+
+  it('keeps the newest photo of a moment', async () => {
+    setStorage(memoryKV());
+    const { addPhoto, photos } = await import('../src/sequel/photos');
+    addPhoto({ id: 'last_sunday', title: 'THE LAST SUNDAY', data: 'data:a', taken: 1 });
+    addPhoto({ id: 'last_sunday', title: 'THE LAST SUNDAY', data: 'data:b', taken: 2 });
+    expect(photos()).toEqual([{ id: 'last_sunday', title: 'THE LAST SUNDAY', data: 'data:b', taken: 2 }]);
+  });
+});
+
+describe('the story in promoter mode', () => {
+  it('sends the story characters in as free agents after a finished story, once', async () => {
+    const { offerLegacyFighters, legacyFAOf, LEGACY_FAS } = await import('../src/sequel/legacyfa');
+    const { newSequelRun } = await import('../src/sequel/model');
+    const run = newSequelRun(14);
+    expect(offerLegacyFighters(run, false)).toBe(0);
+    expect(offerLegacyFighters(run, true)).toBe(LEGACY_FAS.length);
+    expect(offerLegacyFighters(run, true)).toBe(0);
+    const han = run.freeAgents.find((f) => legacyFAOf(run, f.id)?.key === 'han')!;
+    expect(han.last).toBe('Tibular');
+    // nobody's id clashes with anybody already in the promotion
+    const ids = [...run.roster.map((x) => x.f.id), ...run.freeAgents.map((f) => f.id)];
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe("Juiced Butler's week in review", () => {
+  it('talks about the week that actually happened', async () => {
+    const { radioPromoter, radioStory } = await import('../src/sequel/radio');
+    const { newSequelRun } = await import('../src/sequel/model');
+    const run = newSequelRun(5);
+    expect(radioPromoter(run, 'DANE').map((l) => l.text).join(' ')).toContain('No show last week');
+    run.lastShow = { week: 3, venue: 0, gimmick: '', ad: 0, results: [{ aName: 'Rico Ruiz', bName: 'Bo Kane', winner: 'a', method: 'KO', round: 2, finish: true } as never], gate: 9000, stream: 0, merch: 0, sponsor: 0, purses: 0, costs: 0, net: 0, fill: 1.03, buzzBefore: 10, buzzAfter: 20, heatBefore: 0, heatAfter: 10, lockerBefore: 0, lockerAfter: 0, headline: '', body: '', notes: [], raided: false };
+    const said = radioPromoter(run, 'DANE').map((l) => l.text).join(' ');
+    expect(said).toContain('Rico Ruiz, KO, round 2');
+    expect(said).toContain('Sold out');
+    const save = newStorySave(3);
+    const story = radioStory(save, ['1TON full striking: grade A, +14 xp.', 'PRESS DAY: three questions.']).map((l) => l.text).join(' ');
+    expect(story).toContain('an A in training');
+    expect(story).toContain('Press day');
+  });
+});
+
+describe('NEW GAME+: the kid at the door', () => {
+  it('opens only after the torch ending, and the kid gets better fight by fight', async () => {
+    setStorage(memoryKV());
+    const { TAPES, tapeUnlocked, tapeFighter } = await import('../src/sequel/tapes');
+    const { overall: ovr } = await import('../src/sim/fighters');
+    const kid = TAPES.find((t) => t.id === 'kid')!;
+    expect(tapeUnlocked(kid, true)).toBe(false);
+    const save = newStorySave(8);
+    save.ending = 'torch';
+    addStoryTrophy(save);
+    expect(tapeUnlocked(kid, true)).toBe(true);
+    const ovrs = [1, 2, 3, 4].map((n) => ovr(tapeFighter(`kid${n}`).skills));
+    expect([...ovrs].sort((a, b) => a - b)).toEqual(ovrs);
+    expect(ovrs[3]).toBeGreaterThan(ovrs[0] + 10);
+  });
+});

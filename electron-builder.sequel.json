@@ -4,6 +4,7 @@
   "copyright": "Riley \"Monkey Man\" Poirier",
   "extraMetadata": {
     "name": "cage-boss-2",
+    "version": "0.9.0",
     "main": "electron/sequel.cjs",
     "description": "CAGE BOSS II: THE BUYBACK - the sequel"
   },

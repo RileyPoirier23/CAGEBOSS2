@@ -191,6 +191,10 @@ storylines. Original characters (1ton, the crew, Zenith) can.
 - **Story levels:** `xpForLevel(lv)` / `levelForXp(xp)` in `story.ts` (rising cost; don't divide by XP_PER_LEVEL).
 - **Custom fighters:** `src/sequel/custom.ts` (`loadCustomFighters`, `offerCustomFighters`).
 - **Icons:** `build/icon-sequel.*` from `tools/make-sequel-icon.mjs`; game 1 keeps `build/icon.*`.
+- **Weekly radio:** `src/sequel/radio.ts` writes it (`radioPromoter`, `radioStory`), `src/ui/sequel/radioui.ts` plays it.
+- **Theatre / album:** `remember(save, kind, title, ref)` in `src/sequel/theatre.ts`; `Line.photo = { id, title }`.
+- **Establishing shots:** add a word to `READ` in `src/ui/sequel/scenery.ts` and a case to `drawScenery`.
+- **New Game+:** the `kid` tape in `src/sequel/tapes.ts` (fighters `kid1`..`kid4`). Story free agents: `legacyfa.ts`.
 - **Windows build:** `npm run dist:sequel:win` (see `tools/dist-sequel-win.mjs`; Electron comes from `.electron-dist/`).
 - **Scenes and refresh:** `Scene.refresh()` destroys the root's children. A Graphics kept on a field must be made
   new in `build()`, or the next refresh re-adds a destroyed object (pointer events then crash).

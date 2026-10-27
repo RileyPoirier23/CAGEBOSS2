@@ -5,7 +5,9 @@
 import { Container, Graphics } from 'pixi.js';
 import { Scene, fullBg, type Game } from '../app';
 import { PAL } from '../../art/palette';
-import { W, SW, OX, H, text, button, paper, ScrollBox } from '../kit';
+import { II } from '../theme';
+import { panel2 } from '../sequel/panel2';
+import { W, SW, OX, H, text, button, ScrollBox } from '../kit';
 import { money } from '../../core/format';
 import { sfx } from '../../audio/sfx';
 import { seqTitleBackdrop } from '../sequelart';
@@ -37,29 +39,29 @@ export class StoryEndScene extends Scene {
 
     const pw = Math.min(440, SW - 20);
     const px = Math.round((SW - pw) / 2);
-    const p = paper(pw, 218, 'news', save.seed % 89 + 11);
+    const p = panel2(pw, 218);
     p.position.set(px, 12);
     r.addChild(p);
 
-    p.addChild(text('THE NOTEBOOK', 0, 6, { scale: 2, width: pw, align: 'center', color: PAL.ink }));
-    p.addChild(text(`TALES OF LEGACY  /  FINAL PAGE  /  RANK ${e.rank}`, 0, 24, { small: true, width: pw, align: 'center', color: PAL.blood }));
-    p.addChild(new Graphics().rect(10, 33, pw - 20, 1).fill(PAL.ink));
-    p.addChild(text(e.title, 10, 37, { width: pw - 20, color: e.color === PAL.gold ? PAL.ink : e.color, maxLines: 2 }));
-    p.addChild(text(e.kicker, 10, 53, { width: pw - 20, small: true, color: PAL.blood, maxLines: 1 }));
-    p.addChild(new Graphics().rect(10, 63, pw - 20, 1).fill(PAL.paperDark));
+    p.addChild(text('THE NOTEBOOK', 0, 6, { scale: 2, width: pw, align: 'center', color: II.bone }));
+    p.addChild(text(`TALES OF LEGACY  /  FINAL PAGE  /  RANK ${e.rank}`, 0, 24, { small: true, width: pw, align: 'center', color: II.blood }));
+    p.addChild(new Graphics().rect(10, 33, pw - 20, 1).fill(II.bone));
+    p.addChild(text(e.title, 10, 37, { width: pw - 20, color: e.color === II.gold ? II.bone : e.color, maxLines: 2 }));
+    p.addChild(text(e.kicker, 10, 53, { width: pw - 20, small: true, color: II.blood, maxLines: 1 }));
+    p.addChild(new Graphics().rect(10, 63, pw - 20, 1).fill(II.edge));
 
     const sb = new ScrollBox(pw - 24, 58);
     sb.position.set(10, 68);
-    const body = text(e.body, 0, 0, { width: pw - 32, small: true, color: PAL.ink });
+    const body = text(e.body, 0, 0, { width: pw - 32, small: true, color: II.bone });
     sb.content.addChild(body);
     sb.refresh();
     p.addChild(sb);
 
-    p.addChild(new Graphics().rect(10, 130, pw - 20, 1).fill(PAL.ink));
+    p.addChild(new Graphics().rect(10, 130, pw - 20, 1).fill(II.bone));
     const dane = storyRecord(save, 'corner');
     const one = storyRecord(save, 'oneton');
-    const stat = (label: string, value: string, x: number, y: number, color: number = PAL.ink) => {
-      p.addChild(text(label, x, y, { small: true, color: PAL.slate }));
+    const stat = (label: string, value: string, x: number, y: number, color: number = II.bone) => {
+      p.addChild(text(label, x, y, { small: true, color: II.ash }));
       p.addChild(text(value, x, y + 9, { color, width: 102, maxLines: 1 }));
     };
     stat('HAN / MATEO', `${dane.w}-${dane.l}${dane.d ? '-' + dane.d : ''}`, 10, 135);
@@ -75,20 +77,20 @@ export class StoryEndScene extends Scene {
     stat('GOOD DEALS', String(save.stats.goodDeals), 226, 173);
     stat('WALKED', String(save.stats.walked), 334, 173);
 
-    p.addChild(new Graphics().rect(10, 190, pw - 20, 1).fill(PAL.paperDark));
+    p.addChild(new Graphics().rect(10, 190, pw - 20, 1).fill(II.edge));
     p.addChild(text(
       `ENDINGS FOUND ${trophy.endings.length} / ${STORY_ENDINGS.length}  /  BEST RANK ${trophy.bestRank}  /  PLAYTHROUGHS ${trophy.playthroughs}`,
-      10, 194, { small: true, width: pw - 20, color: PAL.ink, maxLines: 1 },
+      10, 194, { small: true, width: pw - 20, color: II.bone, maxLines: 1 },
     ));
-    p.addChild(text('Some cages have a door. Some have a receipt.', 10, 204, { small: true, color: PAL.slate }));
+    p.addChild(text('Some cages have a door. Some have a receipt.', 10, 204, { small: true, color: II.ash }));
 
     const bw = 104;
     const gap = 6;
     const x0 = Math.round((SW - (bw * 4 + gap * 3)) / 2);
-    r.addChild(button('NEW STORY', x0, 238, bw, 18, () => this.again(), { fill: PAL.blood, border: PAL.gold }));
-    r.addChild(button('TROPHY CASE', x0 + bw + gap, 238, bw, 18, () => openStoryTrophies(this.g), { fill: PAL.rust, border: PAL.slate }));
-    r.addChild(button('STORY MENU', x0 + (bw + gap) * 2, 238, bw, 18, () => this.storyMenu(), { fill: PAL.shadow, border: PAL.slate }));
-    r.addChild(button('MAIN MENU', x0 + (bw + gap) * 3, 238, bw, 18, () => this.mainMenu(), { fill: PAL.shadow, border: PAL.slate }));
+    r.addChild(button('NEW STORY', x0, 238, bw, 18, () => this.again(), { fill: II.blood, border: II.gold }));
+    r.addChild(button('TROPHY CASE', x0 + bw + gap, 238, bw, 18, () => openStoryTrophies(this.g), { fill: II.sodium, border: II.ash }));
+    r.addChild(button('STORY MENU', x0 + (bw + gap) * 2, 238, bw, 18, () => this.storyMenu(), { fill: II.steel, border: II.ash }));
+    r.addChild(button('MAIN MENU', x0 + (bw + gap) * 3, 238, bw, 18, () => this.mainMenu(), { fill: II.steel, border: II.ash }));
   }
 
   private again(): void {
@@ -124,9 +126,9 @@ export function openStoryTrophies(g: Game): void {
   for (let x = -OX; x < SW - OX; x += 26) room.rect(x, 0, 1, H).fill(0x130c08);
   room.rect(-OX, H - 10, SW, 10).fill(0x2e1414);
   root.addChild(room);
-  root.addChild(text('THE STORY TROPHY CASE', 12, 6, { scale: 2, color: PAL.gold, shadow: 0x000000 }));
+  root.addChild(text('THE STORY TROPHY CASE', 12, 6, { scale: 2, color: II.gold, shadow: 0x000000 }));
   root.addChild(text(`ENDINGS ${trophy.endings.length} OF ${STORY_ENDINGS.length}  /  BEST RANK ${trophy.bestRank}  /  CONTRACTS ${trophy.catches} CAUGHT`, 12, 22, { small: true, color: PAL.ash }));
-  root.addChild(text('NINE CHAPTERS. EIGHT WAYS OUT. ONE NOTEBOOK.', 12, 32, { small: true, color: PAL.ember }));
+  root.addChild(text(`FIFTEEN CHAPTERS. ${STORY_ENDINGS.length} WAYS OUT. ONE NOTEBOOK.`, 12, 32, { small: true, color: PAL.ember }));
   STORY_ENDINGS.forEach((e, i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);
@@ -134,10 +136,10 @@ export function openStoryTrophies(g: Game): void {
     const y = 45 + row * 43;
     const got = trophy.endings.includes(e.id);
     root.addChild(new Graphics().rect(x, y, 220, 38).fill(got ? 0x2a2118 : 0x140e0c).stroke({ color: got ? e.color : 0x3a2a20, width: 1 }));
-    root.addChild(text(e.title, x + 6, y + 4, { small: true, color: got ? PAL.gold : PAL.grey, width: 208, maxLines: 1 }));
-    root.addChild(text(e.kicker, x + 6, y + 14, { small: true, color: got ? PAL.ash : PAL.grey, width: 208, maxLines: 1 }));
-    root.addChild(text(got ? `WON  /  RANK ${e.rank}` : 'NOT FOUND YET', x + 6, y + 26, { small: true, color: got ? PAL.moss : PAL.slate }));
+    root.addChild(text(e.title, x + 6, y + 4, { small: true, color: got ? II.gold : II.ash, width: 208, maxLines: 1 }));
+    root.addChild(text(e.kicker, x + 6, y + 14, { small: true, color: got ? PAL.ash : II.ash, width: 208, maxLines: 1 }));
+    root.addChild(text(got ? `WON  /  RANK ${e.rank}` : 'NOT FOUND YET', x + 6, y + 26, { small: true, color: got ? PAL.moss : II.ash }));
   });
-  root.addChild(text('THE PROMOTER SEASON KEEPS ITS OWN CABINET. THIS ONE IS FOR THE STORY.', 12, H - 28, { small: true, color: PAL.grey }));
-  root.addChild(button('CLOSE', W - 54, 8, 44, 14, () => g.closeModal(wrap), { small: true, fill: PAL.shadow, border: PAL.gold }));
+  root.addChild(text('THE PROMOTER SEASON KEEPS ITS OWN CABINET. THIS ONE IS FOR THE STORY.', 12, H - 28, { small: true, color: II.ash }));
+  root.addChild(button('CLOSE', W - 54, 8, 44, 14, () => g.closeModal(wrap), { small: true, fill: II.steel, border: II.gold }));
 }

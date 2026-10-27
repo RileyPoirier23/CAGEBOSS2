@@ -6,15 +6,16 @@
  */
 import type { Fighter } from '../core/types';
 import { loadJSON, storeJSON } from '../core/save';
-import { authored, buildOneTon, buildOpponent, newStorySave } from './story';
+import { authored, buildHan, buildMateoGrown, buildOneTon, buildOpponent, newStorySave } from './story';
 import { notebookPages } from './notebook';
+import { loadStoryTrophy } from './storysession';
 import type { Bg, Line } from '../ui/cutscene';
 
 /** Who can stand in a tape's scenes: the regular cast (by CAST id) or a tape fighter (by key). */
 export interface TapeActor { who: string; name: string; x: number; facing: 1 | -1; fighter?: string; pose?: string }
 export type TapeStep =
   | { kind: 'scene'; title: string; bg: Bg; flashback?: boolean; cast: TapeActor[]; lines: Line[] }
-  | { kind: 'fight'; title: string; player: string; opponent: string; venue: string; rounds: 3 | 5; stakes: string };
+  | { kind: 'fight'; title: string; player: string; opponent: string; venue: string; rounds: 3 | 5; stakes: string; referee?: string };
 
 export interface Tape { id: string; title: string; label: string; blurb: string; unlock: string; needs: (pages: string[], finished: boolean) => boolean; steps: TapeStep[] }
 
@@ -39,6 +40,14 @@ export function tapeFighter(key: string): Fighter {
     case 'alberto': { const f = buildOneTon(s, true); f.first = 'Alberto'; f.last = 'Del Burrito'; f.nick = 'El Campeon'; f.division = 'middle'; return f; }
     case 'prince': return buildOpponent(s, 'prince');
     case 'nieto': return mk('nieto', { first: 'Kevin', last: 'Ramos', nick: 'El Nieto', country: 'Mexico', hometown: 'Guadalajara, Jalisco', age: 23, height: 183, reach: 187, skills: sk(86), styles: ['Pressure Striker'], traits: ['Hungry', 'Loyal'], record: { w: 15, l: 0, d: 0, nc: 0 }, look: { hair: 11, beard: 0, build: 2, tattoo: 2 } });
+    case 'han': return buildHan(s);
+    case 'bigmateo': return buildMateoGrown(s);
+    // NEW GAME+: the kid at the door, a little better after every fight
+    case 'kid1': case 'kid2': case 'kid3': case 'kid4': {
+      const n = Number(key.slice(3));
+      return mk(`kid_${n}`, { first: 'Theo', last: 'Arsenault', nick: n >= 3 ? 'The Hoodie' : 'Kid', country: 'Canada', hometown: 'Shediac, New Brunswick', age: 15 + n, height: 172 + n * 2, reach: 176 + n * 2, skills: sk(54 + n * 8), styles: ['Pressure Striker'], traits: n >= 4 ? ['Loyal', 'Heart'] : ['Loyal'], record: { w: (n - 1) * 3, l: 0, d: 0, nc: 0 }, look: { hair: 11, hairColor: 2, beard: 0, build: n >= 3 ? 1 : 0 } }, 'light', n >= 4 ? 'contender' : 'gatekeeper');
+    }
+    case 'synergy3': return mk('synergy3', { first: 'Brayden', last: 'Hale', nick: 'Synergy III', country: 'USA', hometown: 'Scottsdale, Arizona', age: 22, height: 180, reach: 185, skills: sk(84), styles: ['Point Fighter', 'Kickboxer'], traits: ['Clout Chaser'], record: { w: 14, l: 0, d: 0, nc: 0 }, look: { hair: 12, hairColor: 4, beard: 0, build: 1 } }, 'light', 'contender');
     default: return buildOpponent(s, 'brick');
   }
 }
@@ -46,7 +55,7 @@ export function tapeFighter(key: string): Fighter {
 // ---------------------------------------------------------------- the tapes
 
 const sc = (title: string, bg: Bg, cast: TapeActor[], lines: Line[], flashback = false): TapeStep => ({ kind: 'scene', title, bg, cast, lines, flashback });
-const fight = (title: string, player: string, opponent: string, venue: string, rounds: 3 | 5, stakes: string): TapeStep => ({ kind: 'fight', title, player, opponent, venue, rounds, stakes });
+const fight = (title: string, player: string, opponent: string, venue: string, rounds: 3 | 5, stakes: string, referee?: string): TapeStep => ({ kind: 'fight', title, player, opponent, venue, rounds, stakes, referee });
 
 export const TAPES: Tape[] = [
   {
@@ -153,6 +162,90 @@ export const TAPES: Tape[] = [
         { who: 'mateo', text: 'Tonight.' },
         { who: 'han', text: 'Every night, if you want.' },
         { who: null, text: 'Somebody has made soup in the locker room. It has a little chile in it. Nobody tells anyone.' },
+      ]),
+    ],
+  },
+  {
+    id: 'pete', title: 'COMMISSIONER PETE', label: 'TAPE 5', unlock: 'Notebook pages: THE COWBOY and THE BUYBACK',
+    blurb: 'The true story of the most powerful official in Maritime combat sports. He is a goat. He has eaten four contracts and a judge\'s scorecard.',
+    needs: (p) => p.includes('xavier') && p.includes('belt'),
+    steps: [
+      sc('THE CARD GAME', 'warehouse', [{ who: 'xavier', fighter: 'xavier', name: 'XAVIER, 26', x: 170, facing: 1 }, { who: 'ray', name: 'RAY (YOUNGER)', x: 300, facing: -1 }], [
+        { who: null, text: 'A barn outside Sussex, twenty years ago. A card game. Xavier is out of money, so he bets the cage. He wins the cage, and the goat that lives in it.' },
+        { who: 'xavier', text: 'Every league needs a commissioner, Ray.' },
+        { who: 'ray', text: 'That is a goat.' },
+        { who: 'xavier', text: 'That is Commissioner Pete. He is impartial. He has no idea what is happening.' },
+        { who: 'ray', text: 'Most commissioners are like that.' },
+      ], true),
+      sc('THE BOUT SHEET', 'warehouse', [{ who: 'xavier', name: 'XAVIER "ALLSTAR" COCKETT', x: 160, facing: 1 }, { who: 'oneton', name: '1TON', x: 300, facing: -1 }], [
+        { who: null, text: 'Allstar FC, card one. The goat walks into the cage, eats the bout sheet and sits in the middle of the canvas.' },
+        { who: 'oneton', text: 'Who is fighting first?' },
+        { who: 'xavier', text: 'Nobody knows. Pete has ruled. We go alphabetically.' },
+        { who: 'oneton', text: 'My name starts with a number.' },
+        { who: 'xavier', text: 'Then you are first, partner. The commissioner has spoken.' },
+      ]),
+      fight('CUSTODY', 'xavier', 'sheriff', 'XAVIER\'S BARN', 3, 'The sheriff says a goat cannot hold a sanctioning license. Xavier says the goat holds it fine, it just eats it sometimes. Winner keeps Pete.'),
+      sc('THE OLD DOME', 'cage', [{ who: 'xavier', name: 'XAVIER "ALLSTAR" COCKETT', x: 150, facing: 1 }, { who: 'han', name: 'HAN', x: 280, facing: -1 }], [
+        { who: null, text: 'The buyback. Eighteen thousand people. Commissioner Pete arrives at the Old Dome in his own horse trailer. Security does not stop him. Security has met him.' },
+        { who: 'han', text: 'Is he allowed in here?' },
+        { who: 'xavier', text: 'He is the most senior official in the building.' },
+        { who: 'han', text: 'He is eating the ring card.' },
+        { who: 'xavier', text: 'Then the round is over. Rules are rules.' },
+      ]),
+      sc('RETIREMENT', 'gym', [{ who: 'mateo', name: 'MATEO', x: 180, facing: 1 }, { who: 'han', name: 'HAN', x: 300, facing: -1 }], [
+        { who: null, text: 'Ray\'s Boxing & Soup. Monday. Six a.m. There is a goat on the roof.' },
+        { who: 'mateo', text: 'Xavier says Pete is retiring. He wants to be near the soup.' },
+        { who: 'han', text: 'Ray would have let him stay.' },
+        { who: 'mateo', text: 'Ray would have made him a bowl.' },
+        { who: null, text: 'Somebody makes him a bowl. Commissioner Pete eats the bowl.' },
+      ]),
+    ],
+  },
+  {
+    id: 'kid', title: 'THE KID AT THE DOOR', label: 'NEW GAME+', unlock: 'Finish TALES OF LEGACY with the torch ending',
+    blurb: 'Mateo runs Ray\'s now. There is a kid in a hoodie three sizes too big standing at the door. He has been there a week.',
+    needs: (_p, finished) => finished && loadStoryTrophy().endings.includes('torch'),
+    steps: [
+      sc('MONDAY. SIX A.M.', 'gym', [{ who: 'mateo', fighter: 'bigmateo', name: 'MATEO', x: 180, facing: 1 }, { who: 'kid', fighter: 'kid1', name: 'THE KID', x: 330, facing: -1 }], [
+        { who: null, text: 'Ray\'s Boxing & Soup. A year after the torch. Mateo runs it now, with Han on Tuesdays and a goat on the roof.' },
+        { who: null, text: 'There is a kid at the door. Hoodie three sizes too big. He has been standing there for a week.' },
+        { who: 'mateo', text: 'You are letting the cold in.' },
+        { who: 'kid', text: 'I am not coming in.' },
+        { who: 'mateo', text: 'I know. I did not come in either. For a week.' },
+        { who: null, text: 'Mateo holds out a mop. The kid looks at it for a long time. Then he takes it.', act: [{ do: 'meet', who: 'mateo', target: 'kid', pose: 'offer', prop: 'mop' }] },
+        { who: 'mateo', text: 'Theo, right? Luc Arsenault\'s grandson. Shediac. Hands up. Chin down. Eat something.' },
+      ]),
+      fight('NO HARD SHOTS', 'kid1', 'chad', "RAY'S BOXING & SOUP", 3, 'Six months of mopping. His first rounds in Ray\'s ring, against a rich kid from Rothesay who came in for "content". Mateo is refereeing. Mateo says no hard shots.', 'Mateo Varga'),
+      sc('TUESDAYS', 'gym', [{ who: 'han', fighter: 'han', name: 'HAN', x: 160, facing: 1 }, { who: 'kid', fighter: 'kid2', name: 'THEO', x: 300, facing: -1 }], [
+        { who: null, text: 'Han teaches Tuesdays now. He is better at it than he thought. He is worse at the whiteboard than ever.' },
+        { who: 'han', text: 'Left hook. Turn the hip, not the shoulder. A man called Butch did it to my uncle in 1987.' },
+        { who: 'kid', text: 'Did your uncle win?' },
+        { who: 'han', text: 'No. He got the soup. The soup is better than winning. Do not tell Mateo I said that.' },
+      ]),
+      fight('THE BARN', 'kid2', 'bull', "XAVIER'S BARN", 3, 'Allstar FC. Xavier has a new hat. Commissioner Pete has a new opinion about the bout sheet. Theo\'s first fight in front of people.'),
+      sc('THE BACK ROW', 'warehouse', [{ who: 'oneton', name: 'GORDO "1TON" FUENTE', x: 150, facing: 1 }, { who: 'kid', fighter: 'kid3', name: 'THEO', x: 300, facing: -1 }], [
+        { who: null, text: 'The warehouse. Third row from the back. A big man with a beard and a notebook.' },
+        { who: 'oneton', text: 'I write for the Daily Clinch again. One question.' },
+        { who: 'kid', text: 'Go on.' },
+        { who: 'oneton', text: 'When are you going to put a kid from Shediac in the main event?' },
+        { who: 'kid', text: 'Ask Mateo.' },
+        { who: 'oneton', text: 'I did. He said: when one walks in the door.' },
+      ]),
+      fight('THE UNDERCARD', 'kid3', 'kicker', 'THE WAREHOUSE', 3, 'The warehouse undercard, against a Brazilian kickboxer who has never been taken down and has never met anyone who mops this hard.'),
+      sc('THE CALL', 'office', [{ who: 'mateo', fighter: 'bigmateo', name: 'MATEO', x: 170, facing: 1 }, { who: 'kid', fighter: 'kid4', name: 'THEO "THE HOODIE" ARSENAULT', x: 310, facing: -1 }], [
+        { who: null, text: 'Zenith calls. They have a new golden boy and a hole in their card at the Old Dome. They want a local kid to lose to him.' },
+        { who: 'mateo', text: 'They want you to lose.' },
+        { who: 'kid', text: 'I am not going to.' },
+        { who: 'mateo', text: 'I know. That is why I said yes. The bucket goes in your corner.' },
+      ]),
+      fight('THE OLD DOME', 'kid4', 'synergy3', 'THE OLD DOME', 5, 'Five rounds at the Old Dome against Zenith\'s third "Synergy". Mateo in the corner with Ray\'s bucket. Han on the apron. A goat in the front row.'),
+      sc('MONDAY. SIX A.M.', 'gym', [{ who: 'mateo', fighter: 'bigmateo', name: 'MATEO', x: 150, facing: 1 }, { who: 'kid', fighter: 'kid4', name: 'THEO', x: 260, facing: -1 }, { who: 'han', fighter: 'han', name: 'HAN', x: 370, facing: -1 }], [
+        { who: null, text: 'Monday. Six a.m. The soup is on. Theo is at the door at 5:58.' },
+        { who: 'kid', text: 'There is a kid outside. Hoodie three sizes too big. He has been there since Thursday.' },
+        { who: 'mateo', text: 'Give him the mop.', photo: { id: 'ending_kid', title: 'THE KID AT THE DOOR' } },
+        { who: 'han', text: 'Hands up.' },
+        { who: 'kid', text: 'Chin down.' },
+        { who: 'mateo', text: 'Eat something.' },
       ]),
     ],
   },

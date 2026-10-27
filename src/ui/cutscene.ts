@@ -46,6 +46,8 @@ export interface Line {
   sfx?: 'punch' | 'thud' | 'roar' | 'crowd' | 'bell' | 'snap' | 'click' | 'cash' | 'whoosh';
   /** CAGE BOSS II: what the actors do on this line (CINE II reads narration for it when this is left out; [] = nothing) */
   act?: StageAct[];
+  /** CAGE BOSS II: somebody takes a photo here; it goes in the album at the back of Ray's notebook */
+  photo?: { id: string; title: string };
 }
 export interface Shot {
   bg: Bg;

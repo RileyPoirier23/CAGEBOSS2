@@ -749,19 +749,20 @@ function outroLegacy(save: StorySave): Cutscene {
         { who: 'han', text: 'Ray said one day a kid would walk in the door and be better than me. He said I would hate it.' },
         { who: 'mateo', text: 'Do you?' },
         { who: 'han', text: 'No.' },
-        { who: null, text: 'He buckles the belt around Mateo\'s waist. In the back row, 1ton closes the notebook and, for the first time in his life, does not write anything down.' },
+        { who: null, text: 'He buckles the belt around Mateo\'s waist. In the back row, 1ton closes the notebook and, for the first time in his life, does not write anything down.',
+          act: [{ do: 'meet', who: 'han', target: 'mateo', pose: 'offer', prop: 'belt' }], photo: { id: 'ending_torch', title: 'THE TORCH' } },
       ] : [
         { who: null, text: 'Han wins. Barely. He spends the whole interview talking about the kid.' },
         { who: 'han', text: 'Monday. Six a.m.' },
         { who: 'mateo', text: 'I will be there at five-forty.' },
-        { who: 'han', text: 'I know. That is why it is not yet. Not never.' },
+        { who: 'han', text: 'I know. That is why it is not yet. Not never.', photo: { id: 'ending_student', title: 'NOT YET, KID' } },
       ]) : won ? [
         { who: null, text: 'Cesar is on the canvas where Ray fell, in a manner of speaking. The belt stays in the warehouse.' },
         { who: 'mateo', text: 'This one is for the soup.' },
-        { who: 'han', text: 'Next year, kid. You and me.' },
+        { who: 'han', text: 'Next year, kid. You and me.', photo: { id: 'ending_champion', title: 'THE CHAMPION' } },
       ] : [
         { who: null, text: 'La Mano takes the belt. Mateo had one good night. He will always have it.' },
-        { who: 'han', text: 'Monday. Six a.m.' },
+        { who: 'han', text: 'Monday. Six a.m.', photo: { id: 'ending_onenight', title: 'ONE GOOD NIGHT' } },
       ], torch ? 'THE WAREHOUSE' : 'THE OLD DOME'),
     ],
   };
@@ -1729,7 +1730,7 @@ export function beatScene(save: StorySave, id: string): Cutscene | null {
             { who: 'mateo', text: 'Tell the Butch story.' },
             { who: 'han', text: 'Not the Butch story.' },
             { who: 'ray', text: 'The mullet. You have to understand the mullet. You could hide a CAT in that mullet.' },
-            { who: null, text: 'They laugh until Mateo spills the soup. Nobody minds. Han takes a photo. Later it is the only photo anybody has of that night.' },
+            { who: null, text: 'They laugh until Mateo spills the soup. Nobody minds. Han takes a photo. Later it is the only photo anybody has of that night.', photo: { id: 'last_sunday', title: 'THE LAST SUNDAY' } },
             { who: 'ray', text: 'Look at this. Two champions and a promoter at my table. Marie would not believe it.' },
             { who: 'han', text: 'She would. She always said you would fill this place.' },
           ], 'THE LAST SUNDAY'),
@@ -2064,7 +2065,7 @@ export function storyEndingScene(save: StorySave): Cutscene {
           { who: 'han', text: 'That is Ray\'s pot. Marie\'s recipe.' },
           { who: 'mateo', text: 'I know. I mopped around it for nine years.' },
           { who: 'dane', text: 'What happens now?' },
-          { who: 'han', text: 'Hands up. Chin down. Eat something.' },
+          { who: 'han', text: 'Hands up. Chin down. Eat something.', photo: { id: 'ending_buyback', title: 'MONDAY, SIX A.M.' } },
         ], 'AFTER THE BELL'),
       ],
     };
@@ -2079,13 +2080,13 @@ export function storyEndingScene(save: StorySave): Cutscene {
         { who: 'dane', text: 'I bought a building.' },
         { who: 'ray', text: 'That is what a promotion is. The rest is paperwork and soup.' },
         { who: 'mateo', text: 'What happens now?' },
-        { who: 'dane', text: 'Now we answer the question.' },
+        { who: 'dane', text: 'Now we answer the question.', photo: { id: 'ending_house', title: 'THE BUILDING' } },
       ] : [
         { who: null, text: 'The roof of the Old Dome. The city is below. The contract is above. 1ton is holding both.' },
         { who: 'verity', text: 'Congratulations, Mr. Fuente. You are the face of the buyback.' },
         { who: 'oneton', text: 'I am the face of the question.' },
         { who: 'lenny', text: 'The question has a merchandising plan.' },
-        { who: 'oneton', text: 'Of course it does.' },
+        { who: 'oneton', text: 'Of course it does.', photo: { id: 'ending_zenith', title: 'THE FACE OF THE BUYBACK' } },
       ], 'AFTER THE BELL'),
     ],
   };

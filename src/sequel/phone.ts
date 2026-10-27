@@ -54,6 +54,10 @@ const CALLS: PhoneCall[] = [
     { label: 'Book the ranch hand ($600)', reply: 'He shows up in chaps. The crowd loves him. Bradie sells forty T-shirts.', fx: { cash: -600, hype: 4 } },
     { label: 'Pass', reply: '"Your loss, partner." He sends a photo of the horse. The horse looks disappointed.', fx: {} },
   ] },
+  { id: 'pete', from: 'XAVIER "ALLSTAR" COCKETT', text: 'Partner. Bad news. Commissioner Pete got into the office. He has eaten a contract. Your contract. The one with the purses in it.', choices: [
+    { label: '"Print another one."', reply: 'You print another one. Pete eats that one too. Xavier says this is how he knows it is a good contract.', fx: { mood: 3, cash: -100 } },
+    { label: '"Is the goat okay?"', reply: '"He is thriving." Xavier sends a photo. The goat looks pleased with himself. Bradie posts it. It does better than the fight.', fx: { hype: 5 } },
+  ] },
   { id: 'verity', from: 'VERITY KANE (ZENITH)', text: 'A courtesy call. The commission has questions about your venue. We could make those questions go away. For a consideration.', choices: [
     { label: 'Pay the consideration ($8,000)', reply: 'The questions go away. A receipt arrives with the Zenith logo on it, which is either an accident or a threat.', fx: { cash: -8000, heat: -12 } },
     { label: '"Tell the commission to buy a ticket."', reply: 'She laughs. It is not a nice laugh. The commission buys a ticket. Front row.', fx: { heat: 6, hype: 3 } },
@@ -100,9 +104,12 @@ export const BLEETS: Bleet[] = [
   { id: 'trent', label: 'SUBTWEET TRENT', fx: { hype: 5, heat: 4, mood: 2 },
     posts: ['Some people get a corner office by working. Some people get one in a seven-minute meeting. Anyway. Saturday.', 'Thinking about the stapler today. It is a good stapler. It is the only thing I took. Saturday.'],
     replies: [['@TrentStrategy', 'Hi! Love this energy. Let\'s align offline? 🙂'], ['@1ton', 'TRENT HAS NEVER BEEN PUNCHED AND YOU CAN TELL']] },
+  { id: 'pete', label: 'POST THE GOAT', fx: { hype: 3, mood: 3 },
+    posts: ['Commissioner Pete has reviewed Saturday\'s card and ruled it "baaa". Sanctioned.', 'Our most senior official, Commissioner Pete, would like to remind fans that he will eat your ticket if you hold it near him.'],
+    replies: [['@CommissionerPete', 'baaa'], ['@xaviercockett', 'HE IS IMPARTIAL'], ['@ZenithHQ', 'Zenith Holdings does not recognise this goat.'], ['@CommissionerPete', 'BAAA']] },
   { id: 'soup', label: 'POST THE SOUP', fx: { mood: 4, hype: 1 },
     posts: ['Ray made soup. That is the post.', 'The real main event: Ray\'s soup, Marie\'s recipe, a little chile nobody is supposed to know about.'],
-    replies: [['@UncleRay', 'WHO TOLD YOU ABOUT THE CHILE'], ['@mateovarga', 'the chile was 1ton'], ['@1ton', 'i regret nothing']] },
+    replies: [['@UncleRay', 'WHO TOLD YOU ABOUT THE CHILE'], ['@mateovarga', 'the chile was 1ton'], ['@1ton', 'i regret nothing'], ['@CommissionerPete', 'baa (wants soup)']] },
 ];
 
 export const bleetedThisWeek = (o: PhoneOwner): boolean => !!o.flags[`bleet_${o.key}`];

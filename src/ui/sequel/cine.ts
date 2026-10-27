@@ -13,12 +13,13 @@
  *
  *   playCine(g, scene, (choice) => ...)
  */
-import { ColorMatrixFilter, Container, Graphics, type Ticker } from 'pixi.js';
+import { ColorMatrixFilter, Container, Graphics, Rectangle, type Ticker } from 'pixi.js';
+import { addPhoto } from '../../sequel/photos';
 import type { Game } from '../app';
 import { W, H, SW, OX, text, button } from '../kit';
 import { POSES, drawRig, lerpRig, lookFor, tauntRig, type Look2, type Rig } from '../rig';
 import { input } from '../../core/input';
-import { sfx } from '../../audio/sfx';
+import { sfx, blip } from '../../audio/sfx';
 import { drawShow, showLabels, type TvShow } from '../tvshows';
 import { isTouchDevice } from '../../core/platform';
 import { clearOfProps, drawBg, setDressing, tvScreen, FLOOR, type Actor, type Bg, type Cutscene } from '../cutscene';
@@ -26,6 +27,7 @@ import { II } from '../theme';
 import type { PixelText } from '../text';
 import { lerpColor as lerpRGB, shade as shadeRGB } from '../../art/palette';
 import { readStage, type Prop, type StageAct, type StageCtx } from './stage';
+import { drawScenery, sceneryTags, type SceneryTag } from './scenery';
 import type { Line } from '../cutscene';
 
 /** How each room is lit: the grade (top/bottom multiply), the key light colour and where the light comes from. */
@@ -93,6 +95,18 @@ function alive(r: Rig, t: number, ph: number, talking: boolean, standing: boolea
   }
   return o;
 }
+
+/** How each character sounds while his line types out: pitch, timbre, a blip every N letters. */
+const VOICES: Record<string, { f: number; type: OscillatorType; every: number }> = {
+  ray: { f: 140, type: 'triangle', every: 4 }, ray87: { f: 170, type: 'triangle', every: 3 },
+  xavier: { f: 330, type: 'square', every: 2 }, oneton: { f: 165, type: 'triangle', every: 3 }, alberto: { f: 165, type: 'triangle', every: 3 },
+  dane: { f: 205, type: 'square', every: 3 }, han: { f: 195, type: 'square', every: 3 }, mateo: { f: 235, type: 'triangle', every: 3 },
+  zenith: { f: 392, type: 'sine', every: 3 }, verity: { f: 392, type: 'sine', every: 3 }, reporter: { f: 360, type: 'sine', every: 3 },
+  bradie: { f: 300, type: 'square', every: 2 }, tyler: { f: 255, type: 'square', every: 3 }, gordon: { f: 180, type: 'sine', every: 4 },
+  zac: { f: 220, type: 'square', every: 3 }, butch: { f: 150, type: 'sawtooth', every: 3 }, chairman: { f: 160, type: 'sine', every: 4 },
+};
+const voiceOf = (a: Live): { f: number; type: OscillatorType; every: number } =>
+  VOICES[a.id] ?? (a.look2.female ? { f: 350, type: 'sine', every: 3 } : { f: 215 + (a.id.length * 17) % 50, type: 'square', every: 3 });
 
 /** A thing in a hand (or on the floor), drawn at (x, y) facing the way he faces: outlined, lit from above. */
 function drawProp(g: Graphics, p: Prop, x: number, y: number, f: 1 | -1, t: number, floor = false): void {
@@ -224,7 +238,9 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   lightG.blendMode = 'add';
   const fgG = new Graphics();
   const fx = new Graphics();
-  world.addChild(bgG, dress, tvG, tvWords, shadowC, rimC, actorsG, fgG, lightG, fx);
+  // establishing details: the back layer sits behind the people, the front one over them (with fx)
+  const sceneryBack = new Graphics();
+  world.addChild(bgG, dress, tvG, tvWords, sceneryBack, shadowC, rimC, actorsG, fgG, lightG, fx);
   // screen space: the grade, the vignette, the film, the bars, the words
   const gradeG = new Graphics();
   gradeG.blendMode = 'multiply';
@@ -260,7 +276,12 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   const camS = { x: W / 2, y: 140, z: 1.04 };
   // ------------------------------------------------------------ stage directions: what the narration says happens, happens
   let tasks: Task[] = [];
+  let blipN = 0;
+  let photoPending: { id: string; title: string; t: number } | null = null;
   let stageCtx: StageCtx = { speaker: null, subject: null, object: null };
+  /** what the narration has put on screen (rain, the goat, the skyline) and how far it has faded in */
+  let scenery: SceneryTag[] = [];
+  let sceneryK = 0;
   /** things set down in this shot: they stay where they were left */
   let floorProps: { p: Prop; x: number; f: 1 | -1 }[] = [];
   const byId = (id: string) => cast.find((c) => c.id === id);
@@ -513,6 +534,8 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     tasks = [];
     stageCtx = { speaker: null, subject: null, object: null };
     floorProps = [];
+    scenery = [];
+    sceneryK = 0;
     drawGrade();
     drawCaption(s.caption);
     if (!instant) fade = 1;
@@ -676,6 +699,11 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       const a = cast.find((c) => c.id === id);
       if (a) a.pose = p;
     }
+    // a line that sets the scene puts it on screen (it stays up until another one changes it)
+    if (!ln.who) {
+      const tags = sceneryTags(ln.text);
+      if (tags.length) scenery = tags;
+    }
     const acts = actsFor(ln);
     tasks = acts.map((x) => makeTask(x, ln)).filter((x): x is Task => !!x);
     // a punch on this line brings its own jolt, sound and flash when it lands
@@ -686,6 +714,8 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     }
     if (ln.flash && !lands) flash = 0.4;
     if (ln.sfx && !lands) sfx(ln.sfx);
+    // a photo: give the moment a beat to happen, then the flash
+    photoPending = ln.photo ? { ...ln.photo, t: 1.1 } : null;
   };
   /** Back or skip: the shot from the top, every line up to here acted out at once. */
   const replayTo = (idx: number) => {
@@ -696,6 +726,10 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       for (const [id, p] of Object.entries(ln.poses ?? {})) {
         const a = cast.find((c) => c.id === id);
         if (a) a.pose = p;
+      }
+      if (!ln.who) {
+        const tags = sceneryTags(ln.text);
+        if (tags.length) scenery = tags;
       }
       for (const act of actsFor(ln)) makeTask(act, ln)?.instant();
     }
@@ -817,7 +851,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   setupShot(0);
   nextLine();
   // debug / automated testing hook: who is where, doing what
-  (window as unknown as { __cine?: unknown }).__cine = { get cast() { return cast.map((c) => ({ id: c.id, x: Math.round(c.x), cx: Math.round(c.cx), pose: c.pose ?? 'stand', facing: c.facing })); }, get tasks() { return tasks.length; } };
+  (window as unknown as { __cine?: unknown }).__cine = { get cast() { return cast.map((c) => ({ id: c.id, x: Math.round(c.x), cx: Math.round(c.cx), pose: c.pose ?? 'stand', facing: c.facing })); }, get tasks() { return tasks.length; }, get photo() { return photoPending; }, get line() { return lineIdx; }, get done() { return finished; } };
 
   const tick = (tk: Ticker) => {
     const dt = Math.min(0.05, tk.deltaMS / 1000);
@@ -842,7 +876,19 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     bars.rect(-OX, 0, SW, bh).fill(0x000000).rect(-OX, H - Math.round(6 * barsK), SW, Math.round(6 * barsK)).fill(0x000000);
 
     const ln = scene.shots[shotIdx]?.lines[lineIdx];
-    if (ln && !finished && titleT <= 0) shown = Math.min(ln.text.length, shown + dt * 52);
+    if (ln && !finished && titleT <= 0) {
+      const was = Math.floor(shown);
+      shown = Math.min(ln.text.length, shown + dt * 52);
+      // the speaker's voice: a blip every few letters, at his pitch
+      const sp0 = speaker();
+      if (sp0 && Math.floor(shown) > was) {
+        const v = voiceOf(sp0);
+        for (let c = was; c < Math.floor(shown); c++) {
+          if (!/[a-z0-9]/i.test(ln.text[c] ?? '')) continue;
+          if (++blipN % v.every === 0) blip(v.f * (0.94 + Math.random() * 0.12), v.type);
+        }
+      }
+    }
     if (screen && show) {
       tvG.clear();
       drawShow(tvG, show, screen.x, screen.y, screen.w, screen.h, t);
@@ -853,6 +899,29 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     actorsG.clear();
     rimG.clear();
     shadowG.clear();
+    // the photo: the room without the subtitles, shrunk into the album
+    if (photoPending && !finished && titleT <= 0 && (photoPending.t -= dt) <= 0) {
+      const p = photoPending;
+      photoPending = null;
+      try {
+        const hide = [ui, bars, filmG, fadeG, titleC];
+        const vis = hide.map((c) => c.visible);
+        for (const c of hide) c.visible = false;
+        const src = g.app.renderer.extract.canvas({ target: root, frame: new Rectangle(0, 0, W, H), resolution: 1 }) as HTMLCanvasElement;
+        hide.forEach((c, i) => (c.visible = vis[i]));
+        const cv = document.createElement('canvas');
+        cv.width = 240;
+        cv.height = 135;
+        cv.getContext('2d')?.drawImage(src, 0, 0, 240, 135);
+        addPhoto({ id: p.id, title: p.title, data: cv.toDataURL('image/jpeg', 0.82), taken: Date.now() });
+        flash = 0.55;
+        sfx('snap');
+        g.toast(`PHOTO ADDED TO RAY'S NOTEBOOK  /  ${p.title}`, II.gold);
+      } catch (e) {
+        // no renderer to read back (tests, old GPUs): the moment still happened
+        console.warn('photo not taken', e);
+      }
+    }
     // the line's stage directions, one after another
     while (tasks.length && !finished && titleT <= 0 && tasks[0].tick(dt)) tasks.shift();
     for (const a of cast) {
@@ -922,6 +991,9 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     }
     if (bg === 'gym' || bg === 'tv') for (let k = 0; k < 5; k++) fx.circle(400 + Math.sin(t * 1.5 + k) * 6, 110 - ((t * 14 + k * 9) % 36), 3).fill({ color: 0xffffff, alpha: 0.12 });
     if (bg === 'lucha') for (let k = 0; k < 24; k++) fx.rect((k * 59 + t * 9) % W, 6 + (k * 17) % 40, 2, 1).fill({ color: [0xe0559a, 0xf2c12e, 0x2a8a6a][k % 3], alpha: 0.4 });
+    sceneryBack.clear();
+    sceneryK = ease(sceneryK, scenery.length ? 1 : 0, dt, 2.5);
+    drawScenery(sceneryBack, fx, scenery, t, sceneryK, W, H, FLOOR);
     if (flash > 0) {
       fx.rect(-OX, 0, SW, H).fill({ color: 0xffffff, alpha: Math.min(0.6, flash) });
       flash -= dt;

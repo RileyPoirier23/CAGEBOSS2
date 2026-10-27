@@ -586,6 +586,7 @@ export const PART_LINES: Record<string, (L[] | null)[]> = {
       ['xavier', 'And Commissioner Pete. He has his own trailer.'],
       ['dane', 'The goat is coming to the Old Dome.'],
       ['xavier', 'The goat has never missed a big fight, Dane.'],
+      [null, 'Commissioner Pete arrives at the Old Dome in his own horse trailer. Security does not stop him. Security has met him.'],
     ],
     [
       [null, 'Ray\'s bucket, in the red corner. Han sets it down like it is made of glass.', [{ do: 'prop', who: 'han', prop: 'bucket' }, { do: 'pose', who: 'han', pose: 'kneel' }, { do: 'drop', who: 'han' }]],

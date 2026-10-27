@@ -7,6 +7,37 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 9: Claude (2026-10-27)
+Riley's list, all done:
+- **Version**: the sequel is `sequelVersion` 0.9.0 in package.json (Vite's `__APP_VERSION__`, the build's
+  `extraMetadata.version`, and `stamp-exe.mjs` takes it as a third argument). Game 1 stays 2.2.0.
+- **Story press day is a cutscene** (`src/ui/sequel/storypress.ts`): the table, Dane and the chapter's fighter, the
+  Daily Clinch in the back row; each answer is Dane saying it and the room reacting; the last shot is what ran.
+- **Sequel look**: `panel2()` (`src/ui/sequel/panel2.ts`) replaces game 1's newsprint on the season end and story end;
+  the trophy case is steel, and its cabinet and detail box are positioned (they used to sit over the title).
+- **Establishing shots** (`src/ui/sequel/scenery.ts`): narration that sets a scene puts it on screen (rain, snow, a
+  storm, Commissioner Pete wandering through, the horse trailer, the skyline through Zenith's glass, the crowd, the
+  bleachers, soup steam, camera flashes, the sea and the MARIE-ANNE, neon, sirens).
+- **Voices**: every speaker blips while their line types (`VOICES` in cine.ts; `blip()` in sfx.ts).
+- **The album**: `Line.photo` snapshots the scene (no subtitles) into `cageboss2.photos`; PHOTOS in Ray's notebook.
+  Taken at the last Sunday, the torch, every secret-chapter outcome and the endings.
+- **THE THEATRE** (Tales of Legacy menu): `src/sequel/theatre.ts` stores a recipe per scene (seed, chapter, choices,
+  flags) for intros, outros, beats and endings; `theatreui.ts` rebuilds and replays them.
+- **The story in Promoter Mode** (`src/sequel/legacyfa.ts`): after a finished story, Han, Mateo, Tyler, Spadam and
+  1ton walk in as free agents (FROM THE STORY); signing one plays a short office scene with lines that remember.
+- **Commissioner Pete**: his own tape (TAPE 5), a Xavier phone call, POST THE GOAT on Bleeter and replies, and he
+  arrives at the Old Dome for the buyback. The tape shelf is re-spaced for five.
+- **Juiced Butler's week in review** (`src/sequel/radio.ts`, `radioui.ts`): a booth segment after every show in
+  Promoter Mode and every END WEEK in the story, about what actually happened.
+- **NEW GAME+: THE KID AT THE DOOR** (tape id `kid`, unlocked by the torch ending; a banner in the tapes window):
+  Mateo runs Ray's, Theo Arsenault (Luc's grandson) stands at the door for a week, takes the mop, and fights four
+  times (Ray's ring with Mateo refereeing, the barn, the warehouse, the Old Dome against Synergy III), better each time.
+
+Not checked on screen: the browser pane was hidden for most of this turn, so the new screens were smoke-run (they
+open and draw with no errors) rather than looked at. Worth a look: press day, the radio booth, the theatre list, the
+album, the season-end panel. The radio plays every week in the story; if it feels like too much, make it every
+other week in `doEndWeek`.
+
 ### Turn 8: Claude (2026-10-27)
 - **The Windows exe builds.** `npm run dist:sequel:win` now runs `tools/dist-sequel-win.mjs`: Electron is unpacked once
   from electron's download cache into `.electron-dist/` (`tools/electron-dist.mjs`, gitignored) and passed as
