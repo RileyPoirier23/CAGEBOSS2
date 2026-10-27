@@ -130,8 +130,7 @@ is **"Hands up. Chin down. Eat something."**
 Tibular** fished lobster out of **Shediac** on the **MARIE-ANNE** and was lost in a November gale when Han was 15.
 **Tyler Vance** mops at Ray's, **Zac Buna** runs the Tuesday class, and **Xavier Cockett** runs Allstar FC out of a barn.
 In 1987 Ray was **Ray "The Electrician" Tibodeau**, 33; Butch is **Butch "The Mullet" Comeau** from Dieppe. The final
-was at the **Moncton Coliseum**; Marie met Ray at the bus with two bowls of soup. Moncton's diner is **the Magnetic
-Diner** (waitress: Denise). Han's apartment is **2B, over the laundromat**.
+was at the **Moncton Coliseum**; Marie met Ray at the bus with two bowls of soup.
 
 Content rule from game 1 (see `CONTENT_GUIDE.md`): parodies of real people never get crime, doping or abuse
 storylines. Original characters (1ton, the crew, Zenith) can.
@@ -179,9 +178,6 @@ storylines. Original characters (1ton, the crew, Zenith) can.
   (brows, eyes, nose, mouth) from where shots land (`faceHit`, its own RNG so game 1 fights don't change). A swollen
   spot takes more, a swollen nose breathes worse. Between rounds `src/ui/sequel/corner2.ts` (ENSWELL, ICE, GAUZE,
   VASELINE; SIM = C) works it and sets `faceWorked`; the CPU's corner is the automatic version in `nextRound`.
-- **The Moncton map:** `src/sequel/moncton.ts` (`PLACES`, `placeFor(venue)`, `storyMarker(save)`), the street in
-  `src/ui/sequel/moncton.ts`, opened by WALK MONCTON in the Tales of Legacy hub (`openMap`). Every hub action is
-  behind a door; the marker says where the story wants you.
 - **Scenes and refresh:** `Scene.refresh()` destroys the root's children. A Graphics kept on a field must be made
   new in `build()`, or the next refresh re-adds a destroyed object (pointer events then crash).
 

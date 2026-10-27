@@ -647,26 +647,3 @@ describe("Ray's notebook and the Legacy Tapes", () => {
     }
   });
 });
-
-describe('the Moncton map', () => {
-  it('puts every story venue behind a door, and marks the one the story wants', async () => {
-    const { placeFor, storyMarker, PLACES, STREET_W } = await import('../src/sequel/moncton');
-    expect(placeFor("RAY'S BOXING & SOUP")).toBe('rays');
-    expect(placeFor("THE ALLEY BEHIND RAY'S")).toBe('rays');
-    expect(placeFor('THE WAREHOUSE')).toBe('warehouse');
-    expect(placeFor('THE OLD DOME')).toBe('coliseum');
-    expect(placeFor('ARENA GUADALAJARA')).toBe('bus');
-    // every story fight's venue has somewhere to be
-    for (const def of STORY_CHAPTERS.flatMap((c) => chapterFights(c))) expect(PLACES.map((p) => p.id)).toContain(placeFor(def.venue));
-    // the buildings sit on the street, left to right, without overlapping
-    for (let i = 1; i < PLACES.length; i++) expect(PLACES[i].x).toBeGreaterThan(PLACES[i - 1].x + PLACES[i - 1].w);
-    expect(PLACES[PLACES.length - 1].x + PLACES[PLACES.length - 1].w).toBeLessThanOrEqual(STREET_W);
-    // a new tale: Ray wants a word before anything else
-    const save = newStorySave(9);
-    const m = storyMarker(save);
-    if (!talkedThisChapter(save)) expect(m).toEqual({ place: 'rays', label: 'TALK' });
-    save.flags[`talk_${storyChapter(save).id}`] = true;
-    const after = storyMarker(save);
-    expect(after === null || after.label === 'FIGHT' || after.label === 'CONTINUE').toBe(true);
-  });
-});

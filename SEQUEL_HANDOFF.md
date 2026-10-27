@@ -8,7 +8,7 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 ## Turn log
 
 ### Turn 5: Claude (2026-10-27)
-Riley picked nine ideas; all nine are in:
+Riley picked nine ideas; eight are in (the map was cut):
 - **Rivalry heat maps** (`src/sequel/rivals.ts`): grudges build from results, pressers and weigh-in face-offs; a
   grudge match sells more and pays bigger purses; the presser asks about it.
 - **Zenith counter-promotion**: Zenith books against your big nights; you get a warning and a toast.
@@ -21,15 +21,11 @@ Riley picked nine ideas; all nine are in:
 - **The corner, redone**: a big close-up face that swells and bleeds by zone (from where the shots landed). ENSWELL
   strokes, ICE holds, GAUZE presses in the band, VASELINE seals; SIM gives a C. What you leave carries into the next
   round. Ray works the corner in story fights.
-- **The Moncton map**: WALK MONCTON in the story hub. Home, Ray's, the Magnetic Diner, the warehouse, the Coliseum
-  and the bus station; time of day follows the days left; snow in winter; the story marker sits over the right door.
+- The Moncton map was built and then **removed at Riley's request** ("lowkey ass"). Don't bring it back.
 
 Left for the next turn (Riley's plan: polish, then fill out the game):
-- **Polish pass:** play a whole chapter through the map instead of the button row; check the corner with a pad and
-  on a phone; the crowd's chant timing over a full five-rounder.
-- **Fill out:** most of the 80 parts are still only cards. Give them scenes, and put the story beats *in place* on
-  the map (a beat at the diner plays when you walk in).
-- Pedestrians and cameos on the map (Tyler mopping outside Ray's, Xavier's truck, Zenith's car at the Coliseum).
+- **Polish pass:** check the corner with a pad and on a phone; the crowd's chant timing over a full five-rounder.
+- **Fill out:** most of the 80 parts are still only cards. Give them scenes of their own.
 
 ### Turn 4: Claude (2026-10-27)
 Done (Riley's open list, in order):
