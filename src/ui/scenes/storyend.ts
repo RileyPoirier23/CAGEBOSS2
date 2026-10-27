@@ -42,7 +42,7 @@ export class StoryEndScene extends Scene {
     r.addChild(p);
 
     p.addChild(text('THE NOTEBOOK', 0, 6, { scale: 2, width: pw, align: 'center', color: PAL.ink }));
-    p.addChild(text(`STORY MODE  /  FINAL PAGE  /  RANK ${e.rank}`, 0, 24, { small: true, width: pw, align: 'center', color: PAL.blood }));
+    p.addChild(text(`TALES OF LEGACY  /  FINAL PAGE  /  RANK ${e.rank}`, 0, 24, { small: true, width: pw, align: 'center', color: PAL.blood }));
     p.addChild(new Graphics().rect(10, 33, pw - 20, 1).fill(PAL.ink));
     p.addChild(text(e.title, 10, 37, { width: pw - 20, color: e.color === PAL.gold ? PAL.ink : e.color, maxLines: 2 }));
     p.addChild(text(e.kicker, 10, 53, { width: pw - 20, small: true, color: PAL.blood, maxLines: 1 }));

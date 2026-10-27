@@ -136,6 +136,8 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   let shown = 0;
   let t = 0;
   let shake = 0;
+  /** an impact: the camera punches in and tilts, then settles (0..1) */
+  let punch = 0;
   let flash = 0;
   let fade = 1; // 1 = black, eases to 0 after a cut
   let barsK = 0; // letterbox in
@@ -341,7 +343,10 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       const a = cast.find((c) => c.id === id);
       if (a) a.pose = p;
     }
-    if (ln.shake) shake = 0.45;
+    if (ln.shake) {
+      shake = 0.45;
+      punch = 1; // the camera jolts in on the hit
+    }
     if (ln.flash) flash = 0.4;
     if (ln.sfx) sfx(ln.sfx);
   };
@@ -585,6 +590,11 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       }
       ty = FLOOR - 62 * ((sp.scale ?? 1.3) / 1.3);
     }
+    // each shot opens on a different angle: wide and high, then low for the two-shot
+    const angle = shotIdx % 3;
+    if (angle === 1) ty -= 8;
+    if (angle === 2) tz += 0.04;
+    tz += punch * 0.14;
     camS.x = ease(camS.x, tx, dt, 1.8);
     camS.y = ease(camS.y, ty, dt, 1.8);
     camS.z = ease(camS.z, tz, dt, 1.4);
@@ -600,6 +610,8 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     }
     cam.scale.set(z);
     cam.position.set(Math.round(wx), Math.round(wy));
+    cam.rotation = punch * 0.025 * (shotIdx % 2 ? -1 : 1);
+    punch = Math.max(0, punch - dt * 2.2);
 
     // film: grain, the odd scratch, the gate weaving; the cut fades up from black
     filmG.clear();

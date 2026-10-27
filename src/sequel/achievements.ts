@@ -408,6 +408,8 @@ export const SEQ_ACHIEVEMENTS: SeqAchievement[] = [
 
 /** Unlock everything this run has earned. Returns only the new ones. */
 export function claimSeqAchievements(run: SeqRun): SeqAchievement[] {
+  // sandbox runs are for fun, not for trophies
+  if (run.flags.sandbox || run.flags.demo) return [];
   const have = seqUnlocked();
   const fresh = SEQ_ACHIEVEMENTS.filter((a) => !have[a.id] && a.test(run));
   if (!fresh.length) return [];

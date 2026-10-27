@@ -16,7 +16,7 @@ import {
   ensureDesk, flagKey, pendingCount, resolveDoc, takeBribe,
 } from '../src/sequel/desk';
 import {
-  advanceStoryChapter, applyChapterChoice, applyPressAnswer, buildHan, chapterWeeks, endStoryWeek, fightDue, storyWeek, talkedThisChapter, trainSession, sparSession, gradeFor, storyDate, DAYS_PER_WEEK, buildMateoGrown, buildOneTon, chapterFights, chapterReady, STORY_CHAPTERS, finishPressDay, newStorySave,
+  advanceStoryChapter, applyChapterChoice, applyPressAnswer, buildHan, chapterWeeks, endStoryWeek, fightDue, storyWeek, talkedThisChapter, trainSession, sparSession, gradeFor, storyDate, DAYS_PER_WEEK, movesOf, buildMateoGrown, buildOneTon, chapterFights, chapterReady, STORY_CHAPTERS, finishPressDay, newStorySave,
   pressQuestions, recordSideFight, recordStoryFight, resolveStoryDoc, sideOffers, storyChapter,
   storyCorner, storyDoc, storyEnding, trainOneTon,
 } from '../src/sequel/story';
@@ -471,6 +471,25 @@ describe('sequel story mode', () => {
     sparSession(save, 'corner', 'A');
     expect(save.actionsLeft).toBe(DAYS_PER_WEEK - 2);
     for (const t of ['striking', 'grappling', 'cardio']) expect(save.xp![`corner.${t}`]).toBeGreaterThan(0);
+  });
+
+  it('teaches a special move for a B or better in sparring, never twice', () => {
+    const save = newStorySave(24);
+    sparSession(save, 'oneton', 'C');
+    expect(movesOf(save, 'oneton')).toEqual([]);
+    sparSession(save, 'oneton', 'A');
+    expect(movesOf(save, 'oneton')).toEqual(['superman']);
+    save.actionsLeft = DAYS_PER_WEEK;
+    sparSession(save, 'oneton', 'S');
+    expect(movesOf(save, 'oneton')).toEqual(['superman', 'butch']);
+    expect(movesOf(save, 'corner')).toEqual([]);
+  });
+
+  it('books more than one key fight in the chapters before nine', () => {
+    for (const id of ['mexican_math', 'brick_by_brick', 'sparring_partner', 'audit', 'the_board', 'rematch', 'brother']) {
+      const ch = STORY_CHAPTERS.find((c) => c.id === id)!;
+      expect(chapterFights(ch).length, id).toBeGreaterThanOrEqual(2);
+    }
   });
 
   it('runs the story over a few years of calendar', () => {

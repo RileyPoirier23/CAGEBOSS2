@@ -28,14 +28,15 @@ import {
   STORY_CHAPTERS, buildOneTon, cornerFighter, cornerName, cornerKey, chapterFights, nextChapterFight, storyProgress, storyCorner, storyOverall, storyChapter, storyNextLabel,
   storyRecord, storyDoc, resolveStoryDoc, pressQuestions, applyPressAnswer, finishPressDay,
   canAct, mediaDay, dinnerWithOneTon, applyTalkChoice, applyChapterChoice, talkTo,
-  dueBeat, storyDate, storyWeek, chapterWeeks, fightDue, fightThisWeek, endStoryWeek, restDay, talkedThisChapter, chapterReady,
+  dueBeat, movesOf, storyDate, storyWeek, chapterWeeks, fightDue, fightThisWeek, endStoryWeek, restDay, talkedThisChapter, chapterReady,
   trainSession, gradeFor, TRAIN_TIERS, DAYS_PER_WEEK, type TrainTier, type OneTonTrack,
   fightDone, recordStoryFight, advanceStoryChapter, sideOffers, sideFightReady,
   recordSideFight, type StoryFightDef, type StorySideOpponent, type StoryDocMode,
 } from '../../sequel/story';
-import { beatScene, chapterIntro, chapterOutro, fightIntro, storyEndingScene, talkScene } from './storycuts';
+import { beatScene, chapterIntro, chapterOutro, fightHighlight, fightIntro, storyEndingScene, talkScene } from './storycuts';
 import { newStorySave } from '../../sequel/story';
-import { readStory, writeStory, addStoryTrophy } from '../../sequel/storysession';
+import { readStory, writeStory, addStoryTrophy, forgetStory } from '../../sequel/storysession';
+import { newSlot, listSlots } from '../../sequel/slots';
 import type { StorySave } from '../../sequel/types';
 import { StoryEndScene } from './storyend';
 
@@ -49,8 +50,11 @@ export function routeStory(g: Game): void {
   else g.goto(new SequelStoryHubScene(g));
 }
 
+/** A new Tales of Legacy save, in a new slot (the old one stays in LOAD SAVE). */
 export function startNewStory(g: Game): void {
   const seed = Math.floor(Math.random() * 1e9);
+  newSlot('story', `TALE ${listSlots('story').length + 1}`, false);
+  forgetStory();
   g.loading('Opening the notebook', () => {
     const save = newStorySave(seed);
     writeStory(save);
@@ -96,7 +100,7 @@ export class SequelStoryHubScene extends Scene {
   private header(save: StorySave, ch: ReturnType<typeof storyChapter>): void {
     const r = this.root;
     r.addChild(new Graphics().rect(0, 0, SW, 28).fill({ color: 0x0a080e, alpha: 0.95 }).rect(0, 27, SW, 1).fill({ color: PAL.gold, alpha: 0.55 }));
-    r.addChild(text('CAGE BOSS II  /  STORY MODE', 6, 4, { small: true, color: PAL.gold }));
+    r.addChild(text('CAGE BOSS II  /  TALES OF LEGACY', 6, 4, { small: true, color: PAL.gold }));
     r.addChild(text(`CHAPTER ${storyProgress(save)}`, 170, 4, { small: true, color: PAL.bone }));
     r.addChild(text(`WEEK ${storyWeek(save)}/${chapterWeeks(ch)}  DAY ${Math.min(DAYS_PER_WEEK, DAYS_PER_WEEK + 1 - save.actionsLeft)}/${DAYS_PER_WEEK}`, 262, 4, { small: true, color: save.actionsLeft ? PAL.bone : PAL.ember }));
     r.addChild(text(storyDate(save), 262, 14, { small: true, color: PAL.ash }));
@@ -364,6 +368,7 @@ export class SequelStoryHubScene extends Scene {
         plan: 'balanced', oppPlan: 'balanced', cutTier: 3, seed,
         event: def.venue, judges: ['Lenny Pratt', 'Marla Cross', 'Dexter Bell'], referee: where.referee,
         canvas: where.canvas, refLook: where.refLook, bare: where.bare,
+        rules: { moves: { 0: movesOf(save, def.player === 'oneton' ? 'oneton' : 'corner') } },
         done: (r) => this.afterStoryFight(save, def, player.id, opponent.id, r),
       });
     });
@@ -382,7 +387,10 @@ export class SequelStoryHubScene extends Scene {
         ? `${def.name}: DRAW. ${r.method} R${r.round} ${r.time}. Nobody gets what they came for.`
         : `${def.name}: LOST. ${r.method} R${r.round} ${r.time}. The building makes a different sound.`;
     sfx(won ? 'roar' : 'thud');
-    alertBox(this.g, won ? 'WON' : drawn ? 'DRAW' : 'LOST', line, () => this.playOutroAndAdvance(save));
+    // the moment, shot like a broadcast package, then the card
+    playCutscene(this.g, fightHighlight(save, def, won, r.method, r.round), () => {
+      alertBox(this.g, won ? 'WON' : drawn ? 'DRAW' : 'LOST', line, () => this.playOutroAndAdvance(save));
+    });
   }
 
   private playOutroAndAdvance(save: StorySave): void {
@@ -428,9 +436,7 @@ export class SequelStoryHubScene extends Scene {
 
   private advance(save: StorySave): void {
     if (isSequelDemo() && save.chapter + 1 >= DEMO_STORY_CHAPTERS && chapterReady(save)) {
-      void import('../sequel/demo').then((m) => m.demoOver(this.g, `That was chapter ${DEMO_STORY_CHAPTERS}. Han Tibular walks in next.`, () => {
-        void import('./sequel').then((t) => this.g.goto(new t.SequelTitleScene(this.g)));
-      }));
+      void import('../sequel/demo').then((m) => m.demoToPromoter(this.g));
       return;
     }
     if (!advanceStoryChapter(save)) {

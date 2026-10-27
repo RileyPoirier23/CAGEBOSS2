@@ -138,6 +138,7 @@ const strikeReach = (): Record<string, number> => {
   const out: Record<string, number> = {};
   for (const k of Object.keys(PUNCH) as PunchType[]) out[PUNCH[k].name] = PUNCH[k].reach;
   for (const k of Object.keys(KICK) as KickLevel[]) out[KICK[k].name] = KICK[k].reach;
+  Object.assign(out, { 'superman punch': 64, 'butch hook': 45, 'spinning elbow': 40, 'flying knee': 64, 'calf kick': 50 });
   return out;
 };
 /** How far each standing strike reaches (px), by the name the events carry. */
@@ -217,11 +218,44 @@ export interface LiveRules {
   referee?: string;
   /** knockdowns: 'mma' (no count: jump on him and finish it, or let him up) or 'count' (bareknuckle, amateur smokers) */
   koRules?: 'mma' | 'count';
+  /** CAGE BOSS II: the special moves a side has unlocked (sparring at Ray's); see SPECIAL_MOVES */
+  moves?: Partial<Record<Side, string[]>>;
 }
+
+/**
+ * The moves you earn sparring at Ray's. Each one upgrades an input you already know: unlock it and
+ * that button-and-direction throws the special instead. Bigger, slower, riskier, louder.
+ */
+export const SPECIAL_MOVES: { id: string; name: string; how: string; blurb: string }[] = [
+  { id: 'superman', name: 'superman punch', how: 'REAR HAND + UP (replaces the overhand)', blurb: 'A hop off the back foot and a cross from the sky. Long reach, big wind-up.' },
+  { id: 'butch', name: 'butch hook', how: 'LEAD HAND + TOWARD, HELD (a heavy lead hook)', blurb: 'The left hook that beat Ray in 1987. Turn the hip, not the shoulder.' },
+  { id: 'flyknee', name: 'flying knee', how: 'FRONT KICK (replaces it)', blurb: 'Two steps and a knee to the jaw. If it misses, you are on your own.' },
+  { id: 'calf', name: 'calf kick', how: 'LOW KICK (replaces it)', blurb: 'Below the knee, on the calf. Every one slows him down a little more.' },
+  { id: 'spinelbow', name: 'spinning elbow', how: 'REAR HAND + AWAY (replaces the spinning backfist)', blurb: 'The backfist with a point on it. Short range, brutal.' },
+];
 
 export class LiveFight {
   F: [LiveFighter, LiveFighter];
   rules: LiveRules = {};
+
+  private has(i: Side, move: string): boolean {
+    return !!this.rules.moves?.[i]?.includes(move);
+  }
+
+  /** An unlocked special that replaces this punch for this side, or null. */
+  private specialPunch(i: Side, punch: PunchType, hand: 'lead' | 'rear', weight: Weight): PunchSpec | null {
+    if (punch === 'overhand' && this.has(i, 'superman')) return { name: 'superman punch', reach: 64, wind: 0.26, rec: 0.32, dmg: 10, gas: 3.4, target: 'head' };
+    if (punch === 'hook' && hand === 'lead' && weight === 'heavy' && this.has(i, 'butch')) return { name: 'butch hook', reach: 45, wind: 0.19, rec: 0.25, dmg: 9.2, gas: 2.8, target: 'head' };
+    if (punch === 'spinBackfist' && this.has(i, 'spinelbow')) return { name: 'spinning elbow', reach: 40, wind: 0.26, rec: 0.34, dmg: 11.5, gas: 3.4, target: 'head' };
+    return null;
+  }
+
+  /** An unlocked special that replaces this kick, or null. */
+  private specialKick(i: Side, level: string): (typeof KICK)[KickLevel] | null {
+    if (level === 'front' && this.has(i, 'flyknee')) return { name: 'flying knee', reach: 64, wind: 0.32, rec: 0.46, dmg: 13, target: 'head', heavy: true };
+    if (level === 'low' && this.has(i, 'calf')) return { name: 'calf kick', reach: 50, wind: 0.19, rec: 0.28, dmg: 6.8, target: 'legs', heavy: false };
+    return null;
+  }
   private dqDone = false;
   round = 1;
   clock = ROUND_SECONDS;
@@ -472,7 +506,7 @@ export class LiveFight {
           this.ev({ type: 'punch', side: i, name, big: elbow, hand: it.hand });
           return;
         }
-        const p = PUNCH[it.punch];
+        const p = this.specialPunch(i, it.punch, it.hand, it.weight) ?? PUNCH[it.punch];
         const w = WEIGHT[it.weight];
         const tired = f.gas < 20 ? 1.3 : 1;
         this.startAct(f, { kind: 'punch', name: p.name, wind: p.wind * w.wind * tired, rec: p.rec * w.rec * tired, dmg: p.dmg * w.dmg * (0.85 + it.pressure * 0.15), reach: p.reach, target: p.target, heavy: it.weight === 'heavy' || it.punch === 'spinBackfist', hand: it.hand, light: it.weight === 'light' }, p.gas * w.gas);
@@ -490,7 +524,7 @@ export class LiveFight {
           return;
         }
         if (this.pos !== 'stand') return;
-        const k = KICK[it.level];
+        const k = this.specialKick(i, it.level) ?? KICK[it.level];
         const tired = f.gas < 20 ? 1.3 : 1;
         this.startAct(f, { kind: 'kick', name: k.name, wind: k.wind * tired, rec: k.rec * tired, dmg: k.dmg * (0.6 + f.legs / 250), reach: k.reach, target: k.target, heavy: k.heavy, push: k.push }, it.level === 'spin' ? 4.5 : 3.5);
         this.ev({ type: 'kick', side: i, name: k.name });

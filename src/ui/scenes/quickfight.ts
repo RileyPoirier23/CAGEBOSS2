@@ -14,7 +14,7 @@ import { fighterPortrait } from '../sprites';
 import { createNewGame } from '../../sim/newgame';
 import { makeBout, officialsFor } from '../../sim/events';
 import { DIVISION_ORDER, divisionName } from '../../sim/divisions';
-import { overall } from '../../sim/fighters';
+import { overall, isWomensDivision } from '../../sim/fighters';
 import { record } from '../../core/format';
 import { content } from '../../core/content';
 import { sponsorColor, venueRoom } from '../../sim/sponsorship';
@@ -198,7 +198,7 @@ export class QuickFightScene extends Scene {
 
   /** Pick a random opponent from any division (silly mismatches welcome). */
   private anyone(side: 0 | 1): void {
-    const all = Object.values(roster().fighters).filter((f) => f.status !== 'retired' && !f.division.startsWith('w') === !this.div.startsWith('w'));
+    const all = Object.values(roster().fighters).filter((f) => f.status !== 'retired' && isWomensDivision(f.division) === isWomensDivision(this.div));
     const f = all[Math.floor(Math.random() * all.length)];
     this.div = f.division;
     const l = this.list();

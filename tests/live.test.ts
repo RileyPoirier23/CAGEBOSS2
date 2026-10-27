@@ -236,6 +236,19 @@ describe('a smarter CPU, and no one-button wins', () => {
   };
   const P = (punch: 'jab' | 'straight' | 'overhand' | 'hook', weight: 'light' | 'medium' | 'heavy' = 'medium', hand: 'lead' | 'rear' = 'lead'): FightIntent => ({ type: 'punch', hand, punch, weight, hold: 0.1, pressure: 1, grounded: false });
 
+  it('throws an unlocked special only for the side that has it (CAGE BOSS II)', () => {
+    const named = (L: LiveFight) => run(L, [[P('overhand', 'medium', 'rear')], []], 4).find((e) => e.type === 'punch')?.name;
+    const plain = setup(4);
+    expect(named(plain)).toBe('overhand');
+    const special = setup(4);
+    special.rules = { moves: { 0: ['superman'] } };
+    expect(named(special)).toBe('superman punch');
+    const other = setup(4);
+    other.rules = { moves: { 1: ['superman'] } };
+    expect(named(other)).toBe('overhand');
+    expect(STRIKE_REACH['superman punch']).toBeGreaterThan(STRIKE_REACH.overhand);
+  });
+
   it('the CPU throws what reaches', () => {
     expect(STRIKE_REACH.jab).toBe(56);
     expect(STRIKE_REACH['front kick']).toBe(60);

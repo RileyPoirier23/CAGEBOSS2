@@ -1162,7 +1162,7 @@ export const EVENTS: SeqEventDef[] = [
 ];
 
 export function pickEvent(run: SeqRun, rng: Rng): SeqEventState | null {
-  if (run.week >= SEASON_WEEKS) return null;
+  if (run.week >= SEASON_WEEKS && !run.flags.sandbox) return null;
   const guaranteed = [2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35, 38, 39].includes(run.week);
   if (!guaranteed && !rng.chance(0.42)) return null;
   const recent = new Set(run.eventLog.slice(-4));

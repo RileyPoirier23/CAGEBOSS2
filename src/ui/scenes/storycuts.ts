@@ -10,6 +10,7 @@ import {
   buildMateoGrown,
   buildOneTon,
   buildOpponent,
+  chapterFights,
   fightWon,
   storyChapter,
   type StoryFightDef,
@@ -109,7 +110,7 @@ function introBackRow(save: StorySave): Cutscene {
       shot('warehouse', [dane(142, 1), oneton(352, -1, { enter: 'right' })], [
         { who: 'oneton', text: 'Dane Whyte. Former president of the CBFC. Current president of a building with one working toilet.' },
         { who: 'dane', text: 'Two. If you count the bucket.' },
-        { who: 'oneton', text: 'I have been coming to your press conferences for six years. You have never once answered my question.' },
+        { who: 'oneton', text: 'I have been coming to your press conferences for twelve years. You have never once answered my question.' },
         { who: 'dane', text: 'Ask it again.' },
         { who: 'oneton', text: 'When are you going to put a Mexican fighter in the main event?' },
         { who: 'dane', text: 'When one walks in the door.' },
@@ -179,7 +180,8 @@ function introMexicanMath(save: StorySave): Cutscene {
 }
 
 function outroMexicanMath(save: StorySave): Cutscene {
-  const won = fightWon(save, storyChapter(save).fight!);
+  // the chapter's big fight is its last one
+  const won = fightWon(save, chapterFights(storyChapter(save)).slice(-1)[0]);
   return {
     title: won ? '1TON WINS' : '1TON LEARNS',
     film: true,
@@ -250,7 +252,8 @@ function introBrick(save: StorySave): Cutscene {
 }
 
 function outroBrick(save: StorySave): Cutscene {
-  const won = fightWon(save, storyChapter(save).fight!);
+  // the chapter's big fight is its last one
+  const won = fightWon(save, chapterFights(storyChapter(save)).slice(-1)[0]);
   return {
     title: won ? 'THE BUILDING STAYS' : 'THE BUILDING LEANS',
     film: true,
@@ -307,12 +310,12 @@ function outroSparring(save: StorySave): Cutscene {
         hurt
           ? { who: null, text: 'Mateo is on his stool, holding his ribs. 1ton is still wearing his gloves.' }
           : { who: null, text: 'Mateo is on his stool, breathing hard. 1ton is still wearing his gloves.' },
-        { who: 'oneton', text: 'I did not mean—' },
-        { who: 'mateo', text: hurt ? 'You did. A little.' : 'You did. A little.' },
-        { who: 'dane', text: 'It was a sparring session.' },
-        { who: 'mateo', text: 'It was a job interview. I just did not know who was hiring.' },
-        { who: 'oneton', text: 'I am sorry.' },
-        { who: 'mateo', text: 'Say it without the notebook.' },
+        { who: 'oneton', text: hurt ? 'Kid. Kid, I am sorry, I got excited, the left hook just came out.' : 'You are fast. Nobody told me you were fast.' },
+        { who: 'mateo', text: hurt ? 'Ray taught you that hook last week. I am telling him you used it on me.' : 'Ray told everybody. You were busy writing.' },
+        { who: 'ray', text: 'Both of you: ice, soup, bed. In that order.' },
+        { who: 'oneton', text: 'Same time tomorrow?' },
+        { who: 'mateo', text: 'Same time tomorrow. Bring the notebook. I want to read what you wrote about me.' },
+        { who: 'oneton', text: '"Fast. Annoying. Future champion." It is a short entry.' },
       ], 'NO HARD SHOTS'),
     ],
     choices: [
@@ -339,7 +342,7 @@ function introAudit(save: StorySave): Cutscene {
         { who: 'oneton', text: 'I am here to be audited.' },
         { who: 'dane', text: 'That is not a thing.' },
         { who: 'oneton', text: 'It is now.' },
-        { who: 'verity', text: 'If Mr. Morales wins, Zenith will recognize the warehouse as a legitimate promotion. If he loses, we will call it an incident and take the lease.' },
+        { who: 'verity', text: 'If Mr. Fuente wins, Zenith will recognize the warehouse as a legitimate promotion. If he loses, we will call it an incident and take the lease.' },
         { who: 'auditor', text: 'I have never lost a fight.' },
         { who: 'oneton', text: 'You have never had one.' },
         { who: 'auditor', text: 'I have had settlements.' },
@@ -354,22 +357,20 @@ function outroAudit(save: StorySave): Cutscene {
     film: true,
     shots: [
       shot('lot', [oneton(160, 1), verity(280, -1), lenny(380, 1)], [
-        { who: null, text: 'The parking lot after the audit. Verity Kane is holding a card. The card is black. The card is always black.' },
-        { who: 'verity', text: 'When you are tired of being somebody\'s answer, call me.' },
-        { who: 'oneton', text: 'I am not somebody\'s answer.' },
-        { who: 'verity', text: 'Not yet.' },
-        { who: 'lenny', text: 'The card is also a non-disclosure agreement.' },
-      ], 'THE PARKING LOT'),
-      shot('warehouse', [dane(160, 1), oneton(280, -1), ray(380, 1)], [
-        { who: 'dane', text: 'What did she want?' },
-        { who: 'oneton', text: 'To audit me.' },
-        { who: 'ray', text: 'People do not hand out black cards for auditing.' },
-        { who: 'oneton', text: 'Some people do.' },
+        { who: null, text: 'The parking lot after the audit. Verity Kane is holding a card. The card is black. The card is always black. She holds it out to Dane.' },
+        { who: 'verity', text: 'When you are tired of losing money on principle, Mr. Whyte, call me.' },
+        { who: 'oneton', text: 'He is not tired.' },
+        { who: null, text: '1ton takes the card out of her hand, tears it in half, and gives her the pieces. Politely. Like a gentleman returning a glove.' },
+        { who: 'lenny', text: 'That card was also a non-disclosure agreement.' },
+        { who: 'oneton', text: 'Then I will not disclose that I tore it.' },
+        { who: 'ray', text: 'Ha! Now THAT is a Ray\'s fighter.' },
+        { who: 'dane', text: 'You did not have to do that.' },
+        { who: 'oneton', text: 'You gave me a locker. Ray gave me soup. Nobody else in this country ever gave me anything.' },
       ], 'WHAT DID SHE WANT'),
     ],
     choices: [
-      { id: 'confront', label: 'CONFRONT 1TON ABOUT THE CARD' },
-      { id: 'ignore', label: 'SAY NOTHING' },
+      { id: 'confront', label: 'THANK HIM. MEAN IT.' },
+      { id: 'ignore', label: 'TELL HIM THAT WAS A BAD BUSINESS DECISION' },
     ],
   };
 }
@@ -405,7 +406,8 @@ function introBoard(save: StorySave): Cutscene {
 }
 
 function outroBoard(save: StorySave): Cutscene {
-  const won = fightWon(save, storyChapter(save).fight!);
+  // the chapter's big fight is its last one
+  const won = fightWon(save, chapterFights(storyChapter(save)).slice(-1)[0]);
   return {
     title: won ? 'THE BOARD CONCEDES' : 'THE BOARD PREVAILS',
     film: true,
@@ -452,7 +454,8 @@ function introRematch(save: StorySave): Cutscene {
 }
 
 function outroRematch(save: StorySave): Cutscene {
-  const won = fightWon(save, storyChapter(save).fight!);
+  // the chapter's big fight is its last one
+  const won = fightWon(save, chapterFights(storyChapter(save)).slice(-1)[0]);
   return {
     title: won ? 'THE SLOT IS YOURS' : 'THE SLOT IS HIS',
     film: true,
@@ -515,7 +518,7 @@ function outroBrother(save: StorySave): Cutscene {
         { who: 'oneton', text: 'Not tonight.' },
       ], hurt ? 'THE MESSAGE' : 'THE MESSAGE, WITHHELD'),
       shot('cage', [oneton(160, 1), verity(270, -1), lenny(370, 1), dane(90, 1)], [
-        { who: 'verity', text: 'Mr. Morales. The offer stands. Your own promotion. Your own roster. Your own name.' },
+        { who: 'verity', text: 'Mr. Fuente. The offer stands. Your own promotion. Your own roster. Your own name.' },
         { who: 'dane', text: 'You are not ready.' },
         { who: 'oneton', text: 'You are not listening. I am not asking.' },
         { who: 'oneton', text: 'You built me to be a weapon, Dane. You just did not think I would point myself at you.' },
@@ -568,7 +571,7 @@ function introCrew(save: StorySave): Cutscene {
         { who: 'bradie', text: 'The funeral is Thursday. The police want a statement.' },
         { who: 'dane', text: 'I gave them one. I gave them three names.' },
         { who: 'mateo', text: 'They already had three names.' },
-        { who: null, text: 'Duke Kessler. Rico Alvarez. Cesar Rios. Three men who work for 1ton Morales and have never had to hide.' },
+        { who: null, text: 'Duke Kessler. Rico Alvarez. Cesar Rios. Three men who work for Gordo "1ton" Fuente and have never had to hide.' },
         { who: 'dane', text: 'I am a promoter, Han. I can book them. I cannot fight them.' },
         { who: 'han', text: 'Then book them. All three. One at a time.' },
         { who: 'dane', text: 'Cesar is a light heavyweight.' },
@@ -689,7 +692,7 @@ function outroBuyback(save: StorySave): Cutscene {
         { who: 'oneton', text: 'I can. I wrote it down.' },
         { who: 'lenny', text: 'A draw is a win for Zenith. Technically. Legally. Emotionally.' },
       ] : [
-        { who: null, text: 'Mateo is on one knee. 1ton Morales is standing. The crowd is making a sound that has not been invented yet.' },
+        { who: null, text: 'Mateo is on one knee. Gordo "1ton" Fuente is standing. The crowd is making a sound that has not been invented yet.' },
         { who: 'oneton', text: 'Ask me the question, Dane.' },
         { who: 'dane', text: 'When are you going to put a Mexican fighter in the main event?' },
         { who: 'oneton', text: 'I just did.' },
@@ -764,7 +767,7 @@ function outroLegacy(save: StorySave): Cutscene {
 
 /** The young men in the flashbacks: Ray at 33 in the Golden Gloves final, Butch and his mullet, Han's dad on the wharf. */
 const RAY_1987 = { ...CAST.ray, hairColor: 0x3a2a1e, beard: 1, build: 1, outfit: undefined, trunks: 0x8a1a1a, trim: 0xe8d8b0, glove: 0x8a1a1a };
-const BUTCH_1987 = { ...CAST.promoter, hairStyle: 5, hairColor: 0x8a6a3a, beard: 2, build: 2, outfit: undefined, trunks: 0x1a3a8a, trim: 0xe8e8e8, glove: 0x1a3a8a };
+const BUTCH_1987 = { ...CAST.promoter, hairStyle: 10, hairColor: 0x8a6a3a, beard: 2, build: 2, outfit: undefined, trunks: 0x1a3a8a, trim: 0xe8e8e8, glove: 0x1a3a8a };
 const MARC_TIBULAR = { ...CAST.ray, skin: 0xe2b392, hairStyle: 2, hairColor: 0x5a3a22, beard: 2, build: 2, outfit: { top: 0xd8a020, bottom: 0x2a3a5a, shirt: 0x3a3a3a, bulk: 2, hands: 0xe2b392 } };
 const HAN_15 = { ...CAST.mateo, skin: 0xe2b392, hairStyle: 9, hairColor: 0x6a4a2a, build: 0, outfit: { top: 0x2a5a8a, bottom: 0x2a2a30, bulk: 2, hands: 0xe2b392 } };
 
@@ -1269,6 +1272,84 @@ export function beatScene(save: StorySave, id: string): Cutscene | null {
           ], 'THE LAST SUNDAY'),
         ],
       };
+    case 'true_name': {
+      // chapter ten: who he was. Alberto Del Burrito, champion of Mexico, until one bad night and one abuela.
+      const alberto = { ...CAST.oneton, beard: 1, build: 2, outfit: undefined, trunks: 0x1e7a3c, trim: 0xc8202a, glove: 0xc8202a, mask: 0xc8202a };
+      const abuela = { ...CAST.reporter, hairStyle: 2, hairColor: 0xc8c4bc, build: 1, glasses: 2, outfit: { top: 0x8a4a6a, bottom: 0x3a3a44, bulk: 2, hands: CAST.reporter.skin } };
+      return {
+        title: 'ALBERTO',
+        film: true,
+        shots: [
+          shot('gym', [oneton(170, 1, { pose: 'headDown' }), dane(300, -1, { enter: 'right' })], [
+            { who: null, text: 'Two in the morning. Ray\'s gym. The lights are off but the door is open, and 1ton is sitting in Ray\'s chair by the soup pot. It is cold. Nobody has made the soup since the funeral.' },
+            { who: 'dane', text: 'You should not be here.' },
+            { who: 'oneton', text: 'I know. I came to tell somebody my name before Saturday. Ray would have been first. You are second. You were always second.' },
+            { who: 'oneton', text: 'Alberto Del Burrito. Middleweight champion of Mexico. Twenty-two and oh.' },
+          ], '2:00 A.M.'),
+          { ...shot('lucha', [npc('alberto', 'ALBERTO DEL BURRITO, 2011', 170, 1, { look: alberto, pose: 'headDown' }), npc('abuela', 'A FAN\'S ABUELA', 300, -1, { look: abuela })], [
+            { who: null, text: 'Guadalajara. Fifteen years ago. He has just lost the belt on a split decision. The after-party is in a cantina. He is very, very drunk.' },
+            { who: 'abuela', text: 'My grandson cried, Alberto. You made a child cry. You owe me eight hundred pesos for the tickets.' },
+            { who: 'alberto', text: 'Señora, with respect, I owe the world nothing tonight.', poses: { alberto: 'point' } },
+            { who: null, text: 'She hits him with her handbag. He swings back. He misses. She does not.', shake: true, sfx: 'punch', poses: { alberto: 'rocked', abuela: 'cross' } },
+            { who: null, text: 'Somebody films it. Champion of Mexico, flat on a cantina floor, a seventy-four-year-old woman standing over him with a handbag and a cigarette. It is the most-watched video in the country for a month.', poses: { alberto: 'down' } },
+          ], 'GUADALAJARA  /  FIFTEEN YEARS AGO'), flashback: true },
+          shot('gym', [oneton(170, 1), dane(300, -1)], [
+            { who: 'oneton', text: 'Nobody would book me after that. So I came north. New name. Gordo Fuente. A notebook. A press pass.' },
+            { who: 'oneton', text: 'Every press conference, for twelve years, I asked the same question. "When are you going to put a Mexican fighter in the main event?"' },
+            { who: 'dane', text: '...You meant you.' },
+            { who: 'oneton', text: 'I meant me. I was asking for a second chance in front of everybody, every week. You never heard it. Nobody did. Except Ray.' },
+            { who: null, text: 'He stands up. He puts the chair back exactly where Ray kept it.' },
+            { who: 'oneton', text: 'Saturday, I win the belt, the building, and the question. Tell Mateo I am sorry about the math. Do not tell him my name. I want to tell him myself, after.' },
+          ], '2:00 A.M.'),
+        ],
+        choices: [
+          { id: 'name_hear', label: '"Alberto. I hear you now."', reply: [
+            { who: 'dane', text: 'Alberto. I hear you now. I am sorry it took this.' },
+            { who: 'oneton', text: 'It is too late to hear me, Dane. But thank you for saying my name right.' },
+          ] },
+          { id: 'name_ray', label: '"Ray died because of your crew."', reply: [
+            { who: 'dane', text: 'Ray died because of your crew. Whatever you were owed, he paid it.' },
+            { who: null, text: '1ton stops at the door. For a long moment he does not move at all.' },
+            { who: 'oneton', text: 'I know. That is why I came here first.' },
+          ] },
+        ],
+      };
+    }
+    case 'xavier_league':
+      return {
+        title: 'ALLSTAR FC',
+        film: true,
+        shots: [
+          shot('gym', [npc('xavier', 'XAVIER "ALLSTAR" COCKETT', 170, 1), oneton(270, -1), mateo(360, -1), ray(430, -1)], [
+            { who: null, text: 'Xavier Cockett has driven a horse trailer to Ray\'s. Inside the horse trailer is a folding table, and on the table are contracts.' },
+            { who: 'xavier', text: 'Allstar Fighting Championship. Four hundred dollars a fight, a hat, and a barn with real bleachers.' },
+            { who: 'oneton', text: 'Dane did not offer me a contract.' },
+            { who: 'ray', text: 'Dane is still working out how to pay the electric. Xavier does not pay the electric. That is why he has money.' },
+            { who: 'oneton', text: '...I will sign. For six fights. Then we see.' },
+            { who: 'mateo', text: 'Do you have two contracts?' },
+            { who: 'xavier', text: 'Kid, I have NINE contracts. I print them at the library.' },
+            { who: 'ray', text: 'Mateo, you are nineteen—' },
+            { who: 'mateo', text: 'If he goes, I go. Somebody has to tape his hands right.' },
+            { who: null, text: 'Ray looks at the two of them for a long time. Then he takes a pen out of his cardigan, checks the contracts line by line, crosses out a clause about "livestock liability", and nods.' },
+          ], 'THE HORSE TRAILER'),
+        ],
+      };
+    case 'dane_contract':
+      return {
+        title: 'THE CONTRACT',
+        film: true,
+        shots: [
+          shot('warehouse', [dane(170, 1), oneton(290, -1), npc('xavier', 'XAVIER "ALLSTAR" COCKETT', 400, -1)], [
+            { who: null, text: 'Six fights at Xavier\'s, six wins, one belt from a rodeo. The warehouse has a cage, a crowd and, for the first time, a budget.' },
+            { who: 'dane', text: 'Main event. My promotion. The question you asked me for twelve years: here is the answer.' },
+            { who: 'oneton', text: 'And Xavier?' },
+            { who: 'xavier', text: 'Son, I always knew you were too big for the barn. Go. Just put my hat on the poster.' },
+            { who: null, text: '1ton signs. He signs it twice, by accident, the second time with a different name. He scribbles it out before anybody can read it.' },
+            { who: 'dane', text: 'What was that?' },
+            { who: 'oneton', text: 'Old habit. Reporters sign a lot of things.' },
+          ], 'THE WAREHOUSE OFFICE'),
+        ],
+      };
     case 'tuesday_class':
       return {
         title: 'TUESDAY CLASS',
@@ -1309,8 +1390,9 @@ export function fightIntro(save: StorySave, def: StoryFightDef): Cutscene {
     };
   }
   const p = def.player === 'han' ? hanFight(save, 180, 1) : def.player === 'mateo' ? bigMateoFight(save, 180, 1) : oneTonFight(save, 180, 1);
-  const o =
-    def.opponent === 'cuchillo' || def.opponent === 'cuchillo_rematch' ? cuchillo(save, def.opponent === 'cuchillo_rematch', 320, -1)
+  const guest = ['dusty', 'buck', 'tyler', 'toro', 'spadam', 'synergy', 'doscaras'].includes(def.opponent);
+  const o = guest ? fighterActor(def.opponent, buildOpponent(save, def.opponent).last.toUpperCase(), buildOpponent(save, def.opponent), 320, -1)
+    : def.opponent === 'cuchillo' || def.opponent === 'cuchillo_rematch' ? cuchillo(save, def.opponent === 'cuchillo_rematch', 320, -1)
       : def.opponent === 'brick' ? brick(save, 320, -1)
         : def.opponent === 'mateo_spar' || def.opponent === 'mateo_betrayal' ? mateoFight(save, def.opponent === 'mateo_betrayal', 320, -1)
           : def.opponent === 'auditor' ? auditor(320, -1)
@@ -1353,6 +1435,30 @@ export function fightIntro(save: StorySave, def: StoryFightDef): Cutscene {
                 { who: 'oneton', text: 'I know.' },
                 { who: 'mateo', text: 'Then do not.' },
                 { who: 'oneton', text: 'I know.' },
+              ] : def.opponent === 'dusty' ? [
+                { who: 'xavier', text: 'Ladies and gentlemen and livestock! Allstar Fighting Championship, card number one!' },
+                { who: 'oneton', text: 'There is a goat in the front row.' },
+                { who: 'xavier', text: 'That is the commissioner.' },
+              ] : def.opponent === 'buck' ? [
+                { who: 'buck', text: 'Two years, son. Nobody takes the belt off Buck Harlan.' },
+                { who: 'oneton', text: 'Which hat should I take first?' },
+              ] : def.opponent === 'tyler' ? [
+                { who: 'tyler', text: 'For the soup.' },
+                { who: 'han', text: 'For the soup. Do not mop the floor with me.' },
+                { who: 'tyler', text: 'I literally mopped this floor this morning.' },
+              ] : def.opponent === 'toro' ? [
+                { who: 'oneton', text: 'A Mexican fighter. In the main event.' },
+                { who: 'toro', text: 'Two Mexican fighters. In the main event. Only one leaves it.' },
+              ] : def.opponent === 'spadam' ? [
+                { who: 'spadam', text: 'Little guy. I have been thinking about you every day for two years.' },
+                { who: 'han', text: 'I have been thinking about Ray\'s soup. Different priorities.' },
+              ] : def.opponent === 'synergy' ? [
+                { who: 'synergy', text: 'Smash that like button. Smash this guy.' },
+                { who: 'oneton', text: 'I wrote about you once. One word. "Sponsored."' },
+              ] : def.opponent === 'doscaras' ? [
+                { who: 'doscaras', text: 'I have two faces. You will only see one.' },
+                { who: 'han', text: 'Zenith sent you.' },
+                { who: 'doscaras', text: '...Both of my faces deny that.' },
               ] : def.opponent === 'duke' ? [
                 { who: 'duke', text: 'Security usually handles this part.' },
                 { who: 'han', text: 'Security is not here.' },
@@ -1375,11 +1481,42 @@ export function fightIntro(save: StorySave, def: StoryFightDef): Cutscene {
               ] : [
                 { who: null, text: 'The bell.' },
               ];
+  // Xavier calls his own cards
+  const cast = def.venue === "XAVIER'S BARN" ? [p, o, npc('xavier', 'XAVIER "ALLSTAR" COCKETT', 250, -1)] : [p, o];
   return {
     title: def.name,
     film: true,
     // Cesar's fight was Han's: the knee goes first
-    shots: [...(def.id === 'crew_cesar' ? hanInjury(save) : []), shot('cage', [p, o], [...lines, { who: null, text: def.stakes }], def.hook)],
+    shots: [...(def.id === 'crew_cesar' ? hanInjury(save) : []), shot('cage', cast, [...lines, { who: null, text: def.stakes }], def.hook)],
+  };
+}
+
+/**
+ * The highlight reel after a key fight: the exchange, the moment, the result, shot like a broadcast
+ * package (CINE II pushes in on every impact). Built from what actually happened.
+ */
+export function fightHighlight(save: StorySave, def: StoryFightDef, won: boolean, method: string, round: number): Cutscene {
+  const pl = def.player === 'han' ? hanFight(save, 200, 1) : def.player === 'mateo' ? bigMateoFight(save, 200, 1) : oneTonFight(save, 200, 1);
+  const oppF = buildOpponent(save, def.opponent);
+  const op = fighterActor('opp', oppF.last.toUpperCase(), oppF, 290, -1);
+  const me = pl.id;
+  const finish = method === 'KO' || method === 'TKO';
+  const sub = method === 'SUB';
+  const W = won ? me : 'opp';
+  const Lz = won ? 'opp' : me;
+  return {
+    film: true,
+    shots: [
+      shot('cage', [pl, op], [
+        { who: null, text: `ROUND ${round}. ${def.venue}.`, poses: { [me]: 'guard', opp: 'guard' } },
+        { who: null, text: 'A jab. Another. Feeling for the range.', poses: { [me]: 'jab', opp: 'block' }, sfx: 'punch' },
+        { who: null, text: 'He comes back over the top.', poses: { [me]: 'slip', opp: 'overhand' }, sfx: 'whoosh' },
+        { who: null, text: finish ? 'And then the one that ends it.' : sub ? 'A scramble. A neck. A grip that will not open.' : 'Round after round of it. Neither man gives an inch.',
+          poses: { [W]: finish ? 'hook' : sub ? 'clinch' : 'cross', [Lz]: finish ? 'rocked' : sub ? 'clinchDef' : 'hurt' }, shake: true, flash: finish, sfx: 'punch' },
+        ...(finish ? [{ who: null, text: 'Down.', poses: { [Lz]: 'koFace' as const }, shake: true, sfx: 'thud' as const }] : []),
+        { who: null, text: won ? `${pl.name}. ${method}, round ${round}.` : `${oppF.first} ${oppF.last}. ${method}, round ${round}.`, poses: { [W]: 'celebrate', [Lz]: finish ? 'koFace' : 'headDown' }, sfx: 'crowd' },
+      ], `${def.hook}  /  THE MOMENT`),
+    ],
   };
 }
 
@@ -1450,7 +1587,7 @@ export function storyEndingScene(save: StorySave): Cutscene {
         { who: 'dane', text: 'Now we answer the question.' },
       ] : [
         { who: null, text: 'The roof of the Old Dome. The city is below. The contract is above. 1ton is holding both.' },
-        { who: 'verity', text: 'Congratulations, Mr. Morales. You are the face of the buyback.' },
+        { who: 'verity', text: 'Congratulations, Mr. Fuente. You are the face of the buyback.' },
         { who: 'oneton', text: 'I am the face of the question.' },
         { who: 'lenny', text: 'The question has a merchandising plan.' },
         { who: 'oneton', text: 'Of course it does.' },

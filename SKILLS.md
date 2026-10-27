@@ -113,10 +113,47 @@ is **"Hands up. Chin down. Eat something."**
     legacy and buckles the belt on Mateo) or `student` (Han wins and says "not yet, kid")
   - **defend the belt** → **Mateo vs Cesar II** → `champion` or `onenight`
 - If Mateo loses or draws with 1ton, the story ends on the older endings (`house`, `role`, `zenith`, `draw`).
-- Ray is **Uncle Ray** (Han's uncle). Never "Ray Whyte".
+- Ray is **Uncle Ray** (Han's uncle). Never "Ray Whyte". He is the heart of the story: lovable, funny, a mentor to Han,
+  Mateo **and 1ton** (soup at six a.m., "Hands up. Chin down. Eat something."). Make players love him before chapter 8.
+- **1ton's betrayal is foreshadowed from chapter 6 only** (the gold envelope talk, the Zenith-tower photo beat). Before
+  chapter 6 he is warm, funny and loyal (in chapter 5 he tears up Verity's black card himself). Don't add hints earlier.
+- **1ton's identity:** his press name is **Gordo "1ton" Fuente**. His real name is **Alberto Del Burrito**, once
+  middleweight champion of Mexico (22-0). He lost the belt, got drunk, and lost a fistfight in a cantina to a fan's
+  abuela; it went viral. He moved north, changed his name and became a sportswriter. His question ("When are you going
+  to put a Mexican fighter in the main event?") meant *himself*, every week for twelve years. Revealed in chapter 10
+  (beat `true_name`). Nobody knows before that.
+- **The opening:** 1ton starts training at Ray's (chapter 1), signs with **Xavier's Allstar Fighting Championship**
+  (chapter 2, beat `xavier_league`), and Mateo signs too. 1ton only signs with Dane in chapter 5 (beat `dane_contract`).
+- Han is **30-1**, hair in a **bun with a fade** (`look.hair = 7`, `look.fade = 1`).
+
+**Sequel-established canon:** Ray lost the **1987 Golden Gloves final** to **Butch** (the mullet). Han's father **Marc
+Tibular** fished lobster out of **Shediac** on the **MARIE-ANNE** and was lost in a November gale when Han was 15.
+**Tyler Vance** mops at Ray's, **Zac Buna** runs the Tuesday class, and **Xavier Cockett** runs Allstar FC out of a barn.
 
 Content rule from game 1 (see `CONTENT_GUIDE.md`): parodies of real people never get crime, doping or abuse
 storylines. Original characters (1ton, the crew, Zenith) can.
+
+## 4b. Systems added in II (where they live)
+
+- **Menus:** `src/ui/scenes/sequelmenus.ts`. Title → GAME MODES → PROMOTER MODE / TALES OF LEGACY / QUICK FIGHT.
+- **Save slots:** `src/sequel/slots.ts`. Any number of named saves per mode, an active slot, a sandbox flag (marked in
+  the list). `readRun`/`writeRun`/`readStory`/`writeStory` go through the active slot. The demo uses its own namespace
+  (`setSlotNamespace('cageboss2demo')`). **Sandbox:** promoter = no deadline, +$1M, no achievements
+  (`makeSandbox`, `seasonLength`); story = pick a chapter (unlocked after one finished story).
+- **The clock:** chapters last `weeks`, 7 days a week (`actionsLeft`), fights booked by week, END WEEK, `storyDate`.
+- **Training:** tiers LIGHT/FULL/CAMP (1/2/3 days), letter grades (play the drill or sim for a C), 30 xp a level.
+  Drills: `src/ui/sequel/drills.ts`. Sparring: `src/ui/sequel/spar.ts` (a live round at Ray's, Ray refs).
+- **Special moves:** `SPECIAL_MOVES` in `src/sim/live.ts`. A B+ spar teaches the next one (`save.moves`); fights pass
+  `rules.moves`. Add a move: a spec in `specialPunch`/`specialKick`, a name in `strikeReach`, a pose in `rig.ts`, and
+  `PUNCH_POSE`/`JOINT` entries in `livefight.ts`.
+- **TALK** is required each chapter. Every choice can carry `reply` lines; chapter choices without one get a narrated beat.
+- **Beats** (`STORY_BEATS` + `beatScene`), **flashbacks** (`Shot.flashback`), **highlights** after every key fight
+  (`fightHighlight`), **guests** (`GUESTS` in story.ts: Xavier's barn, Spadam, Zenith's prospect, Dos Caras).
+- **Venues:** `src/ui/sequel/venues.ts` and `CanvasInfo.enclosure` ('cage' | 'ring' | 'none'), plus the `rays` room.
+- **Bodies (II only):** muscle definition, aging bruises, blood running down the chest, per-fighter tattoo layouts
+  (`tattooLayout`, `Look2.tats`), and five new hair styles (10 mullet, 11 high fade + curls, 12 slick back, 13 afro,
+  14 mohawk). Portraits draw those five as their nearest old style for now.
+- **Quick Fight:** `src/ui/scenes/sequelquick.ts`.
 
 ## 5. Tone
 

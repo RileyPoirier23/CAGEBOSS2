@@ -7,6 +7,7 @@ import { Graphics } from 'pixi.js';
 import type { Fighter } from '../core/types';
 import { SKIN_TONES, HAIR_COLORS, shade, lerpColor, PAL } from '../art/palette';
 import { presentedGender } from '../sim/fighters';
+import { isII } from './theme';
 
 export type Joint = 'head' | 'neck' | 'shF' | 'elF' | 'haF' | 'shB' | 'elB' | 'haB' | 'hip' | 'knF' | 'ftF' | 'knB' | 'ftB';
 export type Rig = Record<Joint, [number, number]>;
@@ -21,6 +22,8 @@ export type Pose =
   | 'koFace' | 'koCrumple' | 'legBuckle' | 'coil'
   // directional strikes
   | 'bodyJab' | 'leadHook' | 'bodyHook' | 'overhand' | 'frontKick' | 'spinKick'
+  // CAGE BOSS II's unlockable specials
+  | 'superman'
   // the clinch: dominant ties, the man in them, the fence, knees and trips
   | 'collar' | 'plum' | 'underhook' | 'clinchDef' | 'cageBack' | 'plumKnee' | 'trip' | 'falling' | 'techUp'
   | 'stand' | 'armUp' | 'headDown' | 'refHold' | 'refRaise' | 'mic' | 'point' | 'flex'
@@ -184,6 +187,8 @@ export const POSES: Record<Pose, Rig> = {
   leadHook: P({ neck: [5, -66], head: [7, -74], shF: [9, -64], elF: [24, -68], haF: [30, -72], haB: [10, -68], elB: [6, -56] }),
   bodyHook: P({ hip: [2, -36], neck: [8, -58], head: [12, -64], shF: [10, -56], elF: [20, -44], haF: [30, -50], haB: [12, -60], knF: [12, -18], knB: [-5, -18] }),
   overhand: P({ neck: [9, -64], head: [13, -70], shB: [6, -64], elB: [18, -82], haB: [36, -70], hip: [2, -38], haF: [14, -66], elF: [12, -56], knF: [12, -18] }),
+  // the superman punch: off the ground, the back leg kicked out behind, the cross from above
+  superman: P({ hip: [6, -44], neck: [16, -70], head: [21, -77], shF: [17, -70], shB: [10, -70], elB: [26, -76], haB: [44, -74], elF: [8, -62], haF: [10, -70], knF: [16, -24], ftF: [10, -8], knB: [-10, -34], ftB: [-26, -30] }),
   frontKick: P({ neck: [-2, -67], head: [-2, -75], hip: [0, -42], knF: [16, -50], ftF: [38, -48], knB: [-6, -21], ftB: [-12, 0], haF: [10, -64], haB: [4, -62] }),
   spinKick: P({ neck: [-8, -64], head: [-12, -70], shF: [-4, -62], shB: [-10, -62], hip: [0, -42], knB: [20, -44], ftB: [44, -46], knF: [-2, -21], ftF: [-4, 0], haF: [-14, -60], haB: [-6, -58], elF: [-10, -56], elB: [-4, -54] }),
   // ---- clinch
@@ -321,6 +326,12 @@ export interface Look2 {
   mask?: number;
   /** skin fade on the sides and back */
   fade?: boolean;
+  /**
+   * CAGE BOSS II's ink (drawn only under the II theme): a design per zone, 0 = bare.
+   * Sleeves: 1 koi and waves, 2 tribal, 3 roses and script, 4 a menu (Mateo's arm: Ray's soup, line by line).
+   * Chest: 1 wings, 2 an eagle, 3 a medallion, 4 script on the collarbones. Back: 1 a cross, 2 wings.
+   */
+  tats?: { sleeveF: number; sleeveB: number; chest: number; back: number; ribs: boolean; knuckles: boolean; color: number };
   /** the middle finger is up (the flip-off taunt) */
   bird?: boolean;
   /** the mouthpiece has been knocked out (it's lying on the canvas) */
@@ -435,6 +446,7 @@ export function lookFor(f: Fighter, corner: 0 | 1, champ = false): Look2 {
     inkArt: f.look.inkArt,
     mask: f.look.mask,
     fade: !!f.look.fade,
+    tats: tattooLayout(f),
     glasses: f.look.glasses === 2 ? 2 : undefined,
     beanie: !!f.look.beanie,
     freckles: !!f.look.freckles,
@@ -498,6 +510,30 @@ export function tauntRig(L: Look2, t: number): Rig {
 }
 
 /** Stance tweaks applied to the guard pose. */
+/**
+ * Every fighter's own ink, from the look's tattoo level (0 none .. 3 the works), their id (so it never
+ * changes) and their bio: Mexican fighters lean to roses and script, Brazilians to tribal, the Japanese
+ * and Hawaiians to koi, and a story fighter can name his own (Mateo's menu).
+ */
+export function tattooLayout(f: Fighter): Look2['tats'] {
+  const lvl = f.look.tattoo ?? 0;
+  if (!lvl) return undefined;
+  let h = [...f.id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 17);
+  const r = (n: number) => ((h = (h * 1103515245 + 12345) >>> 0) >>> 8) % n;
+  const c = f.country;
+  const pref = c === 'Mexico' ? 3 : c === 'Brazil' ? 2 : c === 'Japan' || /Hawai/.test(f.hometown ?? '') ? 1 : 1 + r(3);
+  const menu = f.id.startsWith('story_mateo_lhw');
+  return {
+    sleeveF: menu ? 4 : lvl >= 1 ? pref : 0,
+    sleeveB: lvl >= 3 ? (r(2) ? pref : 1 + r(3)) : 0,
+    chest: lvl >= 2 ? 1 + ((pref + r(3)) % 4) : 0,
+    back: lvl >= 3 ? 1 + r(2) : 0,
+    ribs: lvl >= 2 && r(2) === 0,
+    knuckles: lvl >= 3 && r(3) === 0,
+    color: r(4) === 0 ? 0x2a3a6a : 0x1a1a22,
+  };
+}
+
 /** The three ways a man goes out, by what put him there: an uppercut or a head kick drops him on his back, a hook folds him in a heap, body and leg work put him on his face. */
 export const KO_POSES = new Set<Pose>(['ko', 'koFace', 'koCrumple']);
 export function koPoseFor(act: string): Pose {
@@ -820,6 +856,58 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
       for (let i = 0; i < 2; i++) line(P(0.6 + i * 0.12, tw * 0.22), P(0.6 + i * 0.12, tw * 0.38), dk, 0.8);
     }
     g.circle(...T(P(0.86, tw * 0.3)), 0.7 * s).fill(dk); // navel
+    if (isII() && !fem) {
+      // CAGE BOSS II: the body as muscle. Pecs with a shadow under them, a six-pack on the lean,
+      // the serratus fanned out on the big men, a rim of light down the front edge
+      const def = build >= 3 ? 0.35 : build === 2 ? 1 : build === 1 ? 0.8 : 0.6;
+      g.poly([P(0.38, tw * 0.56), P(0.46, tw * 0.48), P(0.47, tw * 0.1), P(0.42, tw * 0.05), P(0.41, tw * 0.44)].flatMap((p) => T(p))).fill({ color: shade(skin, -0.32), alpha: 0.55 * def });
+      g.poly([P(0.12, tw * 0.5), P(0.2, tw * 0.56), P(0.28, tw * 0.5), P(0.22, tw * 0.2), P(0.14, tw * 0.18)].flatMap((p) => T(p))).fill({ color: shade(skin, 0.16), alpha: 0.4 * def });
+      if (build < 3) {
+        for (let row = 0; row < 3; row++) for (let col = 0; col < 2; col++) {
+          const a = 0.54 + row * 0.1;
+          const fw = tw * (0.18 + col * 0.14);
+          const q = T(P(a, fw));
+          g.roundRect(q[0] - 1.1 * s, q[1] - 1.4 * s, 2.2 * s, 2.6 * s, 0.8 * s).fill({ color: shade(skin, 0.1), alpha: 0.35 * def }).stroke({ color: shade(skin, -0.3), width: 0.35 * s, alpha: 0.7 * def });
+        }
+      }
+      line(P(0.1, tw * 0.6), P(0.95, tw * 0.48), shade(skin, 0.22), 0.5); // rim light
+    }
+    if (isII() && L.tats && !fem) {
+      const t = L.tats;
+      const tc = t.color;
+      const red = 0xa82a2a;
+      if (t.chest === 1) for (const side of [1, -1]) line(P(0.16, tw * 0.1 * side), P(0.32, tw * 0.52 * side), tc, 1.1), line(P(0.2, tw * 0.1 * side), P(0.38, tw * 0.44 * side), tc, 0.8); // wings
+      if (t.chest === 2) {
+        g.poly([P(0.16, tw * 0.5), P(0.3, tw * 0.25), P(0.16, 0), P(0.3, -tw * 0.25), P(0.16, -tw * 0.5), P(0.4, 0)].flatMap((p) => T(p))).fill({ color: tc, alpha: 0.85 }); // the eagle
+        g.circle(...T(P(0.2, tw * 0.02)), 0.9 * s).fill(0xc8a040);
+      }
+      if (t.chest === 3) {
+        g.circle(...T(P(0.28, tw * 0.22)), 3.2 * s).stroke({ color: tc, width: 0.8 * s });
+        g.circle(...T(P(0.28, tw * 0.22)), 1.4 * s).fill(red); // a rose in the medallion
+      }
+      if (t.chest === 4) line(P(0.05, tw * 0.42), P(0.1, -tw * 0.1), tc, 0.6); // script on the collarbones
+      if (t.back) line(P(0.15, -tw * 0.46), P(0.62, -tw * 0.4), tc, 1.3);
+      if (t.ribs) for (let k = 0; k < 3; k++) line(P(0.42 + k * 0.07, tw * 0.36), P(0.44 + k * 0.07, tw * 0.5), tc, 0.5);
+    }
+    if (isII()) {
+      // bruises age: fresh red, then purple, then green and yellow at the edges. The liver and the ribs.
+      const b = wear.body;
+      for (const [a, fw, k] of [[0.5, 0.34, 1], [0.64, 0.42, 0.8], [0.36, -0.3, 0.6]] as [number, number, number][]) {
+        if (b * k < 0.15) continue;
+        const q = T(P(a, tw * fw));
+        const r0 = (1.4 + b * k * 2.6) * s;
+        g.circle(q[0], q[1], r0 * 1.5).fill({ color: 0x9aa040, alpha: 0.12 * b * k });
+        g.circle(q[0], q[1], r0).fill({ color: b * k > 0.55 ? 0x5a2a50 : 0xa83a3a, alpha: 0.3 + b * k * 0.35 });
+        g.circle(q[0] + 0.4 * s, q[1] - 0.3 * s, r0 * 0.45).fill({ color: 0x3a1a3a, alpha: 0.25 * b * k });
+      }
+      // blood off the face runs down the chest
+      if (wear.blood > 0.35) {
+        const k = Math.min(1, (wear.blood - 0.35) * 1.6);
+        line(P(0.0, tw * 0.3), P(0.2 + k * 0.4, tw * 0.34), 0x8a1414, 0.7 + k * 0.5);
+        line(P(0.06, tw * 0.18), P(0.18 + k * 0.3, tw * 0.16), 0x7a1010, 0.5 + k * 0.4);
+        g.circle(...T(P(0.22 + k * 0.4, tw * 0.34)), (0.6 + k * 0.4) * s).fill(0x8a1414);
+      }
+    }
     // the fight on the body: red on the ribs where the body shots went, then purple
     if (wear.body > 0.25) {
       const k = Math.min(1, (wear.body - 0.25) * 1.3);
@@ -837,7 +925,7 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
       }
     }
     const ink = shade(skin, -0.5);
-    if (L.tattoo >= 1 && L.ink !== undefined) {
+    if (!(isII() && L.tats) && L.tattoo >= 1 && L.ink !== undefined) {
       switch (L.ink % 6) {
         case 1: // chest piece: wings across the pecs
           line(P(0.2, tw * 0.05), P(0.3, tw * 0.5), ink, 0.9);
@@ -1148,6 +1236,48 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
       g.circle(...hpt(-6 - sw * 0.3, -5.5), 2.3 * s).fill(hc);
       g.circle(...hpt(-6.6 - sw * 0.3, -6.2), 0.8 * s).fill(hcL);
       break;
+    case 10:
+      // the mullet (Butch, 1987): business up front, the back hanging to the shoulders
+      mass(-38, -205, 1.6, hc, { low: true });
+      g.poly(poly([[-5.5, -1], [-8.6, -0.6], [-9.4 - sw, 9.5], [-6.2 - sw * 0.6, 9.8], [-4.2, 3.6]])).fill(hc).stroke({ color: OUT, width: 0.9 * s });
+      hl([-7, 1], [-8 - sw * 0.6, 8], hcD, 0.6);
+      break;
+    case 11:
+      // high fade, curls on top
+      mass(-48, -205, 0.3, lerpColor(hc, skin, 0.6), { strands: false, sideburn: false });
+      for (let a = -55; a > -165; a -= 14) {
+        const c = onR(a, R + 1.1);
+        g.circle(...hpt(c[0], c[1]), 1.5 * s).fill(hc).stroke({ color: OUT, width: 0.4 * s });
+        g.circle(...hpt(c[0] + 0.3, c[1] - 0.4), 0.5 * s).fill(hcL);
+      }
+      break;
+    case 12:
+      // slicked back: flat to the skull, combed lines and a shine
+      mass(-40, -200, 1.1, hc, { sideburn: true });
+      for (let k = 0; k < 3; k++) hl(onR(-60 - k * 8, R + 0.7), onR(-150 - k * 8, R + 0.5), hcD, 0.4);
+      hl(onR(-70, R + 0.9), onR(-140, R + 0.7), hcL, 0.6);
+      break;
+    case 13: {
+      // afro: a big round halo of hair, texture all over it
+      g.circle(...hpt(-1.2, -4.6), (R + 3.4) * s).fill(OUT);
+      g.circle(...hpt(-1.2, -4.6), (R + 2.8) * s).fill(hc);
+      for (let k = 0; k < 14; k++) {
+        const a = -20 - k * 24;
+        const c = onR(a, R + 1.6);
+        g.circle(...hpt(c[0] - 1.2, c[1] - 4.6 + R * 0.45), 0.6 * s).fill(k % 2 ? hcD : hcL);
+      }
+      break;
+    }
+    case 14:
+      // mohawk: shaved sides, a crest of spikes front to back
+      mass(-48, -205, 0.25, lerpColor(hc, skin, 0.7), { strands: false, sideburn: false });
+      for (let a = -50; a > -175; a -= 18) {
+        const b0 = onR(a, R);
+        const tip = onR(a - 8, R + 4.2);
+        const b1 = onR(a - 16, R);
+        g.poly(poly([b0, tip, b1])).fill(hc).stroke({ color: OUT, width: 0.5 * s });
+      }
+      break;
     default:
       // short: volume on top, tapered at the back and the sides, a sideburn
       mass(-38, -202, 1.9, hc, { lift: 0.3 });
@@ -1215,11 +1345,42 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
     ],
     [{ p: rig.elF, r: UA.b / 2, color: armC }, { p: rig.shF, r: UA.a / 2, color: armC }],
   );
-  if (!o && L.tattoo >= 1 && L.ink !== undefined && (L.ink % 6 === 0 || L.ink % 6 === 3)) {
+  if (!o && !(isII() && L.tats) && L.tattoo >= 1 && L.ink !== undefined && (L.ink % 6 === 0 || L.ink % 6 === 3)) {
     // full sleeve: bands of ink down the arm
     const inkC = shade(skin, -0.48);
     for (const t of [0.2, 0.45, 0.7]) line(lerp(rig.shF, rig.elF, t), lerp(rig.shF, rig.elF, t + 0.12), inkC, 2.4);
     if (L.ink % 6 === 0) for (const t of [0.15, 0.45]) line(lerp(rig.elF, rig.haF, t), lerp(rig.elF, rig.haF, t + 0.18), inkC, 2);
+  }
+  if (!o && isII() && L.tats?.sleeveF) {
+    // CAGE BOSS II sleeves: the design wraps the arm from the shoulder to the wrist
+    const t = L.tats;
+    const tc = t.color;
+    const along = (a: V, b: V, k: number) => lerp(a, b, k);
+    if (t.sleeveF === 1) {
+      // koi and waves: a dark body with orange scales, wave lines round it
+      for (const k of [0.15, 0.5, 0.85]) line(along(rig.shF, rig.elF, k), along(rig.shF, rig.elF, k + 0.1), tc, 2.2);
+      for (const k of [0.3, 0.62]) g.circle(...T(along(rig.shF, rig.elF, k)), 0.9 * s).fill(0xd8702a);
+      for (const k of [0.2, 0.6]) line(along(rig.elF, rig.haF, k), along(rig.elF, rig.haF, k + 0.15), tc, 1.6);
+    } else if (t.sleeveF === 2) {
+      // tribal: a zigzag band down the upper arm and a cuff at the wrist
+      for (let k = 0; k < 5; k++) line(along(rig.shF, rig.elF, 0.1 + k * 0.17), along(rig.shF, rig.elF, 0.18 + k * 0.17), tc, k % 2 ? 1.2 : 2.4);
+      line(along(rig.elF, rig.haF, 0.7), along(rig.elF, rig.haF, 0.82), tc, 2.2);
+    } else if (t.sleeveF === 3) {
+      // roses and script: red blooms on the upper arm, a line of script down the forearm
+      for (const k of [0.25, 0.55]) g.circle(...T(along(rig.shF, rig.elF, k)), 1.2 * s).fill(0xa82a2a).stroke({ color: tc, width: 0.4 * s });
+      line(along(rig.shF, rig.elF, 0.1), along(rig.shF, rig.elF, 0.85), tc, 0.6);
+      line(along(rig.elF, rig.haF, 0.15), along(rig.elF, rig.haF, 0.7), tc, 0.6);
+    } else if (t.sleeveF === 4) {
+      // Mateo's arm: Ray's menu, line by line, shoulder to wrist
+      for (let k = 0; k < 6; k++) line(along(rig.shF, rig.elF, 0.1 + k * 0.14), along(rig.shF, rig.elF, 0.15 + k * 0.14), tc, 1.6);
+      for (let k = 0; k < 4; k++) line(along(rig.elF, rig.haF, 0.1 + k * 0.18), along(rig.elF, rig.haF, 0.16 + k * 0.18), tc, 1.3);
+      g.circle(...T(along(rig.shF, rig.elF, 0.05)), 1 * s).fill(0xc8a040); // the soup pot, gold
+    }
+  }
+  if (!o && isII() && build >= 2) {
+    // a jacked man's forearm: a vein or two
+    line(lerp(rig.elF, rig.haF, 0.2), lerp(rig.elF, rig.haF, 0.7), shade(skin, -0.2), 0.45);
+    line(lerp(rig.shF, rig.elF, 0.5), lerp(rig.shF, rig.elF, 0.85), shade(skin, -0.18), 0.4);
   }
   if (!o) {
     line(lerp(rig.shF, rig.elF, 0.25), lerp(rig.shF, rig.elF, 0.6), shade(skin, 0.12), 1.2); // bicep highlight

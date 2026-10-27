@@ -195,7 +195,9 @@ export function drawPortrait(inp: PortraitInput): PixelBuf {
   FACE_ANCHORS.set(inp.id, { eyeL, eyeR, eyeY, browY, noseY, mouthY, top, chinY });
 
   // ------------------------------------------------------------ long hair behind the head
-  const hs = look.hair;
+  // the sequel's new rig styles draw as their nearest portrait style (mullet: long, curls: curly, slick: swept, afro: curly, mohawk: buzz)
+  const PORTRAIT_HAIR: Record<number, number> = { 10: 9, 11: 8, 12: 3, 13: 8, 14: 1 };
+  const hs = PORTRAIT_HAIR[look.hair] ?? look.hair;
   const recede = age >= 33 && !female ? Math.min(4, Math.floor((age - 31) / 3)) : 0;
   if (hs === 9) {
     // long waves past the shoulders, middle part: a full mane behind the head and neck

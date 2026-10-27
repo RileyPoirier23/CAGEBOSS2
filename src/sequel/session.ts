@@ -3,6 +3,8 @@ import { loadJSON, storeJSON } from '../core/save';
 import { endingFor, bestScore } from './model';
 import { emptyDesk, ensureDesk } from './desk';
 import { SEQUEL_VERSION, type SeqBest, type SeqRun } from './types';
+import { activeSlot, slotKey, touchSlot } from './slots';
+import { money } from '../core/format';
 
 export const RUN_KEY = 'cageboss2.run';
 export const BEST_KEY = 'cageboss2.best';
@@ -56,11 +58,18 @@ export function migrateRun(run: SeqRun): SeqRun {
   return run;
 }
 
+/** The active PROMOTER MODE slot's save (slots.ts). */
 export function readRun(): SeqRun | null {
   if (current !== undefined) return current;
-  const raw = loadJSON<unknown>(RUN_KEY, null);
+  const slot = activeSlot('run');
+  const raw = slot ? loadJSON<unknown>(slotKey('run', slot.id), null) : null;
   current = valid(raw) ? migrateRun(raw) : null;
   return current;
+}
+
+/** Another slot was picked (or a new one made): read it fresh next time. */
+export function forgetRun(): void {
+  current = undefined;
 }
 
 export function hasRun(): boolean {
@@ -69,13 +78,18 @@ export function hasRun(): boolean {
 
 export function writeRun(run: SeqRun): void {
   current = run;
-  storeJSON(RUN_KEY, run);
-  if (run.status === 'ended') saveBest(run);
+  const slot = activeSlot('run');
+  if (!slot) return;
+  storeJSON(slotKey('run', slot.id), run);
+  touchSlot('run', `WEEK ${run.week}  /  ${money(run.cash)}  /  BUZZ ${Math.round(run.buzz)}${run.status === 'ended' ? '  /  FINISHED' : ''}`);
+  // sandbox runs don't make the trophy case
+  if (run.status === 'ended' && !run.flags.sandbox && !run.flags.demo) saveBest(run);
 }
 
 export function clearRun(): void {
   current = null;
-  storeJSON(RUN_KEY, null);
+  const slot = activeSlot('run');
+  if (slot) storeJSON(slotKey('run', slot.id), null);
 }
 
 export function loadBest(): SeqBest | null {

@@ -13,6 +13,7 @@ import { content } from '../core/content';
 import { Rng } from '../core/rng';
 import { clamp as clampNum } from '../core/format';
 import { generateFighter } from '../sim/generate';
+import { SPECIAL_MOVES } from '../sim/live';
 import { overall, isWomensDivision } from '../sim/fighters';
 import { HAN } from '../sim/cast';
 import type { Bg } from '../ui/cutscene';
@@ -98,7 +99,13 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     blurb: '1ton has a knee that clicks, a father who was a luchador, and a left hand nobody scouted. El Cuchillo has a knife tattoo and a grudge with the press.',
     bg: 'lucha',
     actions: 2,
-    fight: {
+    fights: [
+      {
+        id: 'allstar_debut', name: 'ALLSTAR FC 1: THE BARN', opponent: 'dusty', player: 'oneton', rounds: 3, venue: "XAVIER'S BARN",
+        stakes: '1ton signed with Xavier\'s Allstar Fighting Championship for four hundred dollars and a hat. His pro debut, in a barn, against a bull rider.',
+        hook: '1TON  vs  DUSTY "THE RODEO" COLE', week: 3,
+      },
+      {
       id: 'cuchillo',
       name: 'THE MEXICAN MATH',
       opponent: 'cuchillo',
@@ -108,6 +115,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       stakes: '1ton\'s first fight. If he wins, the phone starts ringing. If he loses, it still rings. That is the problem.',
       hook: '1TON  vs  EL CUCHILLO',
     },
+    ],
     talk: 'father',
   },
   {
@@ -118,7 +126,13 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     blurb: 'Gordon Vance wants the block and Brick Bastion is the permit. Then Han Tibular walks through the roller door: the CBFC middleweight champion, Uncle Ray\'s nephew, done with Zenith. Promoters do not fight. Champions do.',
     bg: 'warehouse',
     actions: 2,
-    fight: {
+    fights: [
+      {
+        id: 'allstar_title', name: 'ALLSTAR FC 4: THE BELT', opponent: 'buck', player: 'oneton', rounds: 5, venue: "XAVIER'S BARN",
+        stakes: 'Xavier has a belt. It is a real belt, from a real rodeo. Buck Harlan has held it for two years and both of his hats.',
+        hook: '1TON  vs  BUCK "TWO HATS" HARLAN  /  ALLSTAR FC TITLE', week: 3,
+      },
+      {
       id: 'brick',
       name: 'BRICK BY BRICK',
       opponent: 'brick',
@@ -128,6 +142,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       stakes: 'Your building, Han\'s fight. Brick breaks things for a living. Han broke Spadam Biggs for a living. The lease says the building goes to the winner.',
       hook: 'HAN TIBULAR  vs  BRICK BASTION',
     },
+    ],
     talk: 'gordon',
   },
   {
@@ -135,19 +150,26 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     no: 4,
     title: 'THE SPARRING PARTNER',
     kicker: 'MATEO COMES HOME',
-    blurb: 'Mateo is nineteen now and owns a key to the mop closet. He is also the only person in the building 1ton listens to. That makes him useful. That makes him a target.',
+    blurb: 'Mateo is nineteen now and owns a key to the mop closet. He is fast, he is annoying, and he is the only person in the building who can make 1ton laugh. Ray wants them sparring. Ray always gets what he wants.',
     bg: 'gym',
     actions: 2,
-    fight: {
+    fights: [
+      {
+        id: 'han_tyler', name: 'SOUP FOR THE SOUL', opponent: 'tyler', player: 'han', rounds: 3, venue: 'THE WAREHOUSE',
+        stakes: 'A charity exhibition for Ray\'s back rent. Han against Tyler Vance, the rival who mops the floor now. Neither of them is going to take it easy, because neither of them knows how.',
+        hook: 'HAN TIBULAR  vs  TYLER "TRUST FUND" VANCE  /  EXHIBITION', week: 3,
+      },
+      {
       id: 'mateo_spar',
       name: 'SPARRING PARTNER',
       opponent: 'mateo_spar',
       player: 'oneton',
       rounds: 3,
       venue: 'RAY\'S BOXING & SOUP',
-      stakes: 'A sparring session. No judges, no purse, no reason for anybody to get hurt. Somebody is going to get hurt.',
+      stakes: 'A sparring session in Ray\'s ring. No judges, no purse, Uncle Ray refereeing. No hard shots, he says. Nobody listens.',
       hook: '1TON  vs  MATEO VARGA',
     },
+    ],
     talk: 'mateo',
   },
   {
@@ -158,7 +180,13 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     blurb: 'The Auditor has never lost a fight. He has also never had one. He has settlements, a clipboard, and a signature from somebody you have never met.',
     bg: 'zenith',
     actions: 2,
-    fight: {
+    fights: [
+      {
+        id: 'warehouse_main', name: 'WAREHOUSE 1: THE FIRST MAIN EVENT', opponent: 'toro', player: 'oneton', rounds: 3, venue: 'THE WAREHOUSE',
+        stakes: '1ton left Xavier\'s with Xavier\'s blessing and signed with Dane. His first warehouse main event. A Mexican fighter, in the main event, finally. He asked for it for twelve years.',
+        hook: '1TON  vs  RAFA "EL TORO" MEDINA', week: 3,
+      },
+      {
       id: 'auditor',
       name: 'THE AUDIT',
       opponent: 'auditor',
@@ -168,6 +196,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       stakes: 'If 1ton wins, Zenith has to admit the warehouse is a promotion. If he loses, they call it an incident.',
       hook: '1TON  vs  THE AUDITOR',
     },
+    ],
     talk: 'ray',
   },
   {
@@ -178,7 +207,13 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     blurb: 'Zenith does not fight. Zenith acquires. But The Chairman is a legacy asset, and legacy assets fight in exhibitions. The winner gets the debt. The loser gets the building.',
     bg: 'zenith',
     actions: 2,
-    fight: {
+    fights: [
+      {
+        id: 'han_spadam', name: 'THE WHITE BEAST, AGAIN', opponent: 'spadam', player: 'han', rounds: 5, venue: 'THE OLD DOME',
+        stakes: 'Zenith wants Han back and has sent the only argument they have: Spadam Biggs, six foot seven, one loss, still angry about it. No Daniel Stinkovich this time. Probably.',
+        hook: 'HAN TIBULAR  vs  SPADAM "THE WHITE BEAST" BIGGS II', week: 4,
+      },
+      {
       id: 'chairman',
       name: 'THE BOARD',
       opponent: 'chairman',
@@ -188,6 +223,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       stakes: 'Five rounds against a man who has a boardroom named after him. 1ton asked for this fight. That is the first time he has asked for anything.',
       hook: '1TON  vs  THE CHAIRMAN',
     },
+    ],
     talk: 'contract',
   },
   {
@@ -198,7 +234,13 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     blurb: 'Zenith signed the knife. Now he wants the warehouse\'s champion on Zenith television, and Han says yes before you can say no. 1ton watches from the third row and does not say anything at all.',
     bg: 'presser',
     actions: 2,
-    fight: {
+    fights: [
+      {
+        id: 'zenith_prospect', name: 'ZENITH FIGHT NIGHT: SYNERGY', opponent: 'synergy', player: 'oneton', rounds: 3, venue: 'THE OLD DOME',
+        stakes: 'Zenith puts 1ton on its own card against its own prospect, a man with a podcast and a brand deal. Win and they want you more. Lose and they want you cheaper.',
+        hook: '1TON  vs  KYLE "SYNERGY" BRANDT', week: 3,
+      },
+      {
       id: 'cuchillo_rematch',
       name: 'THE REMATCH NOBODY ASKED FOR',
       opponent: 'cuchillo_rematch',
@@ -208,6 +250,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       stakes: 'A Zenith television slot is on the line. El Cuchillo has a new suit, a new contract and the same knife tattoo. Han has a belt over his shoulder and no patience.',
       hook: 'HAN TIBULAR  vs  EL CUCHILLO II',
     },
+    ],
     talk: 'cuchillo',
   },
   {
@@ -218,7 +261,13 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     blurb: 'Zenith books the kid against the star. They want a message. 1ton wants to be the man who delivers it. You want to be anywhere else.',
     bg: 'locker',
     actions: 2,
-    fight: {
+    fights: [
+      {
+        id: 'han_dos_caras', name: 'TWO FACES', opponent: 'doscaras', player: 'han', rounds: 5, venue: 'THE WAREHOUSE',
+        stakes: 'Han defends the warehouse\'s middleweight belt against a masked man from Monterrey who will not say who sent him. Everybody knows who sent him.',
+        hook: 'HAN TIBULAR  vs  DIEGO "DOS CARAS" RUIZ', week: 3,
+      },
+      {
       id: 'mateo_betrayal',
       name: 'THE BROTHER YOU MADE',
       opponent: 'mateo_betrayal',
@@ -228,6 +277,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       stakes: 'Mateo is not a sparring partner anymore. 1ton is not a reporter. You are not in control of either of them.',
       hook: '1TON  vs  MATEO VARGA',
     },
+    ],
     talk: 'brother',
   },
   {
@@ -438,6 +488,20 @@ export function trainSession(save: StorySave, who: 'oneton' | 'corner', track: O
 }
 
 /** A sparring session (2 days): every physical track gets the work, graded on how the spar went. */
+/** The moves this man has earned (the corner's camp shares them: Ray taught both). */
+export const movesOf = (save: StorySave, who: 'oneton' | 'corner'): string[] => save.moves?.[who] ?? [];
+
+/** A good spar (B or better) teaches the next special move on the list. Returns its id, or null. */
+function learnMove(save: StorySave, who: 'oneton' | 'corner', grade: Grade): string | null {
+  if (grade !== 'S' && grade !== 'A' && grade !== 'B') return null;
+  const have = movesOf(save, who);
+  const next = SPECIAL_MOVES.find((m) => !have.includes(m.id));
+  if (!next) return null;
+  save.moves ??= {};
+  save.moves[who] = [...have, next.id];
+  return next.id;
+}
+
 export function sparSession(save: StorySave, who: 'oneton' | 'corner', grade: Grade): string {
   if (!canAct(save, 2)) return 'Sparring takes 2 days. Not enough left this week.';
   const xp = Math.round(7 * GRADE_MULT[grade]);
@@ -450,8 +514,10 @@ export function sparSession(save: StorySave, who: 'oneton' | 'corner', grade: Gr
   save.fatigue = clamp(save.fatigue + 7);
   save.trust = clamp(save.trust + 2);
   const name = who === 'oneton' ? '1TON' : cornerName(save);
-  addLog(save, `${name} sparred at Ray's. Grade ${grade}. Ray reffed and made everyone shake hands after.`);
-  return `${name} SPAR  /  GRADE ${grade}  /  +${xp} XP x3${ups.length ? `  /  ${ups.join(', ')}` : ''}`;
+  const learned = learnMove(save, who, grade);
+  const move = learned ? SPECIAL_MOVES.find((m) => m.id === learned)! : null;
+  addLog(save, `${name} sparred at Ray's. Grade ${grade}. Ray reffed and made everyone shake hands after.${move ? ` Ray showed him the ${move.name}.` : ''}`);
+  return `${name} SPAR  /  GRADE ${grade}  /  +${xp} XP x3${ups.length ? `  /  ${ups.join(', ')}` : ''}${move ? `  /  NEW MOVE: ${move.name.toUpperCase()}` : ''}`;
 }
 
 /** A day off: the body heals, and Ray feeds you. */
@@ -468,12 +534,15 @@ export function restDay(save: StorySave): string {
  * Each chapter is a couple of months, so things happen in the middle of it.
  */
 export const STORY_BEATS: { id: string; chapter: string; week: number }[] = [
-  { id: 'first_day', chapter: 'mexican_math', week: 2 },
+  { id: 'first_day', chapter: 'mexican_math', week: 1 },
+  { id: 'xavier_league', chapter: 'mexican_math', week: 2 },
+  { id: 'dane_contract', chapter: 'audit', week: 2 },
   { id: 'soup_lesson', chapter: 'brick_by_brick', week: 3 },
   { id: 'mop_years', chapter: 'sparring_partner', week: 3 },
   { id: 'tower_photo', chapter: 'the_board', week: 4 },
   { id: 'last_dinner', chapter: 'brother', week: 3 },
   { id: 'tuesday_class', chapter: 'street_justice', week: 5 },
+  { id: 'true_name', chapter: 'buyback', week: 3 },
 ];
 
 /** The beat waiting to play this week, if any. */
@@ -666,12 +735,14 @@ function applyFatigue(f: Fighter, save: StorySave): Fighter {
 export function buildOneTon(save: StorySave, final = false): Fighter {
   const t = save.training;
   const f = authored('story_oneton', 'middle', 'contender', {
-    first: '1ton',
-    last: 'Morales',
-    nick: 'The Mexican Math',
+    // the name on his press pass. His real one is Alberto Del Burrito (the truth comes out in chapter ten).
+    first: 'Gordo',
+    last: 'Fuente',
+    nick: '1ton',
     country: 'Mexico',
     hometown: 'Guadalajara, Jalisco',
-    age: 31,
+    // a champion of Mexico fifteen years ago, a sportswriter for twelve
+    age: 38,
     height: 185,
     reach: 190,
     skills: {
@@ -1090,7 +1161,7 @@ function buildDuke(save: StorySave): Fighter {
       build: 2,
     },
   });
-  f.manager = '1ton Morales';
+  f.manager = 'Gordo "1ton" Fuente';
   f.promotion = 'zenith';
   f.starPower = 39;
   return f;
@@ -1135,7 +1206,7 @@ function buildRico(save: StorySave): Fighter {
       chain: 1,
     },
   });
-  f.manager = '1ton Morales';
+  f.manager = 'Gordo "1ton" Fuente';
   f.promotion = 'zenith';
   f.starPower = 34;
   return f;
@@ -1179,13 +1250,42 @@ function buildCesar(save: StorySave): Fighter {
       build: 2,
     },
   });
-  f.manager = '1ton Morales';
+  f.manager = 'Gordo "1ton" Fuente';
   f.promotion = 'zenith';
   f.starPower = 57;
   return f;
 }
 
+/** The fighters the chapters book between the big ones: Xavier's barn, Zenith's prospects, a masked man. */
+const GUESTS: Record<string, { div: string; tier: 'journeyman' | 'gatekeeper' | 'contender' | 'elite'; first: string; last: string; nick: string; country: string; hometown: string; age: number; height: number; reach: number; styles: string[]; traits: string[]; rec: [number, number]; look: Partial<Look>; boost: number }> = {
+  dusty: { div: 'middle', tier: 'journeyman', first: 'Dusty', last: 'Cole', nick: 'The Rodeo', country: 'USA', hometown: 'Amarillo, Texas', age: 33, height: 183, reach: 185, styles: ['Brawler'], traits: ['Showman'], rec: [6, 5], look: { hair: 2, beard: 2, hat: 1, build: 1, tattoo: 1 }, boost: -8 },
+  buck: { div: 'middle', tier: 'gatekeeper', first: 'Buck', last: 'Harlan', nick: 'Two Hats', country: 'USA', hometown: 'Tulsa, Oklahoma', age: 35, height: 185, reach: 188, styles: ['Wrestler', 'Grinder'], traits: ['Veteran'], rec: [14, 6], look: { hair: 0, beard: 3, build: 2, scar: 1 }, boost: -2 },
+  tyler: { div: 'light', tier: 'contender', first: 'Tyler', last: 'Vance', nick: 'Trust Fund', country: 'Canada', hometown: 'Moncton, New Brunswick (the nice part)', age: 30, height: 178, reach: 182, styles: ['Counter Striker'], traits: ['Showman', 'Loyal'], rec: [24, 4], look: { hair: 3, hairColor: 3, beard: 0, build: 1 }, boost: 8 },
+  toro: { div: 'middle', tier: 'gatekeeper', first: 'Rafa', last: 'Medina', nick: 'El Toro', country: 'Mexico', hometown: 'Tijuana, Baja California', age: 31, height: 182, reach: 186, styles: ['Pressure Striker'], traits: ['Hungry'], rec: [15, 4], look: { hair: 11, beard: 1, build: 2, tattoo: 2 }, boost: 0 },
+  spadam: { div: 'welter', tier: 'elite', first: 'Spadam', last: 'Biggs', nick: 'The White Beast', country: 'USA', hometown: 'Halifax (he says Boston)', age: 31, height: 201, reach: 208, styles: ['Kickboxer', 'Pressure Striker'], traits: ['Showman', 'Trash Talker'], rec: [27, 1], look: { hair: 12, hairColor: 4, beard: 0, build: 2, tattoo: 1 }, boost: 14 },
+  synergy: { div: 'middle', tier: 'contender', first: 'Kyle', last: 'Brandt', nick: 'Synergy', country: 'USA', hometown: 'Scottsdale, Arizona', age: 26, height: 186, reach: 190, styles: ['Point Fighter'], traits: ['Clout Chaser'], rec: [11, 0], look: { hair: 12, hairColor: 4, beard: 0, build: 1 }, boost: 4 },
+  doscaras: { div: 'middle', tier: 'contender', first: 'Diego', last: 'Ruiz', nick: 'Dos Caras', country: 'Mexico', hometown: 'Monterrey, Nuevo Leon', age: 29, height: 184, reach: 188, styles: ['Counter Striker', 'Sub Hunter'], traits: ['Mysterious'], rec: [19, 2], look: { hair: 0, beard: 0, build: 1, mask: 0x2a4ad8, tattoo: 2 }, boost: 10 },
+};
+
+function buildGuest(save: StorySave, key: string): Fighter | null {
+  const g = GUESTS[key];
+  if (!g) return null;
+  const k = g.boost + save.chapter * 0.8;
+  const f = authored(`story_guest_${key}`, g.div, g.tier, {
+    first: g.first, last: g.last, nick: g.nick, country: g.country, hometown: g.hometown, age: g.age, height: g.height, reach: g.reach,
+    skills: {
+      striking: skill(68 + k), power: skill(66 + k), wrestling: skill(62 + k), grappling: skill(60 + k), cardio: skill(68 + k),
+      chin: skill(66 + k), fightIQ: skill(64 + k), durability: skill(65 + k), heart: skill(70 + k), weightCut: 45,
+    },
+    styles: g.styles, traits: g.traits, record: { w: g.rec[0], l: g.rec[1], d: 0, nc: 0 }, look: g.look,
+  });
+  f.gym = key === 'tyler' ? "Ray's Boxing & Soup (now)" : key === 'spadam' ? 'Beast Mode Kickboxing' : f.gym;
+  return f;
+}
+
 export function buildOpponent(save: StorySave, key: string): Fighter {
+  const guest = buildGuest(save, key);
+  if (guest) return guest;
   switch (key) {
     case 'duke':
       return buildDuke(save);
@@ -1531,7 +1631,7 @@ export const STORY_DOCS: Record<string, StoryDoc> = {
       { id: 0, text: 'Zenith will broadcast twelve (12) events over twenty-four months.', bad: false, why: 'You have never had twelve of anything.' },
       { id: 1, text: 'The promotion may not appear on any other network, streaming service, or phone.', bad: true, why: 'The phone is how you reach people.' },
       { id: 2, text: 'Dane Whyte\'s face will appear on all promotional materials, whether he is on them or not.', bad: true, why: 'That is a poster of a man who is not there.' },
-      { id: 3, text: '1ton Morales receives approval over opponents, purses, and the color of the cage.', bad: true, why: 'The color of the cage is not a fighter\'s right.' },
+      { id: 3, text: 'Gordo "1ton" Fuente receives approval over opponents, purses, and the color of the cage.', bad: true, why: 'The color of the cage is not a fighter\'s right.' },
       { id: 4, text: 'Compensation for the first year will be paid in "exposure."', bad: true, why: 'Exposure does not cover rent.' },
       { id: 5, text: 'Network may cancel after any loss, any controversy, or any Tuesday.', bad: false, why: 'It is always Tuesday somewhere.' },
     ],
@@ -1547,7 +1647,7 @@ export const STORY_DOCS: Record<string, StoryDoc> = {
       { id: 0, text: 'Three (3) rounds. Winner receives a title shot. Loser is released.', bad: true, why: 'One of these men is nineteen. The other is your family.' },
       { id: 1, text: 'Mateo Varga will fight without a corner, a cutman, or a stool.', bad: true, why: 'Nobody should fight alone.' },
       { id: 2, text: 'Promotion will pay for Mateo\'s medical coverage, win or lose.', bad: false, why: 'The bare minimum.' },
-      { id: 3, text: '1ton Morales receives "creative control" over the finish.', bad: true, why: 'A finish is not a script.' },
+      { id: 3, text: 'Gordo "1ton" Fuente receives "creative control" over the finish.', bad: true, why: 'A finish is not a script.' },
       { id: 4, text: 'Family discount: Mateo\'s purse is 20% off.', bad: false, why: 'It is a discount for being family. That is worse.' },
       { id: 5, text: 'The bout may be stopped at any time by the referee, the doctor, or the promoter\'s conscience.', bad: false, why: 'One of those has never shown up.' },
     ],
@@ -1703,7 +1803,7 @@ const PRESS_QUESTIONS: StoryPressQuestion[] = [
     ],
   },
   {
-    q: '"Is 1ton Morales the future of this promotion, or the end of it?"',
+    q: '"Is Gordo "1ton" Fuente the future of this promotion, or the end of it?"',
     options: [
       { id: 'future', label: 'HE IS THE FUTURE. I AM THE LEASE.', trust: 4, ego: 2, brand: 3, heat: 0, reply: '1ton laughs. It sounds almost real.' },
       { id: 'end', label: 'HE IS THE END OF SOMETHING. I HAVEN\'T DECIDED WHAT.', trust: -3, ego: 1, brand: 3, heat: 2, reply: 'The quote gets four million views. Two of them are Verity.' },
@@ -1862,12 +1962,12 @@ export function applyChapterChoice(save: StorySave, id: string): string {
     case 'confront':
       save.trust = clamp(save.trust + 5);
       save.heat = clamp(save.heat + 5);
-      addLog(save, 'You confronted 1ton about the Zenith contract. He said it was a meeting. It was a signing.');
+      addLog(save, 'You thanked him for tearing up Zenith\'s card. He went red behind the beard and said "it was a bad card".');
       return 'TRUST +5  /  HEAT +5';
     case 'ignore':
       save.trust = clamp(save.trust - 7);
       save.ego = clamp(save.ego + 7);
-      addLog(save, 'You said nothing. He noticed that too.');
+      addLog(save, 'You told him tearing up Zenith\'s card was bad business. He laughed. Later, alone, he did not.');
       return 'EGO +7  /  TRUST -7';
     case 'main_event':
       save.ego = clamp(save.ego + 8);

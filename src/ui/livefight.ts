@@ -79,10 +79,13 @@ const PUNCH_POSE: Record<string, string> = {
   jab: 'jab', cross: 'cross', hook: 'hook', uppercut: 'uppercut', overhand: 'overhand', 'body jab': 'bodyJab', 'body shot': 'body', 'body hook': 'bodyHook',
   'spinning backfist': 'spin', 'short hook': 'leadHook', elbow: 'elbow', knee: 'knee', legkick: 'legkick', kick: 'bodykick', headkick: 'headkick',
   'front kick': 'frontKick', 'spinning back kick': 'spinKick',
+  // CAGE BOSS II's specials
+  'superman punch': 'superman', 'butch hook': 'leadHook', 'spinning elbow': 'spin', 'flying knee': 'flyknee', 'calf kick': 'legkick',
 };
 const JOINT: Record<string, 'haF' | 'haB' | 'ftB' | 'knB' | 'elB'> = {
   jab: 'haF', cross: 'haB', hook: 'haF', uppercut: 'haB', overhand: 'haB', 'body jab': 'haF', 'body shot': 'haB', 'body hook': 'haF', 'spinning backfist': 'haB', 'short hook': 'haF',
   elbow: 'elB', knee: 'knB', legkick: 'ftB', kick: 'ftB', headkick: 'ftB', 'front kick': 'ftB', 'spinning back kick': 'ftB', punch: 'haB',
+  'superman punch': 'haB', 'butch hook': 'haF', 'spinning elbow': 'elB', 'flying knee': 'knB', 'calf kick': 'ftB',
 };
 const poseFor = (name: string, hand?: 'lead' | 'rear'): string => (name === 'hook' && hand === 'lead' ? 'leadHook' : name === 'hook' && hand === 'rear' ? 'hook' : PUNCH_POSE[name] ?? 'jab');
 const TIE_NAME = { collar: 'COLLAR TIE', under: 'DOUBLE UNDERHOOKS', plum: 'THAI PLUM' };

@@ -8,7 +8,7 @@ import type { Game } from '../app';
 import type { Fighter, FightResult } from '../../core/types';
 import { openLiveFight } from '../livefight';
 import { tylerFighter, bossFighter } from '../../sim/cast';
-import { SIM_SCORE, buildOneTon, cornerFighter, cornerKey, gradeFor, sparSession, buildMateoGrown, buildHan } from '../../sequel/story';
+import { SIM_SCORE, movesOf, buildOneTon, cornerFighter, cornerKey, gradeFor, sparSession, buildMateoGrown, buildHan } from '../../sequel/story';
 import type { StorySave } from '../../sequel/types';
 import { storyVenue } from './venues';
 import { openWindow } from '../widgets';
@@ -69,6 +69,7 @@ export function openSpar(g: Game, save: StorySave, who: 'oneton' | 'corner', don
       plan: 'balanced', oppPlan: 'balanced', cutTier: 3, seed,
       event: "SPARRING  /  RAY'S BOXING & SOUP", judges: ['Uncle Ray', 'Uncle Ray', 'Uncle Ray'], referee: where.referee,
       canvas: where.canvas, refLook: where.refLook,
+      rules: { moves: { 0: movesOf(save, who) } },
       done: (r) => done(sparSession(save, who, gradeFor(sparScore(r, me.id)))),
     });
   };

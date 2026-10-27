@@ -23,6 +23,9 @@ import { openSequelAchievements } from './sequelachievements';
 import { isSequelStandalone, isSequelDemo } from '../../sequel/standalone';
 import { desktop } from '../../desktop';
 import { openSettings } from './settings';
+import { GameModesScene, continueLatest, hasAnySave, latestSaveLine, openSaves } from './sequelmenus';
+import { newSlot, listSlots } from '../../sequel/slots';
+import { forgetRun } from '../../sequel/session';
 
 export function openStoryMode(g: Game): void {
   const save = readStory();
@@ -43,8 +46,11 @@ export function routeSequel(g: Game, run: SeqRun): void {
   else g.goto(new SequelShowScene(g));
 }
 
+/** A new promoter save, in a new slot (the old save stays in LOAD SAVE). */
 export function startNewSequelRun(g: Game): void {
   const seed = Math.floor(Math.random() * 1e9);
+  newSlot('run', `THE WAREHOUSE ${listSlots('run').length + 1}`, false);
+  forgetRun();
   g.loading('Opening the warehouse', () => {
     const run = newSequelRun(seed);
     writeRun(run);
@@ -95,7 +101,7 @@ export function openSequelHelp(g: Game): void {
   b.addChild(text(
     'Three straight wins makes a champion. Champions sell tickets and defend belts. CAMPS takes one to four weeks off: ' +
     'the rent keeps running and the crowd forgets, but bodies heal and a fighter can come back permanently better. ' +
-    'SEASON shows the quarters, the belts and the buyback number. STORY MODE is ten chapters (and one secret), Han Tibular, Mateo and one trainee with a plan.',
+    'SEASON shows the quarters, the belts and the buyback number. TALES OF LEGACY is ten chapters (and one secret), Han Tibular, Mateo and one trainee with a plan.',
     8, 193, { width: 404, small: true, color: PAL.ink, maxLines: 3 },
   ));
   b.addChild(button('BACK TO THE WAREHOUSE', 134, 226, 156, 15, () => win.close(), { small: true, fill: PAL.moss, border: PAL.ink }));
@@ -123,16 +129,15 @@ export class SequelTitleScene extends Scene {
     r.addChild(text('THE BUYBACK', 16, 72, { scale: 2, color: PAL.gold, shadow: PAL.ink }));
     if (isSequelDemo()) r.addChild(new Graphics().rect(150, 72, 44, 12).fill(PAL.blood).rect(150, 72, 44, 12).stroke({ color: PAL.gold, width: 1 }), text('DEMO', 150, 75, { small: true, width: 44, align: 'center', color: PAL.bone }));
     r.addChild(text(SEQUEL_TAGLINE, 16, 92, { small: true, color: PAL.ash }));
-    r.addChild(text(SEQUEL_STORY, 16, 106, { small: true, width: 178, color: PAL.fog, maxLines: 8, lineGap: 0 }));
+    r.addChild(text(SEQUEL_STORY, 16, 106, { small: true, width: 178, color: PAL.fog, maxLines: 5, lineGap: 0 }));
     r.addChild(text('FICTIONAL. EVERYONE. EVEN THE TIGER.', 16, H - 10, { small: true, color: PAL.grey }));
 
-    const run = readRun();
-    const story = readStory();
+    // CONTINUE (the save you played last, either mode), GAME MODES (the two doors), LOAD SAVE
     const items: [string, () => void, number?][] = [];
-    if (run) items.push(['CONTINUE', () => this.continueRun(run), PAL.moss]);
-    items.push(['NEW RUN', () => this.newRun(!!run), PAL.blood]);
-    items.push(['STORY MODE', () => this.openStory(), PAL.rust]);
-    const y0 = run ? 150 : 164;
+    if (hasAnySave()) items.push(['CONTINUE', () => { sfx('click'); continueLatest(this.g); }, PAL.moss]);
+    items.push(['GAME MODES', () => { sfx('click'); this.g.goto(new GameModesScene(this.g)); }, PAL.blood]);
+    items.push(['LOAD SAVE', () => { sfx('click'); this.loadMenu(); }, PAL.rust]);
+    const y0 = items.length === 3 ? 150 : 164;
     const touch = isTouchDevice();
     items.forEach(([label, fn, fill], i) => {
       r.addChild(button(label, 16, y0 + i * (touch ? 24 : 22), 176, touch ? 19 : 17, fn, {
@@ -141,12 +146,8 @@ export class SequelTitleScene extends Scene {
         small: false,
       }));
     });
-    // what is behind the story door, in one line
-    const storyLine = story
-      ? story.status === 'ended'
-        ? 'THE NOTEBOOK IS CLOSED. THE ENDINGS ARE STILL OUT THERE.'
-        : `CHAPTER ${story.chapter + 1} OF ${Math.max(10, story.chapter + 1)}. THE NOTEBOOK IS OPEN.`
-      : 'TEN CHAPTERS. ONE TRAINEE. HAN TIBULAR IS BACK.';
+    // the newest save, in one line
+    const storyLine = latestSaveLine() || 'PROMOTER MODE. TALES OF LEGACY. QUICK FIGHT.';
     r.addChild(text(storyLine, 16, y0 + items.length * (touch ? 24 : 22) + 3, { small: true, width: 176, color: PAL.ember, maxLines: 2 }));
 
     // the utility shelf: trophies, rules, the door out
@@ -173,24 +174,10 @@ export class SequelTitleScene extends Scene {
     r.addChild(text('THE CAGE IS ALREADY UP.', 268, 156, { small: true, color: PAL.ash }));
   }
 
-  private continueRun(run: SeqRun): void {
-    sfx('click');
-    if (run.status === 'ended') this.g.goto(new SequelEndScene(this.g));
-    else routeSequel(this.g, run);
-  }
-
-  private openStory(): void {
-    sfx('click');
-    openStoryMode(this.g);
-  }
-
-  private newRun(existing: boolean): void {
-    sfx('click');
-    if (existing) {
-      confirm(this.g, 'Start a new run? The current run and its best-show numbers stay in the trophy case, but the warehouse gets a new seed.', () => startNewSequelRun(this.g), 'START OVER', 'KEEP RUNNING');
-      return;
-    }
-    startNewSequelRun(this.g);
+  private loadMenu(): void {
+    const win = openWindow(this.g, 'LOAD SAVE', 220, 64);
+    win.body.addChild(button('PROMOTER MODE', 8, 8, 98, 18, () => { win.close(); openSaves(this.g, 'run'); }, { small: true, fill: PAL.blood }));
+    win.body.addChild(button('TALES OF LEGACY', 114, 8, 98, 18, () => { win.close(); openSaves(this.g, 'story'); }, { small: true, fill: PAL.blood }));
   }
 
   private back(): void {

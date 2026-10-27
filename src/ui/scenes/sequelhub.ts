@@ -207,7 +207,7 @@ export class SequelHubScene extends Scene {
     const r = this.root;
     r.addChild(new Graphics().rect(0, 0, SW, 28).fill({ color: 0x0a080e, alpha: 0.94 }).rect(0, 27, SW, 1).fill({ color: PAL.gold, alpha: 0.5 }));
     r.addChild(text('CAGE BOSS II', 6, 4, { small: true, color: PAL.gold }));
-    r.addChild(text(`WEEK ${run.week} / ${SEASON_WEEKS}`, 76, 4, { small: true, color: PAL.bone }));
+    r.addChild(text(run.flags.sandbox ? `WEEK ${run.week}  /  SANDBOX` : `WEEK ${run.week} / ${SEASON_WEEKS}`, 76, 4, { small: true, color: run.flags.sandbox ? PAL.gold : PAL.bone }));
     const cash = text(`CASH ${money(run.cash)}`, 168, 4, { small: true, color: run.cash < 10000 ? PAL.blood : PAL.bone });
     r.addChild(cash);
     const stat = (label: string, value: number, x: number, color: number) => {

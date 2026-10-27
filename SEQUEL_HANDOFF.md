@@ -7,6 +7,38 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 3 (cont.): Claude (2026-10-27)
+Done since the turn 3 notes below:
+- **Menus and saves:** GAME MODES → PROMOTER MODE (new / load / sandbox) and TALES OF LEGACY (new / load / sandbox
+  once finished). Unlimited named save slots per mode, sandbox-marked, CONTINUE plays the latest. NEW RUN is gone.
+- **Story mode is now TALES OF LEGACY** everywhere it shows.
+- **1ton is Gordo "1ton" Fuente, really Alberto Del Burrito**, with a chapter-10 reveal beat (with a flashback of the
+  cantina and the abuela).
+- **Xavier's league opening:** 1ton and Mateo sign with Allstar FC (chapter 2); 1ton signs with Dane in chapter 5.
+- **A second key fight in chapters 2–8** (Allstar FC debut, the Allstar title, Han vs Tyler, the first warehouse main
+  event, Han vs Spadam II, a Zenith prospect, Han vs Dos Caras), each with intro lines, and a **highlight cinematic
+  after every key fight**.
+- **Special moves from sparring** (superman punch, Butch hook, flying knee, calf kick, spinning elbow) in the engine,
+  with a new superman pose; tested.
+- **Body and tattoo pass, five new hair styles** (II only).
+- **Foreshadowing audit, chapters 1–5:** the chapter 4 spar and the chapter 5 black card no longer hint at the betrayal.
+- **Camera:** an impact punch-in and tilt, and a different opening angle per shot.
+- **Quick Fight:** a new select screen with live models, the face-off after READY (fighters stop a forehead apart),
+  and Tales of Legacy fighters.
+- **Demo:** its own saves; prologue → chapters 1–2 → 4 promoter weeks → poster → back to game 1.
+- Fixed game 1's Quick Fight random pick (the same welterweight bug).
+
+Still open from Riley's list (next):
+1. **Fighter kits, one per fighter from their bio** (`COUNTRY_KIT` in rig.ts is all there is): a kit generator
+   (base, trim, pattern, waistband logo, gloves) from country, styles, traits, nickname and id.
+2. **The tutorial** from game 1 (`src/ui/tutorial.ts`, `guidelessons.ts`), re-done in II style for the sequel's modes.
+3. **Re-do everything carried over from game 1** (hub, desk, show and end screens still hard-code `PAL.*`).
+4. **Dane's cutscenes in PROMOTER MODE**, using the player's chosen name (the promoter mode has no name entry yet:
+   add one to the new-save flow; `{boss}` substitution in the lines).
+5. **A much longer story:** more beats per chapter, more chapters or chapter parts, more side stories (the Tales).
+6. **The phone:** calls (Ray, Xavier, Verity, the plug), Bleeter posting (game 1 has `src/sim/bleets.ts`), DMs to the plug.
+7. **The character creator** for the new bodies, hair and tattoos (portrait hair for styles 10–14 too).
+
 ### Turn 2: Claude (2026-10-27)
 Riley's asks this turn: run the sequel as its own exe; review OpenCode's work; write SKILLS.md and notes; overhaul
 the cutscenes, animation, blood and bruising, fighter models and fight screen so they don't look like game 1;

@@ -360,6 +360,8 @@ export interface StorySave {
   totalWeeks?: number;
   /** Training experience per track ("oneton.striking", "corner.cardio"); the levels are xp / XP_PER_LEVEL. */
   xp?: Record<string, number>;
+  /** Special moves unlocked sparring at Ray's, per man ("oneton", "corner"): ids from SPECIAL_MOVES. */
+  moves?: Record<string, string[]>;
   training: StoryTraining;
   daneTraining: StoryDaneTraining;
   fights: StoryFightRecord[];

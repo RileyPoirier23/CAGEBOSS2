@@ -144,6 +144,16 @@ function buildRoster(worldSeed: number): { roster: SeqFighter[]; freeAgents: Fig
   return { roster: roster.map((f) => makeSeqFighter(f, 1)), freeAgents };
 }
 
+/** A sandbox run never runs out of Saturdays (and never makes the trophy case). */
+export const seasonLength = (run: SeqRun): number => (run.flags.sandbox ? 9999 : SEASON_WEEKS);
+
+/** A sandbox run: no deadline, a bankroll to play with, no achievements. */
+export function makeSandbox(run: SeqRun): SeqRun {
+  run.flags.sandbox = true;
+  run.cash += 1_000_000;
+  return run;
+}
+
 export function newSequelRun(seed: number): SeqRun {
   const s = Math.abs(Math.floor(seed)) >>> 0;
   const { roster, freeAgents } = buildRoster(s);
@@ -780,7 +790,7 @@ export function runShow(run: SeqRun): SeqShow {
 
   if (run.cash < 0) finishRun(run, 'broke');
   else if (!run.roster.length) finishRun(run, 'empty');
-  else if (run.week >= SEASON_WEEKS) finishRun(run);
+  else if (run.week >= seasonLength(run)) finishRun(run);
 
   // finishRun() always leaves an ending behind; a live run has none yet.
   if (run.ending) run.event = null;
@@ -844,7 +854,7 @@ export function nextWeek(run: SeqRun): void {
     finishRun(run, 'empty');
     return;
   }
-  if (run.week > SEASON_WEEKS) {
+  if (run.week > seasonLength(run)) {
     finishRun(run);
     return;
   }
@@ -872,7 +882,7 @@ export interface SeqSkipResult {
 }
 
 export function canSkip(run: SeqRun): boolean {
-  return run.status === 'plan' && run.week < SEASON_WEEKS;
+  return run.status === 'plan' && run.week < seasonLength(run);
 }
 
 /**
@@ -882,7 +892,7 @@ export function canSkip(run: SeqRun): boolean {
  */
 export function skipWeeks(run: SeqRun, weeks: number, campId = 'rest', fighterId?: string): SeqSkipResult {
   if (!canSkip(run)) return { ok: false, error: 'There is no week left to skip. The next bell is the last one.', skip: null, notes: [] };
-  const span = Math.max(1, Math.min(4, Math.floor(weeks), SEASON_WEEKS - run.week));
+  const span = Math.max(1, Math.min(4, Math.floor(weeks), seasonLength(run) - run.week));
   if (span <= 0) return { ok: false, error: 'The calendar is full. Run the show.', skip: null, notes: [] };
   const camp = campById(campId);
   const target = camp.id === 'rest' ? undefined : run.roster.find((x) => x.f.id === fighterId);
@@ -931,7 +941,7 @@ export function skipWeeks(run: SeqRun, weeks: number, campId = 'rest', fighterId
     }
     notes.push(`${target.f.first} ${target.f.last} spent ${span} week${span === 1 ? '' : 's'} at ${camp.name.toLowerCase()}. He came back different, or at least tired in a new way.`);
   }
-  if (run.week >= SEASON_WEEKS) notes.push('This is the last week on the calendar. There is one show left, and it is the one that matters.');
+  if (run.week >= seasonLength(run)) notes.push('This is the last week on the calendar. There is one show left, and it is the one that matters.');
 
   const phaseNotes = checkPhases(run);
   notes.push(...phaseNotes);
