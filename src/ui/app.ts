@@ -17,6 +17,8 @@ import { setTextResolution, setBleep, setFontMode, type FontMode } from './text'
 import { desktop } from '../desktop';
 import { isTouchDevice } from '../core/platform';
 import { makeLoadingScreen, type LoadingLike } from './loading';
+import { isII } from './theme';
+import { DUR, easeOut, reducedMotion, setReduceMotion, tween } from './motion';
 import { configureMusic, setMusicContext, skipTrack, unlockMusic, onTrackChange, type MusicContext } from '../audio/music';
 
 export interface Settings {
@@ -97,7 +99,11 @@ export class Game {
   settings: Settings = loadJSON('cageboss.settings', DEFAULT_SETTINGS);
   private shakeT = 0;
   private shakeMag = 0;
-  private toasts: { node: Container; t: number }[] = [];
+  /** age: seconds on screen; h: its height (CAGE BOSS II stacks and glides them); top: the top-centre kind */
+  private toasts: { node: Container; t: number; age: number; h: number; top: boolean }[] = [];
+  /** CAGE BOSS II: a black veil over the scene that lifts after every screen change */
+  private sceneVeil = new Graphics();
+  private veilStop: (() => void) | null = null;
   scale = 1;
 
   async init(parent: HTMLElement): Promise<void> {
@@ -121,7 +127,10 @@ export class Game {
     parent.appendChild(this.app.canvas);
     this.app.stage.addChild(this.frame);
     this.frame.addChild(this.stage);
-    this.stage.addChild(this.sceneLayer, this.toastLayer, this.modalLayer, this.feedbackLayer);
+    this.stage.addChild(this.sceneLayer, this.sceneVeil, this.toastLayer, this.modalLayer, this.feedbackLayer);
+    this.sceneVeil.rect(-OX - 8, -8, SW + 16, H + 16).fill(0x000000);
+    this.sceneVeil.alpha = 0;
+    this.sceneVeil.eventMode = 'none';
     // notices are for reading, not tapping: a toast over END WEEK must not swallow the tap
     this.toastLayer.eventMode = 'none';
     this.feedbackLayer.eventMode = 'none';
@@ -194,6 +203,7 @@ export class Game {
   }
 
   applySettings(): void {
+    setReduceMotion(!!this.settings.reduceShake);
     setBleep(!!this.settings.bleep);
     setFontMode(this.settings.font ?? 'pixel');
     desktop?.setFullscreen(this.settings.fullscreen !== false);
@@ -224,6 +234,11 @@ export class Game {
     this.sceneLayer.addChild(scene.root);
     setMusicContext(scene.music);
     scene.enter();
+    if (isII()) {
+      this.veilStop?.();
+      this.sceneVeil.alpha = 0.85;
+      this.veilStop = tween(DUR.scene, (k) => (this.sceneVeil.alpha = 0.85 * (1 - k)));
+    }
     if (scene.tutorialKey) maybeTutorial(this, scene.tutorialKey);
     // anything earned since the last screen gets its congratulations
     if (this.state) setTimeout(() => checkAchievements(this), 1500);
@@ -260,6 +275,25 @@ export class Game {
     this.modalLayer.addChild(wrap);
     this.modals.push(wrap);
     tooltip.hide();
+    if (isII()) {
+      const grow = !reducedMotion() && (opts.dim ?? 0.6) < 1 && !(opts.fit !== false && isTouchDevice());
+      const x0 = content.x;
+      const y0 = content.y;
+      wrap.alpha = 0;
+      if (grow) {
+        // its first frame is already the small one
+        content.scale.set(0.96);
+        content.position.set(W / 2 + (x0 - W / 2) * 0.96, H / 2 + (y0 - H / 2) * 0.96);
+      }
+      tween(DUR.modalIn, (k) => {
+        wrap.alpha = k;
+        if (!grow) return;
+        const s = 0.96 + 0.04 * k;
+        content.scale.set(s);
+        // grow from the middle of the screen
+        content.position.set(W / 2 + (x0 - W / 2) * s, H / 2 + (y0 - H / 2) * s);
+      });
+    }
     return wrap;
   }
 
@@ -267,9 +301,23 @@ export class Game {
     const m = which ?? this.modals[this.modals.length - 1];
     if (!m) return;
     this.modals = this.modals.filter((x) => x !== m);
+    tooltip.hide();
+    if (isII() && !m.destroyed) {
+      // out faster than it came in; it takes no clicks on the way out
+      m.eventMode = 'none';
+      m.interactiveChildren = false;
+      const a0 = m.alpha;
+      tween(DUR.modalOut, (k) => (m.alpha = a0 * (1 - k)), {
+        done: () => {
+          if (m.destroyed) return;
+          this.modalLayer.removeChild(m);
+          m.destroy({ children: true });
+        },
+      });
+      return;
+    }
     this.modalLayer.removeChild(m);
     m.destroy({ children: true });
-    tooltip.hide();
   }
 
   closeAllModals(): void {
@@ -296,7 +344,12 @@ export class Game {
     c.x = opts.top ? Math.floor((W - w) / 2) : SW - OX - w - 4;
     c.y = opts.top ? 2 : H - 4 - h - this.toasts.length * (h + 2);
     (this.modals.length && !opts.background ? this.feedbackLayer : this.toastLayer).addChild(c);
-    this.toasts.push({ node: c, t: 2.6 });
+    if (isII()) {
+      // CAGE BOSS II: it rises into its slot and fades in; the stack reflows as others leave
+      c.alpha = 0;
+      if (!opts.top && !reducedMotion()) c.y += 6;
+    }
+    this.toasts.push({ node: c, t: 2.6, age: 0, h, top: !!opts.top });
   }
 
   /** Compact 'NOW PLAYING' tag, bottom-left: fades in, holds ~3s, fades out. One at a time. */
@@ -366,7 +419,8 @@ export class Game {
         this.stage.x = this.stage.y = 0;
       }
     }
-    for (const t of this.toasts) {
+    if (isII()) this.tickToasts2(dt);
+    else for (const t of this.toasts) {
       t.t -= dt;
       if (t.t < 0.4) t.node.alpha = Math.max(0, t.t / 0.4);
     }
@@ -376,6 +430,28 @@ export class Game {
       this.toasts = this.toasts.filter((t) => t.t > 0);
     }
     this.scene?.update(dt);
+  }
+
+  /**
+   * CAGE BOSS II's toasts: in over 180 ms (strong ease-out), out over 200 ms dropping a few pixels,
+   * and the bottom stack glides into the gap when one leaves (it retargets, so it never jumps).
+   */
+  private tickToasts2(dt: number): void {
+    const still = !reducedMotion();
+    let y = H - 4;
+    // newest on top of the stack: walk from the oldest (lowest) up
+    for (const t of this.toasts) {
+      t.t -= dt;
+      t.age += dt;
+      const inK = easeOut(Math.min(1, t.age / DUR.toastIn));
+      const outK = t.t < DUR.toastOut ? easeOut(Math.max(0, t.t) / DUR.toastOut) : 1;
+      t.node.alpha = Math.min(inK, outK);
+      if (t.top) continue;
+      y -= t.h;
+      const target = y + (still ? (1 - outK) * 4 : 0);
+      t.node.y = still ? t.node.y + (target - t.node.y) * (1 - Math.exp(-dt * 22)) : target;
+      y -= 2;
+    }
   }
 
   private keyHandlers: ((e: KeyboardEvent) => boolean)[] = [];

@@ -7,6 +7,22 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 10: Claude (2026-10-27)
+Motion pass with Riley's new animation skills (Emil Kowalski's rules: strong ease-out for things arriving, never
+ease-in on UI, UI under 300 ms, nothing from scale 0, no animation on constant actions, interruptible, reduced motion).
+All sequel-only (`isII()`), shared kit in `src/ui/motion.ts` (`easeOut` = cubic-bezier(0.23, 1, 0.32, 1),
+`easeInOut` = (0.77, 0, 0.175, 1), `DUR`, `tween()`, `reducedMotion()`):
+- Toasts rise 6 px and fade in (180 ms), drop and fade out (200 ms), and the stack glides into the gap.
+- Windows: the dimmer fades up and the window grows from 96% (200 ms); closing fades in 140 ms. Full-screen
+  cutscenes only fade; phones (fit-to-screen) only fade.
+- Screen changes fade up from black (220 ms) after the switch, so input never waits.
+- Buttons go down a pixel while held (no tween; they're clicked constantly).
+- Mode menus stagger in (40 ms apart, 8 px) on first entry only; cutscene choices rise in the same way.
+- Fights: the HEAD bar leaves a pale damage chip that holds 0.4 s and drains.
+- Reduced motion: the OS setting or REDUCE SHAKE keeps the fades and drops the movement.
+Not judged on screen (pane hidden): step-checked frame by frame instead. Feel-check the window grow and the toast
+glide at normal speed; if the grow reads as a wobble, drop it to a fade.
+
 ### Turn 9: Claude (2026-10-27)
 Riley's list, all done:
 - **Version**: the sequel is `sequelVersion` 0.9.0 in package.json (Vite's `__APP_VERSION__`, the build's

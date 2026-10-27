@@ -276,6 +276,26 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
     const hn = crowdHome === -1 ? chants[0] : chants[crowdHome];
     arena.setSigns(crowdCfg.signs || [`${chants[0]}!`, 'HANDS UP', crowdHome === -1 ? `${chants[1]}!` : `${hn} #1`, 'CHIN DOWN', `GO ${hn}`]);
   }
+  /**
+   * CAGE BOSS II: the damage chip on the HEAD bars. A hit leaves the lost health showing as a pale
+   * chunk for 0.4 s, then it drains (exponential, so a second hit mid-drain just retargets).
+   */
+  const chip: [number, number] = [100, 100];
+  const chipHold: [number, number] = [0, 0];
+  const lastHp: [number, number] = [100, 100];
+  const tickChips = (dt: number) => {
+    for (const i of SIDES) {
+      const hp = L.F[i].hp;
+      if (!isII()) {
+        chip[i] = hp;
+        continue;
+      }
+      if (hp < lastHp[i] - 0.01) chipHold[i] = 0.4;
+      lastHp[i] = hp;
+      if (hp >= chip[i]) chip[i] = hp;
+      else if ((chipHold[i] -= dt) <= 0) chip[i] += (hp - chip[i]) * (1 - Math.exp(-dt * 7));
+    }
+  };
   let chantCd = 4;
   let lastSurge = 0;
   let behindRound = 0;
@@ -528,8 +548,13 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
     hudG.rect(x + 1 - s, y, 2 + s, 2).fill(c).rect(x + 4, y, 2 + s, 2).fill(c).rect(x - s, y + 1, 7 + s * 2, 2).fill(c).rect(x + 1, y + 3, 5, 1).fill(c).rect(x + 2, y + 4, 3, 1).fill(c).rect(x + 3, y + 5, 1, 1).fill(c);
     dyn.addChild(hudText(`${Math.round(f.bpm)} BPM`, x + 10, y - 1, { small: true, color: f.bpm > 165 ? PAL.blood : PAL.bone }));
   };
-  const bar = (x: number, y: number, w: number, v: number, c: number, label: string, right = false, labelColor: number = PAL.ash, tick = false) => {
+  const bar = (x: number, y: number, w: number, v: number, c: number, label: string, right = false, labelColor: number = PAL.ash, tick = false, chipV = 0) => {
     hudG.rect(x, y, w, 4).fill(PAL.night);
+    // the damage just taken, still showing (it drains after a beat)
+    if (chipV > v) {
+      const cn = Math.round(w * Math.max(0, Math.min(1, chipV)));
+      hudG.rect(right ? x + w - cn : x, y, cn, 4).fill(0xf0e6d0);
+    }
     const n = Math.round(w * Math.max(0, Math.min(1, v)));
     hudG.rect(right ? x + w - n : x, y, n, 4).fill(c);
     // the 20% line on the gas tank: below it every strike comes out slower
@@ -635,7 +660,7 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
         const x = left ? TX0 + 20 : TX1 - 20 - 46;
         heart(x, y0 + 12, i);
         gasBar(x, y0 + 22, 46, i, !left);
-        bar(x, y0 + 30, 46, L.F[i].hp / 100, L.F[i].hp > 40 ? PAL.moss : PAL.blood, 'HEAD', !left);
+        bar(x, y0 + 30, 46, L.F[i].hp / 100, L.F[i].hp > 40 ? PAL.moss : PAL.blood, 'HEAD', !left, PAL.ash, false, chip[i] / 100);
         if (tags) windows(i, x, 46, y0 + 36, !left);
         continue;
       }
@@ -643,7 +668,7 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
       bodyOutline(left ? 12 : FW - 28, y0 + 42, i);
       heart(x, y0 + 14, i);
       gasBar(left ? x : x + 26, y0 + 25, 50, i, !left);
-      bar(left ? x : x + 26, y0 + 31, 50, L.F[i].hp / 100, L.F[i].hp > 40 ? PAL.moss : PAL.blood, 'HEAD', !left);
+      bar(left ? x : x + 26, y0 + 31, 50, L.F[i].hp / 100, L.F[i].hp > 40 ? PAL.moss : PAL.blood, 'HEAD', !left, PAL.ash, false, chip[i] / 100);
       if (tags) windows(i, left ? x : x + 26, 50, y0 + 38, !left);
     }
     // centre: clock + where the fight is
@@ -1237,6 +1262,7 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
     if (closed) return;
     const dt = Math.min(0.05, t.deltaMS / 1000);
     realT += dt;
+    tickChips(dt);
     if (stage === 'fight' && L.phase === 'fight' && !paused) crowdTick(dt);
     rangeT -= dt;
     fumbleT -= dt;

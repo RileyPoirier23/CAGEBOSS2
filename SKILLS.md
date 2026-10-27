@@ -191,6 +191,7 @@ storylines. Original characters (1ton, the crew, Zenith) can.
 - **Story levels:** `xpForLevel(lv)` / `levelForXp(xp)` in `story.ts` (rising cost; don't divide by XP_PER_LEVEL).
 - **Custom fighters:** `src/sequel/custom.ts` (`loadCustomFighters`, `offerCustomFighters`).
 - **Icons:** `build/icon-sequel.*` from `tools/make-sequel-icon.mjs`; game 1 keeps `build/icon.*`.
+- **Motion:** use `src/ui/motion.ts` (`easeOut`, `easeInOut`, `DUR`, `tween`, `reducedMotion`); don't invent curves.
 - **Weekly radio:** `src/sequel/radio.ts` writes it (`radioPromoter`, `radioStory`), `src/ui/sequel/radioui.ts` plays it.
 - **Theatre / album:** `remember(save, kind, title, ref)` in `src/sequel/theatre.ts`; `Line.photo = { id, title }`.
 - **Establishing shots:** add a word to `READ` in `src/ui/sequel/scenery.ts` and a case to `drawScenery`.

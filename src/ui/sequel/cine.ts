@@ -28,6 +28,7 @@ import type { PixelText } from '../text';
 import { lerpColor as lerpRGB, shade as shadeRGB } from '../../art/palette';
 import { readStage, type Prop, type StageAct, type StageCtx } from './stage';
 import { drawScenery, sceneryTags, type SceneryTag } from './scenery';
+import { DUR, reducedMotion, tween } from '../motion';
 import type { Line } from '../cutscene';
 
 /** How each room is lit: the grade (top/bottom multiply), the key light colour and where the light comes from. */
@@ -741,6 +742,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       if (!scene.choices?.length) return;
       finished = false;
       choicesBox.removeChildren().forEach((c) => c.destroy({ children: true }));
+      choicesIn = false;
       lineIdx = scene.shots[shotIdx].lines.length - 1;
     } else if (lineIdx > 0) lineIdx--;
     else if (shotIdx > 0) {
@@ -765,17 +767,31 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   const choicesBox = new Container();
   ui.addChild(choicesBox);
   let choiceSel = 0;
+  /** the choice list has made its entrance */
+  let choicesIn = false;
   const drawChoices = () => {
     choicesBox.removeChildren().forEach((c) => c.destroy({ children: true }));
     const ch = scene.choices ?? [];
     const rowH = touch ? 19 : 16;
     const y0 = H - 18 - ch.length * (rowH + 3);
     choicesBox.addChild(new Graphics().rect(-OX, y0 - 10, SW, H - y0 + 10).fill({ color: 0x000000, alpha: 0.7 }).rect(-OX, y0 - 10, SW, 1).fill(II.edge));
+    const arrive = !choicesIn;
+    choicesIn = true;
     ch.forEach((c, i) => {
       const sel = i === choiceSel;
-      choicesBox.addChild(button(`${i + 1}   ${c.label}`, 40, y0 + i * (rowH + 3), W - 80, rowH, () => pick(i), {
+      const b = choicesBox.addChild(button(`${i + 1}   ${c.label}`, 40, y0 + i * (rowH + 3), W - 80, rowH, () => pick(i), {
         small: !touch, align: 'left', fill: sel ? II.blood : II.steel, border: sel ? II.sodium : undefined,
       }));
+      // the answers arrive one after another the first time (moving the selection redraws in place)
+      if (arrive) {
+        const by = b.y;
+        const rise = reducedMotion() ? 0 : 6;
+        b.alpha = 0;
+        tween(0.16, (k) => {
+          b.alpha = k;
+          b.y = by + rise * (1 - k);
+        }, { delay: i * DUR.stagger });
+      }
     });
   };
   const pick = (i: number) => {
@@ -789,6 +805,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       scene.choices = undefined;
       scene.shots.push({ bg: cur.bg, cast: cast.map((a) => ({ ...a, x: a.x, enter: undefined })), lines: c.reply, caption: c.label });
       choicesBox.removeChildren().forEach((ch) => ch.destroy({ children: true }));
+      choicesIn = false;
       finished = false;
       setupShot(scene.shots.length - 1, true);
       fade = 0.5;
