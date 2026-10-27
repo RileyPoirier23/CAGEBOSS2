@@ -25,6 +25,8 @@ import { clearOfProps, drawBg, setDressing, tvScreen, FLOOR, type Actor, type Bg
 import { II } from '../theme';
 import type { PixelText } from '../text';
 import { lerpColor as lerpRGB, shade as shadeRGB } from '../../art/palette';
+import { readStage, type StageAct, type StageCtx } from './stage';
+import type { Line } from '../cutscene';
 
 /** How each room is lit: the grade (top/bottom multiply), the key light colour and where the light comes from. */
 interface Light { top: number; bottom: number; key: number; keyA: number; dir: 1 | -1; shafts: boolean; rim: number }
@@ -62,7 +64,10 @@ function shadowFilter(): ColorMatrixFilter {
   return f;
 }
 
-type Live = Actor & { cx: number; look2: Look2; rig: Rig; phase: number; walkPh: number };
+/** noWalk: a shove or a knockback slides him without a walk cycle (seconds) */
+type Live = Actor & { cx: number; look2: Look2; rig: Rig; phase: number; walkPh: number; noWalk: number };
+/** One stage direction playing out: tick until done; instant() jumps to how it ends. */
+interface Task { tick: (dt: number) => boolean; instant: () => void }
 
 /** People are drawn at 1.3 for a 180 cm man; a fighter stands at his own height (Mateo is not a kid any more). */
 const actorScale = (a: Actor): number => (a.fighter ? 1.3 * Math.max(0.86, Math.min(1.16, a.fighter.height / 180)) : a.scale ?? 1.3);
@@ -150,6 +155,192 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   let show: TvShow | null = null;
   let showWords: ReturnType<typeof showLabels> | null = null;
   const camS = { x: W / 2, y: 140, z: 1.04 };
+  // ------------------------------------------------------------ stage directions: what the narration says happens, happens
+  let tasks: Task[] = [];
+  let stageCtx: StageCtx = { speaker: null, subject: null, object: null };
+  const byId = (id: string) => cast.find((c) => c.id === id);
+  const clampX = (v: number) => Math.max(26, Math.min(W - 26, v));
+  const sideOf = (a: Live, b: Live): 1 | -1 => (b.x >= a.x ? 1 : -1);
+  const wait = (cond: () => boolean, max: number) => {
+    let e = 0;
+    return (dt: number) => (e += dt) >= max || cond();
+  };
+  const arrived = (a: Live) => Math.abs(a.cx - a.x) < 3;
+  const impact = (ln: Line | undefined, ko: boolean) => {
+    shake = ko ? 0.5 : 0.35;
+    punch = 1;
+    if (ko || ln?.flash) flash = 0.4;
+    sfx(ln?.sfx ?? 'punch');
+  };
+  const makeTask = (act: StageAct, ln: Line | undefined): Task | null => {
+    if (act.do === 'jolt') return { tick: () => { shake = 0.35; sfx('thud'); return true; }, instant: () => {} };
+    const a = byId(act.who);
+    if (!a) return null;
+    switch (act.do) {
+      case 'pose':
+        return { tick: () => { a.pose = act.pose; return true; }, instant: () => { a.pose = act.pose; } };
+      case 'strip': {
+        const off = () => {
+          const o = a.look2.outfit;
+          if (o) a.look2 = { ...a.look2, outfit: { ...o, top: o.shirt ?? shadeRGB(o.top, 0.3), shirt: undefined, tie: undefined } };
+        };
+        return { tick: () => { off(); return true; }, instant: off };
+      }
+      case 'face': {
+        const turn = () => {
+          const b = act.to ? byId(act.to) : null;
+          if (b) a.facing = sideOf(a, b);
+          else if (act.away) {
+            const others = cast.filter((c) => c !== a);
+            const mid = others.length ? others.reduce((s, c) => s + c.x, 0) / others.length : W / 2;
+            a.facing = a.x >= mid ? 1 : -1;
+          }
+        };
+        return { tick: () => { turn(); return true; }, instant: turn };
+      }
+      case 'exit': {
+        const side = act.side ?? (a.x < W / 2 ? 'left' : 'right');
+        const go = () => {
+          a.pose = undefined;
+          a.x = side === 'left' ? -70 : W + 70;
+        };
+        // he walks off while the scene goes on
+        return { tick: () => { go(); return true; }, instant: () => { go(); a.cx = a.x; } };
+      }
+      case 'walk': {
+        const b = act.to ? byId(act.to) : null;
+        const tx = () => clampX(b ? b.x - sideOf(a, b) * (act.gap ?? 40) : act.x ?? a.x);
+        let started = false;
+        let done: ((dt: number) => boolean) | null = null;
+        const settle = () => {
+          if (b) a.facing = sideOf(a, b);
+        };
+        return {
+          tick: (dt) => {
+            if (a.pose === 'ko') return true;
+            if (!started) {
+              started = true;
+              a.pose = undefined;
+              a.x = tx();
+              done = wait(() => arrived(a), 2.6);
+            }
+            const fin = done!(dt);
+            if (fin) settle();
+            return fin;
+          },
+          instant: () => {
+            if (a.pose === 'ko') return;
+            a.pose = undefined;
+            a.x = a.cx = tx();
+            settle();
+          },
+        };
+      }
+      case 'meet': {
+        const b = byId(act.target);
+        if (!b) return null;
+        const gap = act.pose === 'clinch' ? 22 : 30;
+        let phase = 0;
+        let w: ((dt: number) => boolean) | null = null;
+        const end = () => {
+          a.facing = sideOf(a, b);
+          b.facing = (-a.facing) as 1 | -1;
+          a.pose = act.pose;
+          if (act.both) b.pose = act.pose;
+        };
+        return {
+          tick: (dt) => {
+            if (phase === 0) {
+              phase = 1;
+              a.pose = undefined;
+              a.x = clampX(b.x - sideOf(a, b) * gap);
+              w = wait(() => arrived(a), 2.6);
+            }
+            if (phase === 1 && w!(dt)) {
+              end();
+              return true;
+            }
+            return false;
+          },
+          instant: () => {
+            a.x = a.cx = clampX(b.x - sideOf(a, b) * gap);
+            end();
+          },
+        };
+      }
+      case 'strike': {
+        const b = byId(act.target);
+        if (!b || b.pose === 'ko') return null;
+        const pose = act.pose ?? 'cross';
+        let phase = 0;
+        let w: ((dt: number) => boolean) | null = null;
+        let tt = 0;
+        const spot = () => (Math.abs(b.x - a.x) > 44 ? clampX(b.x - sideOf(a, b) * 36) : a.x);
+        return {
+          tick: (dt) => {
+            if (phase === 0) {
+              // close the distance
+              phase = 1;
+              a.pose = undefined;
+              a.x = spot();
+              w = wait(() => arrived(a), 2.2);
+            }
+            if (phase === 1) {
+              if (!w!(dt)) return false;
+              const d = sideOf(a, b);
+              a.facing = d;
+              b.facing = (-d) as 1 | -1;
+              a.pose = pose;
+              phase = 2;
+              tt = 0;
+            }
+            tt += dt;
+            if (phase === 2 && tt >= 0.13) {
+              // it lands: the camera jolts, he's knocked back, and down if it's that kind of punch
+              const d = sideOf(a, b);
+              b.pose = act.ko ? 'ko' : 'rocked';
+              b.x = clampX(b.x + d * (act.ko ? 24 : 12));
+              b.noWalk = 0.8;
+              impact(ln, !!act.ko);
+              phase = 3;
+              tt = 0;
+            }
+            if (phase === 3 && tt >= 0.55) {
+              a.pose = undefined;
+              if (!act.ko) b.pose = undefined;
+              return true;
+            }
+            return false;
+          },
+          instant: () => {
+            a.x = a.cx = spot();
+            const d = sideOf(a, b);
+            a.facing = d;
+            b.facing = (-d) as 1 | -1;
+            a.pose = undefined;
+            if (act.ko) {
+              b.pose = 'ko';
+              b.x = b.cx = clampX(b.x + d * 24);
+            }
+          },
+        };
+      }
+    }
+    return null;
+  };
+  /** The stage directions for a line (written, or read from the narration), and the context moved on. */
+  const actsFor = (ln: Line): StageAct[] => {
+    const acts = ln.act ?? (ln.who || ln.poses ? [] : readStage(ln.text, cast.map((c) => ({ id: c.id, name: c.name, female: !!c.look2.female })), stageCtx));
+    if (ln.who) {
+      stageCtx.speaker = ln.who;
+      stageCtx.subject = ln.who;
+    }
+    return acts;
+  };
+  const finishTasks = () => {
+    for (const k of tasks) k.instant();
+    tasks = [];
+  };
 
   const lookOf = (a: Actor): Look2 => {
     if (a.look) return { ...a.look };
@@ -180,8 +371,10 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     cast = s.cast.map((a, k) => {
       const x = clearOfProps(s.bg, a.x, a.scale ?? 1.3);
       const p = POSES[a.pose ?? 'stand'];
-      return { ...a, scale: actorScale(a), x, cx: instant ? x : a.enter === 'left' ? -40 : a.enter === 'right' ? W + 40 : x, look2: lookOf(a), rig: { ...p }, phase: k * 1.7, walkPh: 0 };
+      return { ...a, scale: actorScale(a), x, cx: instant ? x : a.enter === 'left' ? -40 : a.enter === 'right' ? W + 40 : x, look2: lookOf(a), rig: { ...p }, phase: k * 1.7, walkPh: 0, noWalk: 0 };
     });
+    tasks = [];
+    stageCtx = { speaker: null, subject: null, object: null };
     drawGrade();
     drawCaption(s.caption);
     if (!instant) fade = 1;
@@ -339,24 +532,36 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       return end();
     }
     const ln = s.lines[lineIdx];
+    // whatever the last line was still acting out finishes now
+    finishTasks();
     for (const [id, p] of Object.entries(ln.poses ?? {})) {
       const a = cast.find((c) => c.id === id);
       if (a) a.pose = p;
     }
-    if (ln.shake) {
+    const acts = actsFor(ln);
+    tasks = acts.map((x) => makeTask(x, ln)).filter((x): x is Task => !!x);
+    // a punch on this line brings its own jolt, sound and flash when it lands
+    const lands = acts.some((x) => x.do === 'strike') && tasks.length > 0;
+    if (ln.shake && !lands) {
       shake = 0.45;
       punch = 1; // the camera jolts in on the hit
     }
-    if (ln.flash) flash = 0.4;
-    if (ln.sfx) sfx(ln.sfx);
+    if (ln.flash && !lands) flash = 0.4;
+    if (ln.sfx && !lands) sfx(ln.sfx);
   };
-  const reapplyPoses = () => {
+  /** Back or skip: the shot from the top, every line up to here acted out at once. */
+  const replayTo = (idx: number) => {
+    setupShot(shotIdx, true);
     const s = scene.shots[shotIdx];
-    for (const a of cast) a.pose = s.cast.find((x) => x.id === a.id)?.pose;
-    for (let k = 0; k <= lineIdx && k < s.lines.length; k++) for (const [id, p] of Object.entries(s.lines[k].poses ?? {})) {
-      const a = cast.find((c) => c.id === id);
-      if (a) a.pose = p;
+    for (let k = 0; k <= idx && k < s.lines.length; k++) {
+      const ln = s.lines[k];
+      for (const [id, p] of Object.entries(ln.poses ?? {})) {
+        const a = cast.find((c) => c.id === id);
+        if (a) a.pose = p;
+      }
+      for (const act of actsFor(ln)) makeTask(act, ln)?.instant();
     }
+    lineIdx = idx;
   };
   const back = () => {
     if (titleT > 0) return;
@@ -372,7 +577,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     } else return;
     wordsKey = '';
     shown = 1e9;
-    reapplyPoses();
+    replayTo(lineIdx);
     sfx('click');
   };
   const advance = () => {
@@ -442,7 +647,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     titleT = 0;
     setupShot(scene.shots.length - 1, true);
     lineIdx = scene.shots[shotIdx].lines.length - 1;
-    reapplyPoses();
+    replayTo(lineIdx);
     end();
   };
 
@@ -473,6 +678,8 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
 
   setupShot(0);
   nextLine();
+  // debug / automated testing hook: who is where, doing what
+  (window as unknown as { __cine?: unknown }).__cine = { get cast() { return cast.map((c) => ({ id: c.id, x: Math.round(c.x), cx: Math.round(c.cx), pose: c.pose ?? 'stand', facing: c.facing })); }, get tasks() { return tasks.length; } };
 
   const tick = (tk: Ticker) => {
     const dt = Math.min(0.05, tk.deltaMS / 1000);
@@ -508,9 +715,13 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     actorsG.clear();
     rimG.clear();
     shadowG.clear();
+    // the line's stage directions, one after another
+    while (tasks.length && !finished && titleT <= 0 && tasks[0].tick(dt)) tasks.shift();
     for (const a of cast) {
-      a.cx = ease(a.cx, a.x, dt, 2.4);
-      const walking = Math.abs(a.x - a.cx) > 1.5;
+      const sliding = a.noWalk > 0;
+      a.noWalk = Math.max(0, a.noWalk - dt);
+      a.cx = ease(a.cx, a.x, dt, sliding ? 9 : 2.4);
+      const walking = !sliding && Math.abs(a.x - a.cx) > 1.5;
       const talking = ln?.who === a.id && shown < (ln?.text.length ?? 0);
       let target: Rig;
       if (walking) {

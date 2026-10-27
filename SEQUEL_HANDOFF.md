@@ -7,8 +7,18 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 6: Claude (2026-10-27)
+- **Cutscenes do what the narration says.** Riley's example: "He takes off his blazer... steps into the cage" / "One
+  punch... The heckler does" had everyone standing still. Now 1ton's jacket comes off, he walks up, throws it, and the
+  heckler is knocked back onto the floor. The narration reader (`src/ui/sequel/stage.ts`) covers every story scene and
+  the tapes; key fights have hand-written `act` lines. About 40 narrated lines now act; most of the rest are mood.
+- Old cutman corner restored (the redone one is deleted).
+
+To do: write `act` by hand for any scene where the reader is wrong or too quiet (fight intros and highlights already
+use `poses`), and props (a bucket, a mask, a belt) so "hands him the mop" shows the mop.
+
 ### Turn 5: Claude (2026-10-27)
-Riley picked nine ideas; eight are in (the map was cut):
+Riley picked nine ideas; seven are in (the map and the new corner were cut):
 - **Rivalry heat maps** (`src/sequel/rivals.ts`): grudges build from results, pressers and weigh-in face-offs; a
   grudge match sells more and pays bigger purses; the presser asks about it.
 - **Zenith counter-promotion**: Zenith books against your big nights; you get a warning and a toast.
@@ -18,13 +28,11 @@ Riley picked nine ideas; eight are in (the map was cut):
   Prince of Polanco, El Nieto for his old belt).
 - **Live crowd** in hands-on fights: signs in the rows, chants for whoever it's behind, boos when nothing happens,
   a second wind on big moments, and a lean on close rounds. Home crowd in Moncton, Zenith's crowd in the parking level.
-- **The corner, redone**: a big close-up face that swells and bleeds by zone (from where the shots landed). ENSWELL
-  strokes, ICE holds, GAUZE presses in the band, VASELINE seals; SIM gives a C. What you leave carries into the next
-  round. Ray works the corner in story fights.
+- The redone corner was built and then **removed at Riley's request**: game 1's cutman corner is back.
 - The Moncton map was built and then **removed at Riley's request** ("lowkey ass"). Don't bring it back.
 
 Left for the next turn (Riley's plan: polish, then fill out the game):
-- **Polish pass:** check the corner with a pad and on a phone; the crowd's chant timing over a full five-rounder.
+- **Polish pass:** the crowd's chant timing over a full five-rounder.
 - **Fill out:** most of the 80 parts are still only cards. Give them scenes of their own.
 
 ### Turn 4: Claude (2026-10-27)

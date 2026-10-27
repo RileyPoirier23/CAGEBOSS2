@@ -533,11 +533,14 @@ function outroBrother(save: StorySave): Cutscene {
         { who: 'ray', text: 'He signed a contract. Not a person.' },
         { who: 'rico', text: 'Walk away, old man.' },
         { who: 'ray', text: 'I have been walking away since before you could drive.' },
-        { who: null, text: 'Ray hits Duke first. A right hand, old and heavy. Duke\'s nose goes sideways. For one second the street remembers who Uncle Ray used to be.' },
+        { who: null, text: 'Ray hits Duke first. A right hand, old and heavy. Duke\'s nose goes sideways. For one second the street remembers who Uncle Ray used to be.',
+          act: [{ do: 'strike', who: 'ray', target: 'duke', pose: 'cross' }] },
         { who: 'duke', text: 'Hold him.' },
-        { who: null, text: 'Rico hits him with the payphone. Cesar catches him before he falls. Then Cesar hits him again.' },
+        { who: null, text: 'Rico hits him with the payphone. Cesar catches him before he falls. Then Cesar hits him again.',
+          act: [{ do: 'strike', who: 'rico', target: 'ray', pose: 'overhand' }, { do: 'walk', who: 'cesar', to: 'ray', gap: 26 }, { do: 'strike', who: 'cesar', target: 'ray', pose: 'hook', ko: true }] },
         { who: 'cesar', text: 'He said the old man was a loose end.' },
-        { who: null, text: 'They leave him on the pavement. The bucket rolls into the gutter. The payphone rings once and stops.' },
+        { who: null, text: 'They leave him on the pavement. The bucket rolls into the gutter. The payphone rings once and stops.',
+          act: [{ do: 'exit', who: 'duke', side: 'right' }, { do: 'exit', who: 'rico', side: 'right' }, { do: 'exit', who: 'cesar', side: 'right' }] },
         { who: 'ray', text: 'Tell him... tell the kid the soup is off.' },
       ], 'THE STREET  /  11:41 PM'),
       shot('street', [han(save, 165, 1), ray(300, 1, { pose: 'down' }), dane(80, 1)], [
@@ -1277,8 +1280,8 @@ export function talkScene(save: StorySave): Cutscene | null {
           { ...shot('gym', [npc('ray87', 'RAY, 1987', 180, 1, { look: RAY_1987, pose: 'guard' }), npc('butch', 'BUTCH', 300, -1, { look: BUTCH_1987, pose: 'guard' })], [
             { who: null, text: 'Moncton Coliseum. Three thousand people. A thirty-three-year-old electrician with a right hand and a wife in the third row.' },
             { who: 'ray87', text: 'Marie! MARIE! Third round, I promise!', poses: { ray87: 'pointUp' } },
-            { who: null, text: 'Butch, mullet and all, hits him with a left hook he never saw.', shake: true, sfx: 'punch', poses: { ray87: 'rocked', butch: 'leadHook' } },
-            { who: null, text: 'Ray gets up at nine. Loses on the cards. Marie meets him at the bus with two bowls of soup in a thermos.', poses: { ray87: 'headDown', butch: 'stand' } },
+            { who: null, text: 'Butch, mullet and all, hits him with a left hook he never saw.', shake: true, sfx: 'punch', act: [{ do: 'strike', who: 'butch', target: 'ray87', pose: 'leadHook', ko: true }] },
+            { who: null, text: 'Ray gets up at nine. Loses on the cards. Marie meets him at the bus with two bowls of soup in a thermos.', poses: { ray87: 'headDown', butch: 'stand' }, act: [] },
           ], '1987  /  GOLDEN GLOVES FINAL'), flashback: true },
           shot('gym', [ray(180, 1), oneton(300, -1)], [
             { who: 'ray', text: 'She said, "A gym should feed people, not just hit them." Six months later we opened this place.' },

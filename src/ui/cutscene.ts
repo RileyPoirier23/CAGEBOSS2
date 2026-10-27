@@ -16,6 +16,7 @@ import { input } from '../core/input';
 import { sfx } from '../audio/sfx';
 import { drawShow, showLabels, type TvShow } from './tvshows';
 import { isTouchDevice } from '../core/platform';
+import type { StageAct } from './sequel/stage';
 
 export type Bg = 'gym' | 'tv' | 'street' | 'bingo' | 'hotel' | 'locker' | 'office' | 'presser' | 'stage' | 'cage' | 'lot' | 'booth' | 'landlord' | 'black'
   | 'warehouse' | 'roof' | 'zenith' | 'hospital' | 'lucha';
@@ -43,6 +44,8 @@ export interface Line {
   shake?: boolean;
   flash?: boolean;
   sfx?: 'punch' | 'thud' | 'roar' | 'crowd' | 'bell' | 'snap' | 'click' | 'cash' | 'whoosh';
+  /** CAGE BOSS II: what the actors do on this line (CINE II reads narration for it when this is left out; [] = nothing) */
+  act?: StageAct[];
 }
 export interface Shot {
   bg: Bg;

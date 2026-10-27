@@ -46,7 +46,6 @@ import type { GamePlan } from '../sim/fight';
 import { openCorner } from './cutman';
 import { openFightLab } from './scenes/fightlab';
 import { isII } from './theme';
-import { openCorner2 } from './sequel/corner2';
 
 export interface LiveFightOpts {
   bout: Bout;
@@ -75,8 +74,6 @@ export interface LiveFightOpts {
   refLook?: Look2;
   /** CAGE BOSS II's live crowd: who the building came to see, its signs and chants (false: an empty room) */
   crowd?: { home?: Side | -1; signs?: string[]; chants?: [string, string] } | false;
-  /** CAGE BOSS II: who works your corner between rounds (Ray, in the story) */
-  cutman?: string;
   done: (r: FightResult) => void;
 }
 
@@ -1101,8 +1098,7 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
       freeze = 1.4;
       arena.showCallout(`ROUND ${L.round}`);
     };
-    if (L.rules.face) openCorner2(g, { f, L, side: P, tier: o.cutTier, round: L.round, coach: rep.coach, scoreGuess: rep.scoreGuess, cutman: o.cutman, done: after });
-    else openCorner(g, f, rep, o.cutTier, L.round, after);
+    openCorner(g, f, rep, o.cutTier, L.round, after);
   };
 
   const scoreGuess = (): string => {

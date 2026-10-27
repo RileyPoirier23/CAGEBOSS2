@@ -174,10 +174,15 @@ storylines. Original characters (1ton, the crew, Zenith) can.
   the side it's behind, and a close round (diff < 3) leans its way on the cards (`rcrowd`). `livefight.ts` turns it
   on for II (not at Ray's, not in a lot) and draws signs and chants (`arena.setSigns`, `arena.crowdChant`). Pass
   `crowd: { home, signs, chants }` on `openLiveFight`; venues say `crowd: 'home' | 'away'` (`venueCrowd`).
-- **The face and the corner (II):** `LiveRules.face`: `L.face[side]` tracks swelling, cut and seal for six zones
-  (brows, eyes, nose, mouth) from where shots land (`faceHit`, its own RNG so game 1 fights don't change). A swollen
-  spot takes more, a swollen nose breathes worse. Between rounds `src/ui/sequel/corner2.ts` (ENSWELL, ICE, GAUZE,
-  VASELINE; SIM = C) works it and sets `faceWorked`; the CPU's corner is the automatic version in `nextRound`.
+- **The face (II):** `LiveRules.face`: `L.face[side]` tracks swelling and cuts for six zones from where shots land
+  (`faceHit`, its own RNG). A swollen spot takes more, a swollen nose breathes worse, and `nextRound` brings it down by
+  the corner's aid. **The corner is game 1's cutman** (`src/ui/cutman.ts`): Riley had the redone one removed.
+- **Cutscenes act out their narration (CINE II):** `src/ui/sequel/stage.ts` reads a narrated line (`who: null`) for
+  stage directions (walk up, strike with a knockdown, exit, sit, kneel, hug, handshake, hand over, take off a jacket,
+  point, look down...) and `cine.ts` plays them as tasks, with the hit's shake and sound landing on the impact. Write
+  `act: [...]` on a line to say exactly what happens (key scenes do: Ray's last stand, the 1987 left hook); `act: []`
+  turns the reading off. Lines with `poses` are left alone. **When you write narration, write what we can see**, and
+  check it plays (`window.__cine.cast` shows who is where). `tests/stage.test.ts` covers the reader.
 - **Scenes and refresh:** `Scene.refresh()` destroys the root's children. A Graphics kept on a field must be made
   new in `build()`, or the next refresh re-adds a destroyed object (pointer events then crash).
 

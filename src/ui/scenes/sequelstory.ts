@@ -387,7 +387,7 @@ export class SequelStoryHubScene extends Scene {
         plan: 'balanced', oppPlan: 'balanced', cutTier: 3, seed,
         event: def.venue, judges: ['Lenny Pratt', 'Marla Cross', 'Dexter Bell'], referee: where.referee,
         canvas: where.canvas, refLook: where.refLook, bare: where.bare,
-        rules: { moves: { 0: movesOf(save, def.player === 'oneton' ? 'oneton' : 'corner') } }, crowd: venueCrowd(where), cutman: 'RAY',
+        rules: { moves: { 0: movesOf(save, def.player === 'oneton' ? 'oneton' : 'corner') } }, crowd: venueCrowd(where),
         done: (r) => this.afterStoryFight(save, def, player.id, opponent.id, r),
       });
     });
