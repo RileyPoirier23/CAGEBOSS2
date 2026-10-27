@@ -772,7 +772,7 @@ function baseFighter(id: string, division: string, tier: 'prospect' | 'journeyma
 }
 
 /** A generated body with an authored face, name and set of numbers on top. */
-function authored(
+export function authored(
   id: string,
   division: string,
   tier: 'prospect' | 'journeyman' | 'gatekeeper' | 'contender' | 'elite',
@@ -1392,6 +1392,28 @@ function buildGuest(save: StorySave, key: string): Fighter | null {
   });
   f.gym = key === 'tyler' ? "Ray's Boxing & Soup (now)" : key === 'spadam' ? 'Beast Mode Kickboxing' : f.gym;
   return f;
+}
+
+/** RAY, 1987 (the notebook's reward): Ray at thirty-three, an electrician with a right hand. */
+export function buildRay1987(): Fighter {
+  const f = authored('ray_1987', 'middle', 'contender', {
+    first: 'Ray', last: 'Tibodeau', nick: 'The Electrician', country: 'Canada', hometown: 'Moncton, New Brunswick', age: 33, height: 180, reach: 183,
+    skills: { striking: 80, power: 86, wrestling: 40, grappling: 38, cardio: 78, chin: 84, fightIQ: 74, durability: 82, heart: 99, weightCut: 50 },
+    styles: ['Pressure Striker', 'Brawler'], traits: ['Loyal', 'Hungry'], record: { w: 19, l: 2, d: 0, nc: 0 },
+    look: { skin: 1, hair: 3, hairColor: 2, beard: 1, brows: 1, nose: 2, ears: 1, scar: 1, tattoo: 0, build: 1 },
+  });
+  f.gym = 'Moncton Boys and Girls Club';
+  return f;
+}
+
+/** Butch, 1987: the left hook and the mullet. */
+export function buildButch1987(): Fighter {
+  return authored('butch_1987', 'middle', 'contender', {
+    first: 'Butch', last: 'Comeau', nick: 'The Mullet', country: 'Canada', hometown: 'Dieppe, New Brunswick', age: 27, height: 182, reach: 186,
+    skills: { striking: 84, power: 82, wrestling: 42, grappling: 40, cardio: 82, chin: 80, fightIQ: 78, durability: 80, heart: 85, weightCut: 50 },
+    styles: ['Counter Striker'], traits: ['Showman'], record: { w: 22, l: 1, d: 0, nc: 0 },
+    look: { skin: 1, hair: 10, hairColor: 3, beard: 2, brows: 1, nose: 0, ears: 0, scar: 0, tattoo: 0, build: 1 },
+  });
 }
 
 export function buildOpponent(save: StorySave, key: string): Fighter {

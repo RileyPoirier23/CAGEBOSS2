@@ -8,7 +8,8 @@ import { lookFor } from '../src/ui/rig';
 import { isWomensDivision, presentedGender } from '../src/sim/fighters';
 import { DIVISION_ORDER } from '../src/sim/divisions';
 import { newSequelRun } from '../src/sequel/model';
-import { STORY_CHAPTERS, buildOneTon, buildHan, buildMateoGrown, buildOpponent, chapterFights, newStorySave } from '../src/sequel/story';
+import { STORY_CHAPTERS, buildOneTon, buildHan, buildMateoGrown, buildOpponent, buildRay1987, buildButch1987, chapterFights, newStorySave } from '../src/sequel/story';
+import { TAPES, tapeFighter } from '../src/sequel/tapes';
 import type { Fighter } from '../src/core/types';
 
 const check = (where: string, f: Fighter) => {
@@ -47,5 +48,8 @@ describe('who wears a top', () => {
     check('story', buildHan(save, true));
     check('story', buildMateoGrown(save));
     for (const def of STORY_CHAPTERS.flatMap((c) => chapterFights(c))) check(`story ${def.id}`, buildOpponent(save, def.opponent));
+    check('1987', buildRay1987());
+    check('1987', buildButch1987());
+    for (const t of TAPES) for (const st of t.steps) if (st.kind === 'fight') for (const k of [st.player, st.opponent]) check(`tape ${t.id}`, tapeFighter(k));
   });
 });

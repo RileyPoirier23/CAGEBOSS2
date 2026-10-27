@@ -38,7 +38,8 @@ import {
 } from '../../sequel/story';
 import { beatScene, chapterIntro, chapterOutro, fightHighlight, fightIntro, partScene, partTitle, storyEndingScene, talkScene } from './storycuts';
 import { newStorySave } from '../../sequel/story';
-import { readStory, writeStory, addStoryTrophy, forgetStory } from '../../sequel/storysession';
+import { readStory, writeStory, addStoryTrophy, forgetStory, takeNewPages } from '../../sequel/storysession';
+import { openNotebook } from '../sequel/notebookui';
 import { newSlot, listSlots } from '../../sequel/slots';
 import type { StorySave } from '../../sequel/types';
 import { StoryEndScene } from './storyend';
@@ -239,6 +240,9 @@ export class SequelStoryHubScene extends Scene {
     r.addChild(button('MENU', 6, 232, 34, 10, () => {
       void import('./sequel').then((m) => this.g.goto(new m.SequelTitleScene(this.g)));
     }, { small: true, fill: PAL.shadow }));
+    r.addChild(button('NOTEBOOK', 88, 232, 50, 10, () => openNotebook(this.g), { small: true, fill: PAL.shadow, border: PAL.gold }));
+    // a page of Ray's notebook filled in since the last look
+    for (const title of takeNewPages()) setTimeout(() => this.g.toast(`RAY'S NOTEBOOK: NEW PAGE  /  ${title}`, PAL.gold), 600);
     r.addChild(button('PHONE', 44, 232, 40, 10, () => openPhone(this.g, ownerForStory(save), () => writeStory(save), () => this.refresh()), { small: true, fill: PAL.blood, border: PAL.gold }));
     void gap;
   }

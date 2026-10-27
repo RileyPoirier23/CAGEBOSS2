@@ -26,6 +26,12 @@ export function storyVenue(venue: string): StoryVenue {
     // no cage, no ring: a lot behind a building, and Bradie filming it on his phone
     return { canvas: { style: 'bk', room: v.includes('LOADING BAY') ? 'hangar' : 'lot', enclosure: 'none' }, referee: 'Bradie (filming it)', refLook: CAST.bradie, bare: true };
   }
+  if (v.includes('GUADALAJARA')) {
+    return { canvas: { style: 'regional', room: 'hall', logo: 'ARENA GUADALAJARA', accent: 0x1e7a3c }, referee: 'Don Chuy', refLook: CAST.ray };
+  }
+  if (v.includes('BARN')) {
+    return { canvas: { style: 'local', room: 'barn', logo: 'ALLSTAR FC', accent: 0xc8a040 }, referee: "Commissioner Pete's owner" };
+  }
   if (v.includes('PARKING LEVEL')) {
     return { canvas: { style: 'regional', room: 'lot', logo: 'ZENITH' }, referee: 'a Zenith compliance officer', refLook: CAST.auditor };
   }

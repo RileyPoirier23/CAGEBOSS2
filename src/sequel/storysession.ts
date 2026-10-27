@@ -3,6 +3,7 @@ import { loadJSON, storeJSON } from '../core/save';
 import { STORY_VERSION, type StorySave, type StoryTrophy } from './types';
 import { STORY_ENDINGS, migrateStorySave, storyChapter } from './story';
 import { activeSlot, slotKey, touchSlot } from './slots';
+import { unlockPages } from './notebook';
 
 export const STORY_KEY = 'cageboss2.story';
 export const STORY_TROPHY_KEY = 'cageboss2.story.trophies';
@@ -32,8 +33,17 @@ export function hasStory(): boolean {
   return !!readStory();
 }
 
+/** Notebook pages unlocked since the screen last asked (it toasts them). */
+let freshPages: string[] = [];
+export function takeNewPages(): string[] {
+  const out = freshPages;
+  freshPages = [];
+  return out;
+}
+
 export function writeStory(save: StorySave): void {
   current = save;
+  freshPages.push(...unlockPages(save).map((p) => p.title));
   const slot = activeSlot('story');
   if (!slot) return;
   storeJSON(slotKey('story', slot.id), save);

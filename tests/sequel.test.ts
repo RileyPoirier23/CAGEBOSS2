@@ -624,3 +624,26 @@ describe('grudges, Zenith nights and the broadcast', () => {
     expect(rateBroadcast(run, { booth: 'chaos', camera: 'side', replay: 0, cut: 'highlights' }).viewers).toBeGreaterThan(0);
   });
 });
+
+describe("Ray's notebook and the Legacy Tapes", () => {
+  it('fills pages from what the story has done, and unlocks tapes from pages', async () => {
+    setStorage(memoryKV());
+    const { unlockPages, notebookPages, PAGES, notebookComplete } = await import('../src/sequel/notebook');
+    const { TAPES, tapeUnlocked, tapeFighter } = await import('../src/sequel/tapes');
+    const save = newStorySave(71);
+    expect(unlockPages(save)).toEqual([]);
+    save.flags.beat_first_day = true;
+    save.flags.beat_xavier_league = true;
+    expect(unlockPages(save).map((p) => p.id).sort()).toEqual(['first_day', 'xavier']);
+    expect(notebookPages()).toContain('xavier');
+    expect(tapeUnlocked(TAPES.find((t) => t.id === 'xavier')!, false)).toBe(true);
+    expect(tapeUnlocked(TAPES.find((t) => t.id === 'alberto')!, false)).toBe(false);
+    expect(notebookComplete()).toBe(false);
+    expect(PAGES.length).toBeGreaterThanOrEqual(16);
+    // every fighter a tape books is real, and every scene's cast exists
+    for (const t of TAPES) for (const s of t.steps) {
+      if (s.kind === 'fight') for (const k of [s.player, s.opponent]) expect(tapeFighter(k).first, `${t.id} ${k}`).toBeTruthy();
+      else for (const a of s.cast) if (a.fighter) expect(tapeFighter(a.fighter).id).toBeTruthy();
+    }
+  });
+});

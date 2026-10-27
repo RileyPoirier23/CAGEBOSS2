@@ -4,6 +4,7 @@
  * LEGACY (new save, load save, and a sandbox once you've finished the story).
  */
 import { maybeLesson2 } from '../sequel/tutorial2';
+import { PAGES, notebookPages } from '../../sequel/notebook';
 import { Container, Graphics } from 'pixi.js';
 import { Scene, type Game } from '../app';
 import { H, SW, OX, text, button, ScrollBox } from '../kit';
@@ -174,6 +175,8 @@ export class LegacyMenuScene extends MenuScene {
     return [
       ['NEW SAVE', () => newSaveFlow(this.g, 'story', false), II.blood],
       ['LOAD SAVE', () => (has ? openSaves(this.g, 'story') : alertBox(this.g, 'No saves', 'No Tales of Legacy saves yet. Start one.'))],
+      [`RAY'S NOTEBOOK (${notebookPages().length}/${PAGES.length})`, () => void import('../sequel/notebookui').then((m) => m.openNotebook(this.g))],
+      ['LEGACY TAPES', () => void import('../sequel/tapesui').then((m) => m.openTapes(this.g))],
       [finished ? 'SANDBOX SAVE' : 'SANDBOX (FINISH THE STORY)', () => (finished ? sandboxStory(this.g) : alertBox(this.g, 'Locked', 'Finish the story once and the sandbox opens: start any chapter, replay any fight.')), finished ? undefined : 0x1a161e],
     ];
   }
