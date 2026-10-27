@@ -376,7 +376,7 @@ export const PART_LINES: Record<string, (L[] | null)[]> = {
   the_signing: [
     [
       ['zenith', 'Sign here. And here. And initial here, here and here.'],
-      [null, 'He signs every page with the gold pen. He does not read them. He has read them already. Twice.', [{ do: 'pose', who: 'oneton', pose: 'headDown' }]],
+      [null, 'He signs every page with the gold pen. He does not read them. He has read them already. Twice.', [{ do: 'prop', who: 'oneton', prop: 'pen' }, { do: 'pose', who: 'oneton', pose: 'headDown' }]],
       ['zenith', 'Keep the pen.'],
       ['oneton', 'I was going to.'],
       ['zenith', 'You will be a main event every month. Your question, answered. Every month.'],
@@ -451,7 +451,7 @@ export const PART_LINES: Record<string, (L[] | null)[]> = {
       ['oneton', 'Ask me after.'],
     ],
     [
-      [null, 'The loading dock behind the Old Dome. Ray has his bucket. He has his cardigan. He does not have anybody with him.', [{ do: 'walk', who: 'ray', x: 300 }]],
+      [null, 'The loading dock behind the Old Dome. Ray has his bucket. He has his cardigan. He does not have anybody with him.', [{ do: 'prop', who: 'ray', prop: 'bucket' }, { do: 'walk', who: 'ray', x: 300 }]],
       ['ray', 'Hello? Gordo\'s friends? I brought soup.'],
       [null, 'Nobody answers. Somewhere, a payphone is ringing. Ray goes to find out who is calling.', [{ do: 'exit', who: 'ray', side: 'right' }]],
     ],
@@ -459,7 +459,7 @@ export const PART_LINES: Record<string, (L[] | null)[]> = {
   the_wake: [
     [
       ['han', 'Uncle Ray would want me to keep this short.'],
-      [null, 'He looks down at the back of the menu. Four hundred people with bowls of soup wait.', [{ do: 'pose', who: 'han', pose: 'headDown' }]],
+      [null, 'He looks down at the back of the menu. Four hundred people with bowls of soup wait.', [{ do: 'prop', who: 'han', prop: 'paper' }, { do: 'pose', who: 'han', pose: 'headDown' }]],
       ['han', 'He fed you. That is it. That is the eulogy. He fed every single one of you.'],
       ['tyler', 'He fed me when my father would not.'],
       ['mateo', 'He fed me when I did not have a father.'],
@@ -493,7 +493,7 @@ export const PART_LINES: Record<string, (L[] | null)[]> = {
     [
       ['zac', 'The police have the names.'],
       ['han', 'And nothing to charge them with.'],
-      [null, 'Han writes three names on a napkin. Duke. Rico. Cesar. He pins it over the heavy bag, under the photo that says OUR KID WON.', [{ do: 'pose', who: 'han', pose: 'headDown' }]],
+      [null, 'Han writes three names on a napkin. Duke. Rico. Cesar. He pins it over the heavy bag, under the photo that says OUR KID WON.', [{ do: 'prop', who: 'han', prop: 'paper' }, { do: 'pose', who: 'han', pose: 'headDown' }]],
       ['zac', 'Ray would not want this.'],
       ['han', 'Ray is not here, Zac.'],
       ['mateo', 'Then we do it the way he would have. In a ring. With a referee. In front of everybody.'],
@@ -525,7 +525,7 @@ export const PART_LINES: Record<string, (L[] | null)[]> = {
       ['mateo', 'Then I take Cesar.'],
       ['han', 'You are twenty-one.'],
       ['mateo', 'I am two hundred and five pounds and I have been holding his bucket since I was twelve.'],
-      [null, 'Mateo picks up Ray\'s bucket and carries it into the loading bay himself.', [{ do: 'exit', who: 'mateo', side: 'right' }]],
+      [null, 'Mateo picks up Ray\'s bucket and carries it into the loading bay himself.', [{ do: 'prop', who: 'mateo', prop: 'bucket' }, { do: 'exit', who: 'mateo', side: 'right' }]],
     ],
   ],
   the_camp: [
@@ -575,7 +575,7 @@ export const PART_LINES: Record<string, (L[] | null)[]> = {
     [
       ['zenith', 'Fourteen pages. You will want a lawyer.'],
       ['dane', 'I will want to read it.'],
-      [null, 'He reads every word. It takes an hour. Verity checks her watch eleven times.', [{ do: 'pose', who: 'dane', pose: 'headDown' }]],
+      [null, 'He reads every word. It takes an hour. Verity checks her watch eleven times.', [{ do: 'prop', who: 'dane', prop: 'paper' }, { do: 'pose', who: 'dane', pose: 'headDown' }]],
       ['dane', 'Clause nine. The company goes to whoever holds the light heavyweight belt at the end of the night.'],
       ['zenith', 'Your boy against our boy.'],
       ['dane', 'They are both my boys, Verity. You just bought one of them.'],
@@ -588,14 +588,14 @@ export const PART_LINES: Record<string, (L[] | null)[]> = {
       ['xavier', 'The goat has never missed a big fight, Dane.'],
     ],
     [
-      [null, 'Ray\'s bucket, in the red corner. Han sets it down like it is made of glass.', [{ do: 'prop', who: 'han', prop: 'bucket' }, { do: 'pose', who: 'han', pose: 'kneel' }]],
+      [null, 'Ray\'s bucket, in the red corner. Han sets it down like it is made of glass.', [{ do: 'prop', who: 'han', prop: 'bucket' }, { do: 'pose', who: 'han', pose: 'kneel' }, { do: 'drop', who: 'han' }]],
       ['mateo', 'It smells like onions.'],
       ['han', 'It always did. He used to bring soup in it when nobody was looking.'],
       ['mateo', 'Everybody was always looking.'],
       ['han', 'He knew.'],
     ],
     [
-      [null, 'The walk. Han behind him on crutches. The bucket in Tyler\'s hand. The tape on Mateo\'s knuckles, the last of Ray\'s roll.', [{ do: 'walk', who: 'mateo', x: 300 }]],
+      [null, 'The walk. Han behind him on crutches. The bucket in Tyler\'s hand. The tape on Mateo\'s knuckles, the last of Ray\'s roll.', [{ do: 'prop', who: 'han', prop: 'crutches' }, { do: 'walk', who: 'mateo', x: 300 }]],
       ['han', 'Hands up.'],
       ['mateo', 'Chin down.'],
       ['han', 'And when it is over...'],

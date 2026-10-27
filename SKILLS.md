@@ -185,10 +185,13 @@ storylines. Original characters (1ton, the crew, Zenith) can.
   check it plays (`window.__cine.cast` shows who is where). `tests/stage.test.ts` covers the reader.
 - **Part scenes:** `PART_LINES` in `src/ui/scenes/partlines.ts` (rows of `[who, text, act?]`), played after the part
   card by `partScene`. Who has to be in that part's `who` list (verity is `zenith`, bigmateo is `mateo`).
-- **Props in cutscenes:** `{ do: 'prop', who, prop }`, or `meet` with `prop` to hand it over (`Prop` in `stage.ts`).
+- **Props in cutscenes:** `{ do: 'prop', who, prop }` (leave `prop` out to put it away), `meet` with `prop` to hand it
+  over, `{ do: 'drop', who }` to set it on the floor for the rest of the shot (`Prop` in `stage.ts`, drawn by `drawProp`
+  in `cine.ts`).
 - **Story levels:** `xpForLevel(lv)` / `levelForXp(xp)` in `story.ts` (rising cost; don't divide by XP_PER_LEVEL).
 - **Custom fighters:** `src/sequel/custom.ts` (`loadCustomFighters`, `offerCustomFighters`).
 - **Icons:** `build/icon-sequel.*` from `tools/make-sequel-icon.mjs`; game 1 keeps `build/icon.*`.
+- **Windows build:** `npm run dist:sequel:win` (see `tools/dist-sequel-win.mjs`; Electron comes from `.electron-dist/`).
 - **Scenes and refresh:** `Scene.refresh()` destroys the root's children. A Graphics kept on a field must be made
   new in `build()`, or the next refresh re-adds a destroyed object (pointer events then crash).
 

@@ -94,52 +94,105 @@ function alive(r: Rig, t: number, ph: number, talking: boolean, standing: boolea
   return o;
 }
 
-/** A thing in a hand, drawn at the hand (x, y), facing the way he faces. */
-function drawProp(g: Graphics, p: Prop, x: number, y: number, f: 1 | -1, t: number): void {
-  const X = (dx: number) => x + dx * f;
+/** A thing in a hand (or on the floor), drawn at (x, y) facing the way he faces: outlined, lit from above. */
+function drawProp(g: Graphics, p: Prop, x: number, y: number, f: 1 | -1, t: number, floor = false): void {
+  const X = (dx: number) => Math.round(x + dx * f);
+  const L = (a: number, b: number) => Math.min(X(a), X(b));
+  const INK = 0x0a0608;
+  const box = (dx0: number, dx1: number, y0: number, h: number, c: number, hi?: number) => {
+    const w = Math.abs(dx1 - dx0);
+    g.rect(L(dx0, dx1) - 1, y0 - 1, w + 2, h + 2).fill(INK).rect(L(dx0, dx1), y0, w, h).fill(c);
+    if (hi !== undefined) g.rect(L(dx0, dx1), y0, w, 1).fill(hi);
+  };
   switch (p) {
-    case 'bowl':
-      g.poly([X(-6), y - 2, X(6), y - 2, X(4), y + 3, X(-4), y + 3]).fill(0xd8c8a8).rect(Math.min(X(-6), X(6)), y - 3, 12, 1).fill(0x8a5a2a);
-      for (let k = 0; k < 2; k++) g.rect(X(-2 + k * 3) + Math.sin(t * 3 + k) * 1.2, y - 8 - k * 2, 1, 3).fill({ color: 0xffffff, alpha: 0.35 });
-      break;
-    case 'pot':
-      g.rect(Math.min(X(-8), X(8)), y - 4, 16, 10).fill(0x8a8a90).rect(Math.min(X(-9), X(9)), y - 5, 18, 2).fill(0xb0b0b8);
-      break;
-    case 'mop':
-      g.rect(X(0), y - 40, 1.5, 58).fill(0xb08a5a).rect(Math.min(X(-5), X(5)), y + 16, 10, 5).fill(0xd8d0b8);
-      break;
-    case 'bucket':
-      g.poly([X(-6), y + 2, X(6), y + 2, X(5), y + 14, X(-5), y + 14]).fill(0x9aa0a8).rect(Math.min(X(-6), X(6)), y + 2, 12, 1).fill(0xd0d4d8);
-      g.moveTo(X(-6), y + 2).lineTo(X(0), y - 3).lineTo(X(6), y + 2).stroke({ color: 0x5a5a60, width: 1 });
-      break;
-    case 'belt':
-      g.rect(Math.min(X(-14), X(14)), y - 2, 28, 4).fill(0x2a1a10).ellipse(X(0), y, 7, 5).fill(0xe8c040).ellipse(X(0), y, 4, 3).fill(0xfff0a0);
-      break;
-    case 'card': case 'envelope': case 'paper': case 'photo': {
-      const c = p === 'envelope' ? 0xd8b040 : p === 'card' ? 0x141414 : p === 'photo' ? 0xc8c0b0 : 0xf0ece0;
-      g.rect(Math.min(X(-1), X(8)), y - 6, p === 'paper' ? 7 : 9, p === 'paper' ? 9 : 6).fill(c).stroke({ color: 0x2a2420, width: 0.5 });
+    case 'bowl': {
+      // a soup bowl: rim, the soup, steam curling up
+      g.poly([X(-7), y - 3, X(7), y - 3, X(5), y + 3, X(-5), y + 3]).fill(INK);
+      g.poly([X(-6), y - 2, X(6), y - 2, X(4), y + 2, X(-4), y + 2]).fill(0xe0d4b8);
+      g.rect(L(-5, 5), y - 2, 10, 1).fill(0xc87a2a).rect(L(-4, 4), y + 1, 8, 1).fill(0xb8a888);
+      for (let k = 0; k < 3; k++) {
+        const sy = y - 5 - ((t * 9 + k * 4) % 10);
+        g.rect(X(-3 + k * 3) + Math.round(Math.sin(t * 3 + k * 2) * 1.5), Math.round(sy), 1, 2).fill({ color: 0xffffff, alpha: 0.4 * (1 - ((t * 9 + k * 4) % 10) / 10) });
+      }
       break;
     }
-    case 'notebook': case 'clipboard':
-      g.rect(Math.min(X(-1), X(8)), y - 8, 8, 10).fill(p === 'clipboard' ? 0x8a6a40 : 0x3a2a20).rect(Math.min(X(0), X(7)), y - 7, 6, 8).fill(0xe8e4d8);
+    case 'pot':
+      box(-9, 9, y - 6, 11, 0x8a8a92, 0xc0c0c8);
+      g.rect(L(-11, -9), y - 4, 2, 2).fill(INK).rect(L(9, 11), y - 4, 2, 2).fill(INK);
       break;
+    case 'mop':
+      // the handle runs from above the hand down to the floor; the head is a grey tangle
+      g.rect(X(0) - 1, y - 38, 3, 56).fill(INK).rect(X(0), y - 37, 1, 54).fill(0xc09a6a);
+      for (let k = -6; k <= 6; k++) g.rect(X(k), y + 16, 1, 5 + ((k * 7 + 3) % 3)).fill(k % 2 ? 0xb8b0a0 : 0xd8d0c0);
+      g.rect(L(-6, 6), y + 15, 12, 2).fill(0x6a6058);
+      break;
+    case 'bucket': {
+      const top = floor ? y - 12 : y + 2;
+      g.poly([X(-7), top - 1, X(7), top - 1, X(6), top + 13, X(-6), top + 13]).fill(INK);
+      g.poly([X(-6), top, X(6), top, X(5), top + 12, X(-5), top + 12]).fill(0xa8aeb6);
+      g.rect(L(-6, 6), top, 12, 1).fill(0xe0e4e8).rect(L(-5, 5), top + 5, 10, 1).fill(0x8a9098).rect(L(-5, 5), top + 9, 10, 1).fill(0x8a9098);
+      g.moveTo(X(-6), top).lineTo(X(0), top - 6).lineTo(X(6), top).stroke({ color: 0x3a3a40, width: 1 });
+      break;
+    }
+    case 'belt': {
+      // leather strap, a gold plate with a red jewel
+      g.rect(L(-16, 16), y - 3, 32, 6).fill(INK).rect(L(-15, 15), y - 2, 30, 4).fill(0x3a2214);
+      g.ellipse(X(0), y, 8, 6).fill(INK).ellipse(X(0), y, 7, 5).fill(0xd8a830).ellipse(X(0), y - 1, 5, 3).fill(0xf8e070).circle(X(0), y, 1.5).fill(0xc4202c);
+      g.rect(L(-12, -9), y - 2, 3, 4).fill(0xd8a830).rect(L(9, 12), y - 2, 3, 4).fill(0xd8a830);
+      break;
+    }
+    case 'card':
+      box(-1, 9, y - 7, 6, 0x141414, 0x4a4a50);
+      g.rect(L(1, 7), y - 5, 4, 1).fill(0xd8b040);
+      break;
+    case 'envelope':
+      box(-1, 10, y - 7, 7, 0xd8b040, 0xf0d070);
+      g.moveTo(X(-1), y - 7).lineTo(X(4.5), y - 3).lineTo(X(10), y - 7).stroke({ color: 0x8a6a20, width: 1 });
+      break;
+    case 'paper':
+      box(0, 8, y - 9, 10, 0xf0ece0);
+      for (let k = 0; k < 4; k++) g.rect(L(1, 7), y - 7 + k * 2, 5, 1).fill(0x9a9488);
+      break;
+    case 'photo':
+      box(-1, 9, y - 8, 7, 0xe8e0d0);
+      g.rect(L(0, 8), y - 7, 7, 5).fill(0x7a6a58).rect(L(2, 4), y - 6, 2, 3).fill(0xc8a888);
+      break;
+    case 'notebook': case 'clipboard': {
+      const c = p === 'clipboard' ? 0x8a6a40 : 0x3a2a20;
+      box(-1, 8, y - 10, 11, c);
+      g.rect(L(0, 7), y - 9, 6, 9).fill(0xe8e4d8);
+      for (let k = 0; k < 3; k++) g.rect(L(1, 6), y - 7 + k * 2, 4, 1).fill(0x8a8478);
+      if (p === 'clipboard') g.rect(L(2, 5), y - 11, 3, 2).fill(0xb0b0b8);
+      break;
+    }
     case 'mask':
-      g.ellipse(X(3), y - 3, 5, 6).fill(0xc4202c).rect(Math.min(X(0), X(6)), y - 5, 6, 2).fill(0xd8d8e0);
+      g.ellipse(X(3), y - 4, 6, 7).fill(INK).ellipse(X(3), y - 4, 5, 6).fill(0xc4202c);
+      g.rect(L(0, 6), y - 6, 7, 2).fill(0xe0e0e8).rect(L(1, 2), y - 5, 1, 1).fill(INK).rect(L(4, 5), y - 5, 1, 1).fill(INK);
+      g.moveTo(X(3), y - 11).lineTo(X(3), y + 2).stroke({ color: 0xe0e0e8, width: 1 });
       break;
     case 'phone':
-      g.rect(Math.min(X(0), X(4)), y - 7, 4, 7).fill(0x101014).rect(Math.min(X(0.5), X(3.5)), y - 6, 3, 5).fill(0x4a7ab0);
+      box(0, 4, y - 8, 8, 0x101014);
+      g.rect(L(1, 3), y - 7, 2, 5).fill(0x5a8ac0);
       break;
     case 'mic':
-      g.rect(X(0), y - 6, 1.5, 7).fill(0x202024).circle(X(0.7), y - 7, 2).fill(0x5a5a64);
+      g.rect(X(0) - 1, y - 6, 3, 8).fill(INK).rect(X(0), y - 5, 1, 6).fill(0x2a2a30);
+      g.circle(X(0.5), y - 8, 3).fill(INK).circle(X(0.5), y - 8, 2).fill(0x8a8a94);
       break;
     case 'ladle':
-      g.rect(X(0), y - 14, 1.5, 14).fill(0xb0b0b8).ellipse(X(1), y + 1, 3, 2).fill(0xc0c0c8);
+      g.rect(X(0) - 1, y - 15, 3, 15).fill(INK).rect(X(0), y - 14, 1, 13).fill(0xc0c0c8);
+      g.ellipse(X(1), y + 1, 4, 3).fill(INK).ellipse(X(1), y + 1, 3, 2).fill(0xd0d0d8);
       break;
     case 'pen':
-      g.rect(X(0), y - 6, 1.2, 7).fill(0xe8c040);
+      g.rect(X(0) - 1, y - 7, 3, 9).fill(INK).rect(X(0), y - 6, 1, 7).fill(0xe8c040);
+      break;
+    case 'crutches':
+      for (const dx of [6, -4]) {
+        g.moveTo(X(dx), y - 6).lineTo(X(dx + 5), y + 52).stroke({ color: INK, width: 3 }).moveTo(X(dx), y - 6).lineTo(X(dx + 5), y + 52).stroke({ color: 0xb0b4bc, width: 1 });
+        g.rect(L(dx - 3, dx + 3), y - 7, 6, 2).fill(0x3a3a40);
+      }
       break;
     case 'tape':
-      g.circle(X(3), y - 2, 3).fill(0xe8e4d8).circle(X(3), y - 2, 1.2).fill(0x8a7a60);
+      g.circle(X(3), y - 3, 4).fill(INK).circle(X(3), y - 3, 3).fill(0xece8dc).circle(X(3), y - 3, 1.2).fill(0x8a7a60);
       break;
   }
 }
@@ -208,6 +261,8 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   // ------------------------------------------------------------ stage directions: what the narration says happens, happens
   let tasks: Task[] = [];
   let stageCtx: StageCtx = { speaker: null, subject: null, object: null };
+  /** things set down in this shot: they stay where they were left */
+  let floorProps: { p: Prop; x: number; f: 1 | -1 }[] = [];
   const byId = (id: string) => cast.find((c) => c.id === id);
   const clampX = (v: number) => Math.max(26, Math.min(W - 26, v));
   const sideOf = (a: Live, b: Live): 1 | -1 => (b.x >= a.x ? 1 : -1);
@@ -219,10 +274,10 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   /** Whoever is standing where he's going steps aside (nobody walks through anybody). */
   const makeRoom = (x: number, a: Live, b?: Live) => {
     for (const c of cast) {
-      if (c === a || c === b || c.pose === 'ko' || Math.abs(c.x - x) > 20) continue;
+      if (c === a || c === b || c.pose === 'ko' || Math.abs(c.x - x) > 34) continue;
       const away = c.x >= x ? 1 : -1;
-      const nx = clampX(x + away * 34);
-      c.x = Math.abs(nx - x) < 20 ? clampX(x - away * 34) : nx;
+      const nx = clampX(x + away * 50);
+      c.x = Math.abs(nx - x) < 34 ? clampX(x - away * 50) : nx;
     }
   };
   const impact = (ln: Line | undefined, ko: boolean) => {
@@ -240,6 +295,16 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
         return { tick: () => { a.pose = act.pose; return true; }, instant: () => { a.pose = act.pose; } };
       case 'prop':
         return { tick: () => { a.prop = act.prop; return true; }, instant: () => { a.prop = act.prop; } };
+      case 'drop': {
+        // set it down at his feet (it stays there for the rest of the shot)
+        const put = () => {
+          const p = act.prop ?? a.prop;
+          if (!p) return;
+          floorProps.push({ p, x: Math.round(a.x + a.facing * 24), f: a.facing });
+          if (a.prop === p) a.prop = undefined;
+        };
+        return { tick: () => { put(); return true; }, instant: put };
+      }
       case 'strip': {
         const off = () => {
           const o = a.look2.outfit;
@@ -283,6 +348,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
               started = true;
               a.pose = undefined;
               a.x = tx();
+              makeRoom(a.x, a, b ?? undefined);
               done = wait(() => arrived(a), 2.6);
             }
             const fin = done!(dt);
@@ -446,6 +512,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     });
     tasks = [];
     stageCtx = { speaker: null, subject: null, object: null };
+    floorProps = [];
     drawGrade();
     drawCaption(s.caption);
     if (!instant) fade = 1;
@@ -813,6 +880,8 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       drawRig(actorsG, r, x, FLOOR + bob, face, a.look2, sc);
       if (a.prop && a.pose !== 'ko') drawProp(actorsG, a.prop, x + r.haF[0] * face * sc, FLOOR + bob + r.haF[1] * sc, face, t);
     }
+    // what's been set down sits in front of everybody
+    for (const fp of floorProps) drawProp(actorsG, fp.p, fp.x, fp.p === 'bucket' ? FLOOR : FLOOR - 2, fp.f, t, true);
     // the long shadow, thrown away from the light
     shadowG.position.set(0, FLOOR + 1);
     shadowG.scale.set(1, -0.26);

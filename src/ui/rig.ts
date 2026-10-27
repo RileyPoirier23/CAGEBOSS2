@@ -28,7 +28,7 @@ export type Pose =
   | 'collar' | 'plum' | 'underhook' | 'clinchDef' | 'cageBack' | 'plumKnee' | 'trip' | 'falling' | 'techUp'
   | 'stand' | 'armUp' | 'headDown' | 'refHold' | 'refRaise' | 'mic' | 'point' | 'flex'
   // CAGE BOSS II's cutscenes: a hand held out at chest height (handing something over, a handshake)
-  | 'offer'
+  | 'offer' | 'laugh'
   // taunts: every fighter has his own
   | 'flipoff' | 'beckon' | 'beckon2' | 'handsDown' | 'chestPound' | 'shrug' | 'pointUp'
   // defence that reads: the head moves, the shin comes up, the kick gets caught (and its owner hops)
@@ -215,6 +215,7 @@ export const POSES: Record<Pose, Rig> = {
   point: P({ elF: [18, -68], haF: [34, -72], elB: [8, -58], haB: [6, -72], head: [5, -77] }, STAND),
   flex: P({ elF: [16, -72], haF: [12, -86], elB: [-12, -72], haB: [-8, -86], head: [2, -78] }, STAND),
   offer: P({ elF: [14, -54], haF: [26, -52], head: [4, -77] }, STAND),
+  laugh: P({ head: [-1, -79], neck: [1, -68], elF: [12, -46], haF: [7, -40], elB: [-8, -46], haB: [-1, -40] }, STAND),
   // ---- taunts
   // the bird: near hand up in his face, chin up (the finger is drawn when Look2.bird is set)
   flipoff: P({ head: [6, -78], neck: [3, -68], elF: [18, -66], haF: [25, -76], elB: [-3, -54], haB: [-2, -44] }, STAND),

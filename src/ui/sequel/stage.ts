@@ -24,15 +24,17 @@ export type StageAct =
   | { do: 'meet'; who: string; target: string; pose: Pose; both?: boolean; prop?: Prop }
   /** something in his hand (or nothing: `prop` left out) */
   | { do: 'prop'; who: string; prop?: Prop }
+  /** set it down where he stands (it stays on the floor for the rest of the shot) */
+  | { do: 'drop'; who: string; prop?: Prop }
   /** the room shakes (a fist on a table, a door slamming) */
   | { do: 'jolt' };
 
 /** What a hand can hold in a cutscene. */
-export type Prop = 'bowl' | 'mop' | 'bucket' | 'belt' | 'card' | 'envelope' | 'paper' | 'notebook' | 'clipboard' | 'mask' | 'phone' | 'mic' | 'ladle' | 'pen' | 'photo' | 'tape' | 'pot';
+export type Prop = 'bowl' | 'mop' | 'bucket' | 'belt' | 'card' | 'envelope' | 'paper' | 'notebook' | 'clipboard' | 'mask' | 'phone' | 'mic' | 'ladle' | 'pen' | 'photo' | 'tape' | 'pot' | 'crutches';
 const PROP_WORDS: [RegExp, Prop][] = [
-  [/\bbowls?\b|\bsoup\b/i, 'bowl'], [/\bmop\b/i, 'mop'], [/\bbucket\b/i, 'bucket'], [/\bbelt\b/i, 'belt'], [/\bgold envelope\b|\benvelope\b/i, 'envelope'],
+  [/\bcrutch(es)?\b/i, 'crutches'], [/\bbowls?\b|\bsoup\b/i, 'bowl'], [/\bmop\b/i, 'mop'], [/\bbucket\b/i, 'bucket'], [/\bbelt\b/i, 'belt'], [/\bgold envelope\b|\benvelope\b/i, 'envelope'],
   [/\bcard\b/i, 'card'], [/\bnotebook\b/i, 'notebook'], [/\bclipboard\b/i, 'clipboard'], [/\bmask\b/i, 'mask'], [/\bphone\b/i, 'phone'],
-  [/\bmicrophone\b|\bmic\b/i, 'mic'], [/\bladle\b/i, 'ladle'], [/\bpen\b/i, 'pen'], [/\bphoto\b/i, 'photo'], [/\btape\b/i, 'tape'], [/\bpage\b|\bpaper\b|\bcontract\b|\bletter\b|\bmenu\b|\bnapkin\b/i, 'paper'],
+  [/\bmicrophone\b|\bmic\b/i, 'mic'], [/\bthe call\b/i, 'phone'], [/\bladle\b/i, 'ladle'], [/\bpen\b/i, 'pen'], [/\bphoto\b/i, 'photo'], [/\btape\b/i, 'tape'], [/\bpage\b|\bpaper\b|\bcontract\b|\bletter\b|\bmenu\b|\bnapkin\b/i, 'paper'],
 ];
 /** The thing a sentence is about, if it's something a hand can hold. */
 export function propIn(s: string): Prop | undefined {
@@ -76,13 +78,13 @@ function tokens(a: StageActor): string[] {
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** Every actor mentioned in a stretch of text, with where ("Mateo's grandmother" is not Mateo). */
-function mentions(s: string, cast: StageActor[]): { id: string; at: number }[] {
+function mentions(s: string, cast: StageActor[], possessive = false): { id: string; at: number }[] {
   const low = s.toLowerCase();
   const out: { id: string; at: number }[] = [];
   for (const a of cast) {
     let best = -1;
     for (const tk of tokens(a)) {
-      const re = new RegExp(`(^|[^a-z0-9])${esc(tk)}(?![a-z0-9]|'s|’s)`, 'g');
+      const re = new RegExp(`(^|[^a-z0-9])${esc(tk)}(?![a-z0-9]${possessive ? '' : "|'s|’s"})`, 'g');
       let m: RegExpExecArray | null;
       const mine = tokens(a);
       while ((m = re.exec(low))) {
@@ -107,7 +109,7 @@ const CROWD = /\b(nobody|no one|everyone|everybody|somebody|someone|the crowd|pe
 const BACK = /\b(where|when|who|that|since|after|before|until|like|as if|the day|the night|used to)\s+(\w+\s+){0,3}$/i;
 const PAST = /\b(had|has been|used to|years ago|in 19\d\d|last (year|week|time)|once|caught|tore|broke)\b/i;
 
-interface Rule { re: RegExp; kind?: 'strike' | 'fall' | 'pose'; make: (subj: string, obj: string | null, line: string) => StageAct[] | null }
+interface Rule { re: RegExp; kind?: 'strike' | 'fall' | 'pose' | 'prop'; make: (subj: string, obj: string | null, line: string) => StageAct[] | null }
 
 const KO = /\b(one punch|one shot|out cold|goes down|go down|falls|drops\b|crumples|does not get up|doesn't get up|asleep|lights out|hits the (floor|mat|canvas|deck|ground)|is down|was\.)/i;
 const pose = (p: Pose) => (s: string): StageAct[] => [{ do: 'pose', who: s, pose: p }];
@@ -124,10 +126,24 @@ const RULES: Rule[] = [
   // handing something over: walk up, hand out
   { re: /\b(hands (you|him|her|it|over)|gives (you|him|her|it)|holds (it|the \w+|a \w+) out|holds out|passes (you|him|her)|slides (it|the \w+) across|gives her the pieces|puts a bowl)\b/i,
     make: (s, o, line) => (o ? [{ do: 'meet', who: s, target: o, pose: 'offer', prop: propIn(line) }] : [{ do: 'pose', who: s, pose: 'offer' }]) },
+  { kind: 'pose', re: /\b(laughs|laughing|laughed|cracks up|grins)\b/i, make: pose('laugh') },
+  { kind: 'pose', re: /\b(counts|counting|wraps (his|her) own hands|reads|crosses it out|scribbles)\b/i, make: pose('headDown') },
+  { kind: 'pose', re: /\b(on|from|off) (a|the|his|her) stool\b/i, make: pose('stool') },
+  { kind: 'pose', re: /\b(draws|drawing|is drawing) (two|a|an|on|the)\b/i, make: (s) => [{ do: 'face', who: s, away: true }, { do: 'pose', who: s, pose: 'point' }] },
+  { kind: 'prop', re: /\b(on crutches)\b/i, make: (s) => [{ do: 'prop', who: s, prop: 'crutches' }] },
+  { kind: 'prop', re: /\b(sells soup|serves soup|ladles|stirs|stirring|makes (the )?soup|is making soup|puts on a (second )?pot|goes to the stove|at the stove)\b/i, make: (s) => [{ do: 'prop', who: s, prop: 'ladle' }] },
+  // setting the empty place: a bowl left on the table for somebody who isn't coming
+  { kind: 'prop', re: /\b(sets? (a|the|his|her|\w+'s) place|set \w+'s place|sets it again)\b/i, make: (s) => [{ do: 'prop', who: s, prop: 'bowl' }, { do: 'drop', who: s, prop: 'bowl' }] },
+  { kind: 'prop', re: /\b(closes the (notebook|book|lid)|puts (it|the \w+) (back|away)|puts the \w+ back)\b/i, make: (s) => [{ do: 'prop', who: s }] },
+  { kind: 'prop', re: /\b(gets the tape out|takes out (the|his|her) tape|tapes (\w+'s|his|her) hands|tapes it)\b/i, make: (s, o, line) => (o && /hands/i.test(line) ? [{ do: 'meet', who: s, target: o, pose: 'offer', prop: 'tape' }] : [{ do: 'prop', who: s, prop: 'tape' }]) },
+  // putting it down, putting it away
+  { re: /\b(sets? (it|the \w+|his \w+|her \w+) down|puts? (it|the \w+) down|drops the|leaves the (bucket|mop|belt|bowl)|puts the (belt|bucket|bowl) on)\b/i,
+    make: (s, _o, line) => [{ do: 'drop', who: s, prop: propIn(line) }] },
+  { re: /\b(puts (it|the \w+) (in|into) (his|her) (jacket|pocket|bag|coat)|pockets (it|the))\b/i, make: (s) => [{ do: 'prop', who: s }] },
   // something in the hand: "holding a bucket", "with the notebook out", "takes the microphone"
-  { re: /\b(holding|holds|carries|carrying|has (a|the|his|her)|picks up|takes (out )?(a|the|his|her)|with (a|the|his|her) (\w+ )?(bucket|mop|bowl|belt|notebook|clipboard|mask|envelope|card|phone|pen|ladle))\b/i,
+  { kind: 'prop', re: /\b(holding|holds|carries|carrying|has (a|the|his|her)|picks up|finds (a|the|his|her|\w+'s)|takes (out )?(a|the|his|her)|with (a|the|his|her|two|three) (\w+ )?(bucket|mop|bowls?|belt|notebook|clipboard|mask|envelope|card|phone|pen|ladle))\b/i,
     make: (s, _o, line) => { const p = propIn(line); return p ? [{ do: 'prop', who: s, prop: p }] : null; } },
-  { re: /\b(tapes (his|her|\w+'s) hands|is taping|wraps (his|her) hands|holds both of)\b/i, make: (s, o) => (o ? [{ do: 'meet', who: s, target: o, pose: 'touch' }] : null) },
+  { re: /\b(is taping|wraps (his|her) hands|holds both of)\b/i, make: (s, o, line) => (o ? [{ do: 'meet', who: s, target: o, pose: 'offer', prop: /tap/i.test(line) ? 'tape' : undefined }] : null) },
   { re: /\b(leaves|walks (out|off|away)|storms (out|off)|exits|goes home|drives (off|away|toward|home)|gets in the car|heads for the door|out the door|goes downstairs)\b/i, make: (s) => [{ do: 'exit', who: s }] },
   { re: /\b(steps? (in|into|up|forward|toward|towards|closer|between|through)|walks? (over|up|in|toward|towards|across|to|into)|crosses (the|to)|comes? (over|in|closer|up)|moves? (in|closer)|approaches|gets? in (his|her) face|marches|goes over)\b/i,
     make: (s, o) => [{ do: 'walk', who: s, to: o ?? undefined, x: o ? undefined : 240, gap: 40 }] },
@@ -177,9 +193,21 @@ function pronoun(word: string, cast: StageActor[], ctx: StageCtx): string | null
 export function readStage(line: string, cast: StageActor[], ctx: StageCtx): StageAct[] {
   const acts: StageAct[] = [];
   const ids = new Set(cast.map((a) => a.id));
-  const lineMentions = mentions(line, cast);
+  const lineMentions = mentions(line, cast, true);
   for (const sen of line.split(/(?<=[.!?])\s+/)) {
     const men = mentions(sen, cast);
+    const menO = mentions(sen, cast, true);
+    // "They stare at each other": the two of them turn face to face
+    if (/\b(stare|look|glare|square up)s? at each other\b|\bface each other\b/i.test(sen)) {
+      const two = [...new Set([...menO.map((x) => x.id), ...lineMentions.map((x) => x.id), ctx.subject, ctx.object].filter((x): x is string => !!x && ids.has(x)))].slice(0, 2);
+      if (two.length === 2) acts.push({ do: 'face', who: two[0], to: two[1] }, { do: 'face', who: two[1], to: two[0] });
+      continue;
+    }
+    // "Everybody has two bowls": the whole room is holding soup
+    if (/\b(everybody|everyone|they all|all of them) (has|have|holds?|is holding|are holding|gets?) (a|two|three|\w+) bowls?\b/i.test(sen)) {
+      for (const a of cast) acts.push({ do: 'prop', who: a.id, prop: 'bowl' });
+      continue;
+    }
     const found: { at: number; rule: Rule }[] = [];
     for (const rule of RULES) {
       const m = rule.re.exec(sen);
@@ -197,7 +225,7 @@ export function readStage(line: string, cast: StageActor[], ctx: StageCtx): Stag
       const pro = /\b(he|she)\b[^.]*$/i.exec(before);
       // "Han and Mateo sit": both of them (poses only)
       let subs: string[] = [];
-      if (named.length >= 2 && f.rule.kind === 'pose' && / and /i.test(before)) subs = named.map((x) => x.id);
+      if (named.length >= 2 && (f.rule.kind === 'pose' || f.rule.kind === 'prop') && / and /i.test(before)) subs = named.map((x) => x.id);
       else if (named.length && (!pro || pro.index < named[named.length - 1].at)) subs = [named[0].id];
       else if (pro) subs = [pronoun(pro[1], cast, ctx) ?? ''];
       // somebody else is doing it (a name that isn't in the shot)
@@ -210,12 +238,13 @@ export function readStage(line: string, cast: StageActor[], ctx: StageCtx): Stag
       for (const s of subs) {
         if (!s || !ids.has(s)) continue;
         const others = (list: { id: string }[]) => list.map((x) => x.id).filter((id) => id !== s);
-        let o: string | null = others(men.filter((x) => x.at > f.at))[0] ?? null;
+        let o: string | null = others(menO.filter((x) => x.at > f.at))[0] ?? null;
         // "hits him": him is whoever we were just following
         if (!o && /^\S+\s+(him|her)\b/i.test(sen.slice(f.at))) o = [ctx.subject, ctx.object, ctx.actor].find((x) => x && x !== s) ?? null;
         if (!o) o = others(lineMentions)[0] ?? null;
         if (!o && f.rule.kind === 'strike') o = ctx.object && ctx.object !== s ? ctx.object : cast.length === 2 ? cast.map((a) => a.id).find((id) => id !== s) ?? null : null;
-        const made = f.rule.make(s, o, line);
+        // a prop is whatever this clause is about, not the first thing the line mentions
+        const made = f.rule.make(s, o, f.rule.kind === 'prop' ? sen.slice(f.at) : line);
         if (!made) continue;
         acts.push(...made);
         if (f.rule.kind === 'strike') struck = true;

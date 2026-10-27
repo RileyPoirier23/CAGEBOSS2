@@ -7,6 +7,20 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 8: Claude (2026-10-27)
+- **The Windows exe builds.** `npm run dist:sequel:win` now runs `tools/dist-sequel-win.mjs`: Electron is unpacked once
+  from electron's download cache into `.electron-dist/` (`tools/electron-dist.mjs`, gitignored) and passed as
+  `electronDist`, which skips the zip-extract-and-rename that failed with EPERM here. Output:
+  `release-sequel/CAGE-BOSS-II-2.2.0-portable.exe` (icon stamped). Smoke-tested: it opens "CAGE BOSS II: THE BUYBACK".
+  The version is still package.json's (2.2.0, game 1's); give the sequel its own in `extraMetadata` if you want.
+- **Props drawn properly** (outlined, shaded, steam off the soup) and new ones: crutches. `{ do: 'drop' }` sets a thing
+  down and it stays on the floor for the shot (Han's bucket in the corner, Ray setting 1ton's empty place).
+- **More narration acts** (69 to 97 lines): laughing (new `laugh` pose), counting/reading, stools, drawing on the
+  whiteboard, crutches, making soup (ladle), setting the empty place, putting things away, taping hands (names in the
+  possessive count as the object now), "they stare at each other", "everybody has two bowls". The ~150 quiet lines left
+  are scenery and backstory.
+- Bystanders step further aside (50 px) when someone walks into their spot, on plain walks too.
+
 ### Turn 7: Claude (2026-10-27)
 Riley: "work on everything". Done:
 - **Every part has a scene.** `src/ui/scenes/partlines.ts` (`PART_LINES`): 60+ parts that were one narrated card now play
@@ -209,7 +223,7 @@ and the crew fights, a `mask` on the rig and `presentedGender`. It hit the usage
 
 ### P3: shipping
 12. (Done) The sequel icon and the stamp-exe step.
-13. `npm run dist:sequel:win` fails here with EPERM on the win-unpacked rename (see turn 7). Try it outside `%TEMP%`.
+13. (Done) `npm run dist:sequel:win` builds the portable exe (see turn 8).
 14. **Move the project out of `%TEMP%`.** (Committed: the `sequel` branch is pushed to the CageBoss2 repo.)
 
 ## Known issues

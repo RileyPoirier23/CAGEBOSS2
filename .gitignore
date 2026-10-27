@@ -7,3 +7,4 @@ sim-report*.json
 release
 dist-sequel
 release-sequel
+.electron-dist
