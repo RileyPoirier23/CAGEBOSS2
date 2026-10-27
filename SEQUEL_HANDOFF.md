@@ -7,6 +7,35 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 4: Claude (2026-10-27)
+Done (Riley's open list, in order):
+- **Kits per fighter** (`kitII` in `src/ui/rig.ts`, II only): cut from style (Muay Thai / fight shorts / board shorts),
+  colours from the flag, pattern from traits and nickname (flames, stars, tiger, camo, split, chevron, stripes,
+  checker), waistband, ankle wraps, champion gold. The creator can override them (`Look.kit2`).
+- **Tales of Legacy is 15 chapters of 5 parts** (+ the secret Torch chapter as 16th). New chapters: ALLSTAR FC,
+  HOMECOMING (Moncton), THE GOLD PEN (1ton signs with Zenith), THE WAKE, THE CAMP. Each chapter is 10 weeks; every
+  part has a card (`PARTS` in `storycuts.ts`: a title, a scene, who is there). Two key fights in every chapter before
+  Ray dies; new guests (Pruitt, Arsenault, Kane, Hale, Sandoval). Each new chapter has an intro, an outro and a talk.
+- **Promoter mode has a promoter**: the new-save flow asks for your name (`run.flags.boss`, `bossName()`), and
+  `src/ui/sequel/promotercuts.ts` plays the season's scenes (the seven-minute board meeting flashback, the first
+  sellout, the first belt, Verity's car each quarter, the raid, Zenith's letter, the last Saturday) using that name.
+- **The phone** (`src/sequel/phone.ts`, `src/ui/sequel/phoneui.ts`), in both hubs: one call a week, one Bleeter post a
+  week (with replies), and the plug's three offers a week (with a chance it blows back as heat).
+- **Tutorial** (`src/ui/sequel/tutorial2.ts`): lesson cards the first time you reach the modes, promoter, desk, show,
+  Tales of Legacy, the camp, sparring and Quick Fight. REPLAY TUTORIALS is in HOW TO PLAY.
+- **Character creator** (`src/ui/scenes/sequelcreate.ts`): from Quick Fight. Build, skin, division, height, style;
+  15 hairstyles, colour, fade, beard; brows, nose, ears, scars, mask, chain; ink per zone; kit cut, pattern, colours.
+  Saved fighters appear in Quick Fight under CUSTOM.
+- Promoter hub header and card counter no longer overlap. A refresh bug (scenes re-adding destroyed graphics) is
+  fixed in Quick Fight, the creator, the title and the menus.
+
+Left for the next turn (and for OpenCode):
+- **Writing:** the 80 parts have cards; most still need full scenes (talks, beats, fights) of their own. Start with
+  the new chapters' parts 2 to 5.
+- **Portraits** for hairstyles 10-14 (they draw as the nearest old style), and the creator's ink and kit in portraits.
+- Custom fighters in PROMOTER MODE (sign your own) and as a Tales of Legacy sandbox fighter.
+- A balance pass over the longer story (fifteen chapters of training is a lot of xp).
+
 ### Turn 3 (cont.): Claude (2026-10-27)
 Done since the turn 3 notes below:
 - **Menus and saves:** GAME MODES → PROMOTER MODE (new / load / sandbox) and TALES OF LEGACY (new / load / sandbox

@@ -153,7 +153,17 @@ storylines. Original characters (1ton, the crew, Zenith) can.
 - **Bodies (II only):** muscle definition, aging bruises, blood running down the chest, per-fighter tattoo layouts
   (`tattooLayout`, `Look2.tats`), and five new hair styles (10 mullet, 11 high fade + curls, 12 slick back, 13 afro,
   14 mohawk). Portraits draw those five as their nearest old style for now.
-- **Quick Fight:** `src/ui/scenes/sequelquick.ts`.
+- **Quick Fight:** `src/ui/scenes/sequelquick.ts`; **creator:** `src/ui/scenes/sequelcreate.ts` (custom fighters in
+  `cageboss2.custom`).
+- **Tales of Legacy is 15 chapters of 5 parts.** A chapter is 10 weeks (`CHAPTER_WEEKS`), a part 2 weeks
+  (`storyPart`, `partWeek`). Part cards: `PARTS` in `storycuts.ts`. Add a chapter: an entry in `STORY_CHAPTERS`
+  (the order sets `no`), its five `PARTS`, its intro/outro in the `chapterIntroRaw`/`chapterOutro` switches, a talk.
+- **Promoter mode's promoter:** `bossName(run)`; its scenes live in `src/ui/sequel/promotercuts.ts` (`CUTS`).
+- **Kits:** `kitII` (from the bio) or `Look.kit2` (the creator's). **Ink:** `tattooLayout` or `Look.ink2`.
+- **The phone:** `src/sequel/phone.ts` (calls, Bleeter, the plug), `src/ui/sequel/phoneui.ts`.
+- **Tutorial:** `src/ui/sequel/tutorial2.ts` (`maybeLesson2(g, key)`).
+- **Scenes and refresh:** `Scene.refresh()` destroys the root's children. A Graphics kept on a field must be made
+  new in `build()`, or the next refresh re-adds a destroyed object (pointer events then crash).
 
 ## 5. Tone
 

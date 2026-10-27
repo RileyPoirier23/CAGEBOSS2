@@ -43,7 +43,7 @@ const A = (id: string, label: string, says: string, buzz: number, heat: number, 
 const BANK: PresserQuestion[] = [
   Q('mexico', 'oneton', '1ton, back row, notebook. {a}: Mexico is watching. Mexico has always been watching. Are you ready for the weight of a nation that is not yours?', [
     A('embrace', 'Let {a} take the flag', '{a} takes the flag from 1ton and wears it like a cape. The back row loses its mind.', 6, 2, 2, 'The clip runs everywhere. BUZZ up.'),
-    A('deflect', 'Dane: "Next question."', '"Next question," you say. 1ton writes something down. Underlines it twice.', 0, 0, 1, 'Nothing happens. 1ton remembers.'),
+    A('deflect', '"Next question."', '"Next question," you say. 1ton writes something down. Underlines it twice.', 0, 0, 1, 'Nothing happens. 1ton remembers.'),
     A('joke', 'Ask 1ton for his record', '"What\'s your record, 1ton?" He stands up. "Undefeated. In journalism." Somebody claps.', 3, 0, 0, 'A small, weird, good moment.'),
   ]),
   Q('zenith', 'plant', 'Hi, Brynn from, um, an independent outlet. Is it true this "promotion" is just a warehouse with debts and a bad attitude? Zenith says hi, by the way.', [

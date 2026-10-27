@@ -556,3 +556,27 @@ describe('sequel story mode', () => {
     expect(loadStoryTrophy().playthroughs).toBe(1);
   });
 });
+
+describe('the phone', () => {
+  it('rings once a week, posts once a week, and the plug costs money (and sometimes heat)', async () => {
+    const { ownerForRun, callThisWeek, answerCall, bleetedThisWeek, postBleet, BLEETS, plugOffers, buyFromPlug } = await import('../src/sequel/phone');
+    const run = newSequelRun(51);
+    const o = ownerForRun(run, 'Riley Poirier');
+    const call = callThisWeek(o)!;
+    expect(call).toBeTruthy();
+    answerCall(o, call, 0);
+    expect(callThisWeek(o)).toBeNull();
+    const buzz = run.buzz;
+    postBleet(o, BLEETS[0]);
+    expect(bleetedThisWeek(o)).toBe(true);
+    expect(run.buzz).toBeGreaterThanOrEqual(buzz);
+    const offer = plugOffers(o).find((x) => x.price > 0)!;
+    const cash = run.cash;
+    const heat = run.heat;
+    const res = buyFromPlug(o, offer, 0); // 0 = always caught
+    expect(res.ok).toBe(true);
+    expect(run.cash).toBeLessThan(cash + (offer.fx.cash ?? 0) + 1);
+    expect(run.heat).toBeGreaterThanOrEqual(Math.min(100, heat + (offer.fx.heat ?? 0)));
+    expect(buyFromPlug(o, offer, 1).ok).toBe(false); // once a week
+  });
+});

@@ -10,6 +10,7 @@
  * registers every field with an Inspector so a player can pull a red string
  * between the paper and the record, then stamp the thing and live with it.
  */
+import { maybeLesson2 } from '../sequel/tutorial2';
 import { Container, Graphics } from 'pixi.js';
 import { Scene, type Game } from '../app';
 import { PAL, shade } from '../../art/palette';
@@ -123,6 +124,7 @@ export class SequelDeskScene extends Scene {
   private lastEvent: { kind: 'compare' | 'stamp' | 'ask' | 'select'; found?: boolean; verdict?: SeqVerdict; correct?: boolean } | null = null;
 
   build(): void {
+    maybeLesson2(this.g, 'desk');
     const run = readRun();
     if (!run) {
       void import('./sequel').then((m) => this.g.goto(new m.SequelTitleScene(this.g)));

@@ -428,6 +428,8 @@ const ANIMAL = /tiger|beast|bull|toro|wolf|snake|lion|bear|panther|cobra|shark|g
  * talkers), ankle wraps on the strikers, and the id decides the rest, so nobody changes kit twice.
  */
 export function kitII(f: Fighter, base: Kit): KitII {
+  const own = f.look.kit2;
+  if (own) return { cut: own.cut, pattern: own.pattern as KitPattern, accent: own.accent, band: own.trim, wraps: null };
   let h = [...f.id].reduce((a, ch) => (a * 33 + ch.charCodeAt(0)) >>> 0, 11);
   const r = (n: number) => ((h = (h * 1103515245 + 12345) >>> 0) >>> 8) % n;
   const st = f.styles;
@@ -450,7 +452,8 @@ export function kitII(f: Fighter, base: Kit): KitII {
 }
 
 export function lookFor(f: Fighter, corner: 0 | 1, champ = false): Look2 {
-  const kit = kitFor(f, champ);
+  const own = f.look.kit2;
+  const kit = own && !champ ? { trunks: own.main, trim: own.trim, pattern: own.accent, champ: false } : kitFor(f, champ);
   return {
     skin: SKIN_TONES[f.look.skin % SKIN_TONES.length],
     hairStyle: f.look.hair,
@@ -554,6 +557,9 @@ export function tauntRig(L: Look2, t: number): Rig {
  * and Hawaiians to koi, and a story fighter can name his own (Mateo's menu).
  */
 export function tattooLayout(f: Fighter): Look2['tats'] {
+  // a fighter from the creator wears exactly the ink they chose
+  const own = f.look.ink2;
+  if (own) return own.sleeveF || own.sleeveB || own.chest || own.back ? { ...own, ribs: false, knuckles: false, color: 0x1a1a22 } : undefined;
   const lvl = f.look.tattoo ?? 0;
   if (!lvl) return undefined;
   let h = [...f.id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 17);

@@ -3,6 +3,7 @@
  * its own backdrop and its saves: PROMOTER MODE (new save, load save, sandbox save) and TALES OF
  * LEGACY (new save, load save, and a sandbox once you've finished the story).
  */
+import { maybeLesson2 } from '../sequel/tutorial2';
 import { Container, Graphics } from 'pixi.js';
 import { Scene, type Game } from '../app';
 import { H, SW, OX, text, button, ScrollBox } from '../kit';
@@ -35,6 +36,7 @@ abstract class MenuScene extends Scene {
   build(): void {
     const r = this.root;
     r.x = -OX;
+    this.fx = new Graphics(); // a refresh destroyed the old one
     r.addChild(this.backdrop());
     r.addChild(this.fx);
     const panel = new Graphics();
@@ -105,6 +107,11 @@ export class GameModesScene extends MenuScene {
   }
   protected back(): void {
     void import('./sequel').then((m) => this.g.goto(new m.SequelTitleScene(this.g)));
+  }
+
+  build(): void {
+    super.build();
+    maybeLesson2(this.g, 'modes');
   }
 }
 
@@ -180,21 +187,27 @@ export class LegacyMenuScene extends MenuScene {
 /** Name the save, make the slot, start it. */
 function newSaveFlow(g: Game, kind: SlotKind, sandbox: boolean, after?: (meta: SlotMeta) => void): void {
   const n = listSlots(kind).length + 1;
-  const win = openWindow(g, `${sandbox ? 'SANDBOX' : 'NEW'} ${KIND_NAME[kind]} SAVE`, 260, 78);
+  const promoter = kind === 'run';
+  const win = openWindow(g, `${sandbox ? 'SANDBOX' : 'NEW'} ${KIND_NAME[kind]} SAVE`, 260, promoter ? 106 : 78);
   win.body.addChild(text('Name the save:', 8, 4, { small: true, color: II.ash }));
-  const input = domInput(g, 8, 14, 244, 14, `${sandbox ? 'SANDBOX' : kind === 'run' ? 'THE WAREHOUSE' : 'TALE'} ${n}`, { maxLength: 28, in: win.body });
-  win.body.addChild(button('START', 70, 40, 120, 16, () => {
+  const input = domInput(g, 8, 14, 244, 14, `${sandbox ? 'SANDBOX' : promoter ? 'THE WAREHOUSE' : 'TALE'} ${n}`, { maxLength: 28, in: win.body });
+  // promoter mode: who you are (the cutscenes use it)
+  if (promoter) win.body.addChild(text('Your name, promoter:', 8, 34, { small: true, color: II.ash }));
+  const boss = promoter ? domInput(g, 8, 44, 244, 14, 'Dane Whyte', { maxLength: 24, in: win.body }) : null;
+  win.body.addChild(button('START', 70, promoter ? 68 : 40, 120, 16, () => {
     const name = input.value();
+    const who = boss?.value().trim() || 'Dane Whyte';
     input.remove();
+    boss?.remove();
     win.close();
     const meta = newSlot(kind, name, sandbox);
     if (after) return after(meta);
-    startSlot(g, meta, true);
+    startSlot(g, meta, true, who);
   }, { fill: II.blood, border: II.sodium }));
 }
 
 /** Start (fresh) or open (load) the slot that is now active. */
-function startSlot(g: Game, meta: SlotMeta, fresh: boolean): void {
+function startSlot(g: Game, meta: SlotMeta, fresh: boolean, boss = 'Dane Whyte'): void {
   setActiveSlot(meta.kind, meta.id);
   if (meta.kind === 'run') {
     forgetRun();
@@ -202,6 +215,7 @@ function startSlot(g: Game, meta: SlotMeta, fresh: boolean): void {
       g.loading('Opening the warehouse', () => {
         const run = newSequelRun(Math.floor(Math.random() * 1e9));
         if (meta.sandbox) makeSandbox(run);
+        run.flags.boss = boss;
         writeRun(run);
         void import('./sequelhub').then((m) => g.goto(new m.SequelHubScene(g)));
       }, 1.2);

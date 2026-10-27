@@ -7,6 +7,7 @@ import { CAST, type Actor, type Cutscene } from '../cutscene';
 import { playCine } from './cine';
 import { applyPresser, type PresserCard } from '../../sequel/presser';
 import type { SeqRun } from '../../sequel/types';
+import { bossName } from '../../sequel/model';
 
 const ASKER: Record<PresserCard['question']['asker'], { id: string; name: string }> = {
   oneton: { id: 'oneton', name: '1TON' },
@@ -17,7 +18,7 @@ const ASKER: Record<PresserCard['question']['asker'], { id: string; name: string
 export function playPresser(g: Game, run: SeqRun, card: PresserCard, done: () => void): void {
   const ask = ASKER[card.question.asker];
   const cast: Actor[] = [
-    { id: 'dane', look: CAST.dane, name: 'DANE WHYTE', x: 90, facing: 1 },
+    { id: 'dane', look: CAST.dane, name: bossName(run).toUpperCase(), x: 90, facing: 1 },
     { id: 'a', fighter: card.A, clothes: { top: 0x1a1a22, bottom: 0x22222a }, name: `${card.A.first} ${card.A.last}`.toUpperCase(), x: 200, facing: 1, scale: 1.2 },
     { id: 'b', fighter: card.B, clothes: { top: 0x3a1418, bottom: 0x22222a }, name: `${card.B.first} ${card.B.last}`.toUpperCase(), x: 300, facing: -1, scale: 1.2 },
     { id: ask.id, look: CAST[ask.id as keyof typeof CAST], name: ask.name, x: 420, facing: -1, enter: 'right' },

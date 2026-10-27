@@ -1,6 +1,11 @@
 /**
  * The weekly office: a leaking warehouse, two fights and four numbers.
  */
+import { maybeLesson2 } from '../sequel/tutorial2';
+import { openPhone } from '../sequel/phoneui';
+import { bossName } from '../../sequel/model';
+import { ownerForRun } from '../../sequel/phone';
+import { maybePromoterCut } from '../sequel/promotercuts';
 import { presserDone, presserFor } from '../../sequel/presser';
 import { playPresser } from '../sequel/presser2';
 import { Container, Graphics } from 'pixi.js';
@@ -46,11 +51,16 @@ export class SequelHubScene extends Scene {
   private flicker = new Graphics();
 
   build(): void {
+    maybeLesson2(this.g, 'promoter');
     const run = readRun();
     if (!run) {
       void import('./sequel').then((m) => this.g.goto(new m.SequelTitleScene(this.g)));
       return;
     }
+    // the season's own scenes: the board meeting, the first sellout, Verity's car, the last Saturday
+    setTimeout(() => {
+      if (this.g.scene === this && !this.g.modals.length) maybePromoterCut(this.g, run, () => writeRun(run), () => this.refresh());
+    }, 350);
     if (run.status === 'ended') {
       void import('./sequelend').then((m) => this.g.goto(new m.SequelEndScene(this.g)));
       return;
@@ -117,7 +127,7 @@ export class SequelHubScene extends Scene {
     right.addChild(box(312, 194, 0x16121a, PAL.slate, { alpha: 0.94, bevel: true }));
     right.addChild(text('YOUR CARD', 6, 5, { small: true, color: PAL.gold }));
     const bouts = cardBouts(run);
-    right.addChild(text(`${bouts.length} FIGHT${bouts.length === 1 ? '' : 'S'}  /  ${bouts.length >= 3 ? 'FULL' : 'ADD UP TO 3'}`, 244, 5, { small: true, color: PAL.ash }));
+    right.addChild(text(`${bouts.length} FIGHT${bouts.length === 1 ? '' : 'S'}  /  ${bouts.length >= 3 ? 'FULL' : 'ADD UP TO 3'}`, 120, 5, { small: true, color: PAL.ash, width: 150, align: 'right', maxLines: 1 }));
     if (bouts.length < 3) {
       right.addChild(button('+ FIGHT', 276, 1, 30, 12, () => {
         if (addBout(run)) this.saveAndRefresh(run);
@@ -185,6 +195,8 @@ export class SequelHubScene extends Scene {
     r.addChild(button('SEASON', 216, by, 54, bh, () => openSeason(this.g), { small: true, fill: PAL.rust }));
     r.addChild(button('HELP', 272, by, 44, bh, () => { void import('./sequel').then((m) => m.openSequelHelp(this.g)); }, { small: true, fill: PAL.shadow }));
     r.addChild(button('TITLE', 318, by, 44, bh, () => { void import('./sequel').then((m) => this.g.goto(new m.SequelTitleScene(this.g))); }, { small: true, fill: PAL.shadow }));
+    // the phone: this week's call, Bleeter, the plug
+    r.addChild(button('PHONE', 440, by, 34, bh, () => openPhone(this.g, ownerForRun(run, bossName(run)), () => writeRun(run), () => this.refresh()), { small: true, fill: PAL.blood, border: PAL.gold }));
     if (run.heat >= 20) {
       r.addChild(button(`PAY ${money(8000)}`, 364, by, 74, bh, () => {
         confirm(this.g, 'Pay the commission $8,000 to lose 25 HEAT?', () => {
@@ -213,9 +225,9 @@ export class SequelHubScene extends Scene {
     const stat = (label: string, value: number, x: number, color: number) => {
       r.addChild(text(label, x, 4, { small: true, color: PAL.ash }));
       const bar = meterBar(52, value, color, 4);
-      bar.position.set(x, 13);
+      bar.position.set(x, 11);
       r.addChild(bar);
-      r.addChild(text(String(Math.round(value)), x + 55, 10, { small: true, color: PAL.bone }));
+      r.addChild(text(String(Math.round(value)), x + 55, 9, { small: true, color: PAL.bone }));
     };
     stat('BUZZ', run.buzz, 250, statColor(run.buzz));
     stat('HEAT', run.heat, 320, statColor(run.heat, true));
@@ -225,7 +237,8 @@ export class SequelHubScene extends Scene {
     const pending = pendingCount(run);
     r.addChild(text(pending ? `PAPERWORK ${pending}` : 'DESK CLEAR', 168, 14, { small: true, color: pending ? PAL.gold : PAL.moss, width: 76, maxLines: 1 }));
     const prog = phaseProgress(run, phase).map((x) => `${x.label} ${x.have.toLocaleString('en-US')}/${x.need.toLocaleString('en-US')}`).join('  ·  ');
-    r.addChild(text(prog, 248, 14, { small: true, color: phaseMet(run, phase) ? PAL.moss : PAL.ash, width: 226, align: 'right', maxLines: 1 }));
+    // under the meters, not on them
+    r.addChild(text(prog, 248, 20, { small: true, color: phaseMet(run, phase) ? PAL.moss : PAL.ash, width: 226, align: 'right', maxLines: 1 }));
   }
 
   private saveAndRefresh(run: SeqRun): void {

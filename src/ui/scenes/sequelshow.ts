@@ -2,6 +2,7 @@
  * The morning after: the show report, then whoever is waiting in the parking
  * lot. Every week ends here, one way or another.
  */
+import { maybeLesson2 } from '../sequel/tutorial2';
 import { Container, Graphics } from 'pixi.js';
 import { Scene } from '../app';
 import { PAL } from '../../art/palette';
@@ -29,6 +30,7 @@ export class SequelShowScene extends Scene {
   private choices: (() => void)[] = [];
 
   build(): void {
+    maybeLesson2(this.g, 'show');
     const run = readRun();
     if (!run) {
       void import('./sequel').then((m) => this.g.goto(new m.SequelTitleScene(this.g)));

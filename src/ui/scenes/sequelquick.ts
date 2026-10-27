@@ -3,6 +3,7 @@
  * lights (they bounce in their own stance, wear their own kit), pick a room, press READY: they
  * walk to the middle and square up nose to nose, the flashbulbs go, then the bell.
  */
+import { maybeLesson2 } from '../sequel/tutorial2';
 import { Container, Graphics, type Ticker } from 'pixi.js';
 import { Scene } from '../app';
 import type { Bout, FightEvent, Fighter, GameState } from '../../core/types';
@@ -24,6 +25,7 @@ import { storyVenue, type StoryVenue } from '../sequel/venues';
 import { newStorySave, buildHan, buildMateoGrown, buildOneTon, buildOpponent } from '../../sequel/story';
 import type { PixelText } from '../text';
 import type { KeyboardShare } from '../../core/fightinput';
+import { loadCustomFighters } from './sequelcreate';
 
 let world: GameState | null = null;
 /** The full roster, built once a session (the booth and the referees read it too). */
@@ -48,6 +50,7 @@ const VENUES: { name: string; v: () => StoryVenue }[] = [
   { name: 'THE ALLEY (BAREKNUCKLE)', v: () => storyVenue("THE ALLEY BEHIND RAY'S") },
 ];
 const LEGACY = 'legacy';
+const CUSTOM = 'custom';
 
 export class SequelQuickFightScene extends Scene {
   music = 'title' as const;
@@ -70,6 +73,7 @@ export class SequelQuickFightScene extends Scene {
 
   private list(): Fighter[] {
     if (this.div === LEGACY) return (this.legacy ??= legacyCast());
+    if (this.div === CUSTOM) return loadCustomFighters();
     const s = roster();
     const ranked = (s.rankings[this.div] ?? []).map((id) => s.fighters[id]).filter(Boolean);
     const rest = Object.values(s.fighters)
@@ -79,12 +83,17 @@ export class SequelQuickFightScene extends Scene {
   }
 
   private divisions(): { id: string; label: string }[] {
-    return [{ id: LEGACY, label: 'TALES OF LEGACY' }, ...DIVISION_ORDER.map((d) => ({ id: d, label: divisionName(d).toUpperCase() }))];
+    const custom = loadCustomFighters().length >= 2 ? [{ id: CUSTOM, label: 'CUSTOM' }] : [];
+    return [{ id: LEGACY, label: 'TALES OF LEGACY' }, ...custom, ...DIVISION_ORDER.map((d) => ({ id: d, label: divisionName(d).toUpperCase() }))];
   }
 
   build(): void {
+    maybeLesson2(this.g, 'quick');
     const r = this.root;
     r.x = -OX;
+    // a refresh destroys the old root's children: fresh canvases for the stage and the models
+    this.stage = new Graphics();
+    this.models = new Graphics();
     const l = this.list();
     this.pick = [Math.min(this.pick[0], l.length - 1), Math.min(this.pick[1], l.length - 1)];
     if (this.pick[0] === this.pick[1] && l.length > 1) this.pick[1] = (this.pick[0] + 1) % l.length;
@@ -160,6 +169,11 @@ export class SequelQuickFightScene extends Scene {
     mid.addChild(button(`${this.rounds} ROUNDS`, mx, 124, 52, 14, () => { this.rounds = this.rounds === 3 ? 5 : 3; this.refresh(); }, { small: true, fill: II.steel }));
     mid.addChild(button(this.versus ? '2 PLAYERS' : 'VS CPU', mx + 56, 124, 52, 14, () => { this.versus = !this.versus; this.refresh(); }, { small: true, fill: II.steel }));
     mid.addChild(button('READY', mx, 146, 108, 22, () => this.ready(), { fill: II.blood, border: II.sodium }));
+    // make your own: the creator, then back here
+    mid.addChild(button('CREATE A FIGHTER', mx, 172, 108, 13, () => {
+      sfx('click');
+      void import('./sequelcreate').then((m) => this.g.goto(new m.SequelCreateScene(this.g, () => this.g.goto(new SequelQuickFightScene(this.g)))));
+    }, { small: true, fill: II.steel }));
     r.addChild(mid);
     if (!isTouchDevice()) r.addChild(text('A/D AND LEFT/RIGHT PICK  /  ENTER = READY', OX, H - 9, { small: true, width: W, align: 'center', color: II.ash }));
     this.callT = text('', OX, 160, { width: W, align: 'center', scale: 3, color: II.gold, shadow: 0x000000 }) as PixelText;

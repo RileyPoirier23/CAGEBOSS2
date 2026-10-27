@@ -144,6 +144,9 @@ function buildRoster(worldSeed: number): { roster: SeqFighter[]; freeAgents: Fig
   return { roster: roster.map((f) => makeSeqFighter(f, 1)), freeAgents };
 }
 
+/** Who you are in PROMOTER MODE: Dane Whyte, unless you named yourself something else. */
+export const bossName = (run: SeqRun): string => String(run.flags.boss || 'Dane Whyte');
+
 /** A sandbox run never runs out of Saturdays (and never makes the trophy case). */
 export const seasonLength = (run: SeqRun): number => (run.flags.sandbox ? 9999 : SEASON_WEEKS);
 

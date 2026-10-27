@@ -14,6 +14,7 @@ import { storyVenue } from './venues';
 import { openWindow } from '../widgets';
 import { text, button } from '../kit';
 import { II } from '../theme';
+import { maybeLesson2 } from './tutorial2';
 import { storyBout } from '../scenes/sequelstory';
 
 interface Partner { id: string; name: string; line: string; make: () => Fighter | null }
@@ -41,6 +42,7 @@ export function openSpar(g: Game, save: StorySave, who: 'oneton' | 'corner', don
   const me = who === 'oneton' ? buildOneTon(save) : cornerFighter(save);
   const ps = partners(save, who);
   const win = openWindow(g, `SPARRING AT RAY'S  /  ${me.first.toUpperCase()}`, 380, 196);
+  maybeLesson2(g, 'spar');
   const b = win.body;
   b.addChild(text('Two days. One hard round in the gym ring, Uncle Ray refereeing. Every physical track gets the work, graded on the round.', 6, 2, { width: 366, small: true, color: II.bone, maxLines: 3 }));
   ps.slice(0, 3).forEach((p, i) => {

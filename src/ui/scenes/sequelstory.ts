@@ -20,6 +20,9 @@ import { storyVenue } from '../sequel/venues';
 import { openDrill, type DrillKind } from '../sequel/drills';
 import { openSpar } from '../sequel/spar';
 import { II } from '../theme';
+import { maybeLesson2 } from '../sequel/tutorial2';
+import { openPhone } from '../sequel/phoneui';
+import { ownerForStory } from '../../sequel/phone';
 import { isSequelDemo, DEMO_STORY_CHAPTERS } from '../../sequel/standalone';
 import { openLiveFight } from '../livefight';
 import type { Bout, FightResult } from '../../core/types';
@@ -78,7 +81,8 @@ export class SequelStoryHubScene extends Scene {
       return;
     }
     this.draw(save);
-    setTimeout(() => this.maybeIntro(save), 260);
+    // the first visit: the lesson, then the story
+    maybeLesson2(this.g, 'legacy', () => setTimeout(() => this.maybeIntro(save), 260));
   }
 
   private draw(save: StorySave): void {
@@ -235,6 +239,7 @@ export class SequelStoryHubScene extends Scene {
     r.addChild(button('MENU', 6, 232, 34, 10, () => {
       void import('./sequel').then((m) => this.g.goto(new m.SequelTitleScene(this.g)));
     }, { small: true, fill: PAL.shadow }));
+    r.addChild(button('PHONE', 44, 232, 40, 10, () => openPhone(this.g, ownerForStory(save), () => writeStory(save), () => this.refresh()), { small: true, fill: PAL.blood, border: PAL.gold }));
     void gap;
   }
 
@@ -519,6 +524,7 @@ function openStoryTraining(g: Game, save: StorySave, after: () => void): void {
   }
   let who: 'oneton' | 'corner' = 'oneton';
   let tier: TrainTier = 'full';
+  maybeLesson2(g, 'training');
   const win = openWindow(g, 'THE CAMP', 400, 232);
   const b = win.body;
   const draw = () => {

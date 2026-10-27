@@ -21,6 +21,7 @@ import { SequelShowScene } from './sequelshow';
 import { SequelEndScene } from './sequelend';
 import { openSequelAchievements } from './sequelachievements';
 import { isSequelStandalone, isSequelDemo } from '../../sequel/standalone';
+import { replayTutorial2 } from '../sequel/tutorial2';
 import { desktop } from '../../desktop';
 import { openSettings } from './settings';
 import { GameModesScene, continueLatest, hasAnySave, latestSaveLine, openSaves } from './sequelmenus';
@@ -105,6 +106,7 @@ export function openSequelHelp(g: Game): void {
     8, 193, { width: 404, small: true, color: PAL.ink, maxLines: 3 },
   ));
   b.addChild(button('BACK TO THE WAREHOUSE', 134, 226, 156, 15, () => win.close(), { small: true, fill: PAL.moss, border: PAL.ink }));
+  b.addChild(button('REPLAY TUTORIALS', 296, 226, 120, 15, () => { replayTutorial2(); win.close(); g.toast('THE TUTORIALS WILL SHOW AGAIN', PAL.gold); }, { small: true, fill: PAL.shadow }));
 }
 
 export class SequelTitleScene extends Scene {
@@ -115,6 +117,7 @@ export class SequelTitleScene extends Scene {
   build(): void {
     const r = this.root;
     r.x = -OX;
+    this.rain = new Graphics(); // a refresh destroyed the old one
     r.addChild(seqTitleBackdrop(SW, H));
     r.addChild(this.rain);
     // dark glass panel

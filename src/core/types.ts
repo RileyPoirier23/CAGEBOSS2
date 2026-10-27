@@ -52,6 +52,10 @@ export interface Look {
   inkArt?: number; // 1 = koi on the shoulder (black and red)
   mask?: number; // luchador eye mask colour (0/undefined = none)
   fade?: number; // 1 = skin fade on the sides and back (with the bun: a bun with a fade)
+  /** CAGE BOSS II's creator: the ink you chose (0 = bare) instead of the generated layout */
+  ink2?: { sleeveF: number; sleeveB: number; chest: number; back: number };
+  /** CAGE BOSS II's creator: the kit you chose instead of the generated one */
+  kit2?: { cut: 'short' | 'thai' | 'board'; pattern: string; main: number; trim: number; accent: number };
 }
 
 export interface Contract {

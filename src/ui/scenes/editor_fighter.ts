@@ -16,7 +16,8 @@ import { Rng } from '../../core/rng';
 import { DIVISION_ORDER, divisionName } from '../../sim/divisions';
 import { computeStarPower, presentedGender, isWomensDivision } from '../../sim/fighters';
 
-const LOOK_PARTS: [keyof Look, string, number][] = [
+// the numeric parts (the sequel's ink2 / kit2 are objects, edited in its own creator)
+const LOOK_PARTS: [Exclude<keyof Look, 'ink2' | 'kit2'>, string, number][] = [
   ['head', 'Head', 4], ['skin', 'Skin', 6], ['hair', 'Hair', 8], ['hairColor', 'Hair col', 8], ['beard', 'Beard', 5], ['brows', 'Brows', 3],
   ['eyes', 'Eyes', 3], ['nose', 'Nose', 3], ['ears', 'Ears', 4], ['scar', 'Scar', 4], ['tattoo', 'Tattoo', 4], ['build', 'Build', 3],
 ];
