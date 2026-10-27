@@ -763,6 +763,330 @@ function outroLegacy(save: StorySave): Cutscene {
   };
 }
 
+// ---------------------------------------------------------------- the five parts of every chapter
+
+/** Who a part card puts in the room. */
+type PartWho = 'dane' | 'oneton' | 'ray' | 'mateo' | 'han' | 'bigmateo' | 'xavier' | 'gordon' | 'tyler' | 'zac' | 'verity' | 'bradie';
+interface Part { title: string; text: string; bg?: Shot['bg']; who: PartWho[] }
+
+/**
+ * Every chapter in five parts (two weeks each). Part one is the chapter's intro; parts two to five
+ * open with their own card: where we are, what has changed, who is in the room.
+ */
+export const PARTS: Record<string, Part[]> = {
+  back_row: [
+    { title: 'THE WAREHOUSE', text: '', who: [] },
+    { title: 'FOLDING CHAIRS', text: 'The first show sells ninety tickets. Eighty of them are Bradie\'s cousins. Ray sells soup at the door and makes more than the gate.', who: ['dane', 'ray', 'bradie'] },
+    { title: 'THE BACK ROW', text: '1ton comes to every show. He sits in the same chair. He asks the same question. Ray starts saving him the chair.', who: ['oneton', 'ray'] },
+    { title: 'THE HECKLER', text: 'Word gets round about the reporter who knocked out a heckler. Two promoters call. Ray tells them both 1ton is "busy eating".', who: ['ray', 'oneton', 'dane'] },
+    { title: 'SIX A.M.', text: 'Ray tells 1ton to be at the gym at six. 1ton says reporters don\'t do six. Ray says nobody does six. That\'s the point.', who: ['ray', 'oneton'] },
+  ],
+  mexican_math: [
+    { title: 'DAY ONE', text: '', who: [] },
+    { title: 'THE HORSE TRAILER', text: 'Xavier Cockett\'s horse trailer is parked outside Ray\'s again. This time he has brought a pen.', bg: 'gym', who: ['xavier', 'oneton', 'ray'] },
+    { title: 'THE BARN', text: 'Allstar FC, card one. A barn outside Moncton, real bleachers, a goat in the front row. 1ton\'s first pro fight, Mateo in his corner with a bucket.', bg: 'warehouse', who: ['xavier', 'oneton', 'mateo'] },
+    { title: 'GUADALAJARA', text: 'Ray takes 1ton to Guadalajara to see where his father fought. Ray has never been on a plane. He brings soup in his carry-on and loses it at security.', bg: 'lucha', who: ['ray', 'oneton'] },
+    { title: 'THE KNIFE', text: 'El Cuchillo calls 1ton out in a newspaper 1ton used to write for. The headline is 1ton\'s own byline, with a knife drawn through it.', who: ['oneton', 'dane'] },
+  ],
+  allstar: [
+    { title: 'THE CIRCUIT', text: '', who: [] },
+    { title: 'MATEO\'S FIRST', text: 'Mateo\'s first amateur fight at the barn: a decision, a black eye and a photo Ray puts over the heavy bag. OUR KID WON.', bg: 'gym', who: ['mateo', 'ray', 'oneton'] },
+    { title: 'THE RANCH HAND', text: 'Wade Pruitt has never been knocked down by anything with fewer than four legs. Xavier has put up a sign: NO STEERS IN THE CAGE.', bg: 'warehouse', who: ['xavier', 'oneton'] },
+    { title: 'SIX A.M., AGAIN', text: '1ton is now at the gym before Ray. Ray pretends this annoys him. Ray has started making a second pot.', bg: 'gym', who: ['ray', 'oneton'] },
+    { title: 'TWO HATS', text: 'Buck Harlan has held Xavier\'s belt for two years. It is a real belt, from a real rodeo. He wears both hats to the weigh-in.', bg: 'warehouse', who: ['xavier', 'oneton', 'mateo'] },
+  ],
+  brick_by_brick: [
+    { title: 'THE LANDLORD', text: '', who: [] },
+    { title: 'THE CHAMPION\'S BAG', text: 'Han moves into the back room at Ray\'s. His belt sits on the soup counter next to the ladle. Nobody is allowed to touch either.', bg: 'gym', who: ['han', 'ray', 'mateo'] },
+    { title: 'SUNDAY', text: 'Ray teaches Han and 1ton to make the soup. 1ton puts chile in it. Ray lets him. Han nearly drops the ladle.', bg: 'gym', who: ['ray', 'han', 'oneton'] },
+    { title: 'PARAGRAPH NINE', text: 'Gordon Vance sends a lawyer. The lawyer reads paragraph nine out loud. Han asks him to read it again, slower, and cracks his knuckles.', who: ['gordon', 'han', 'dane'] },
+    { title: 'THE PERMIT', text: 'Brick Bastion shows up to the weigh-in in a hard hat. He weighs in with the hard hat. He makes weight with the hard hat.', who: ['han', 'dane'] },
+  ],
+  sparring_partner: [
+    { title: 'MATEO COMES HOME', text: '', who: [] },
+    { title: 'THE KID AT THE DOOR', text: 'Han and Mateo find the old photo: Mateo at twelve, in the hoodie, with a mop taller than he is.', bg: 'gym', who: ['han', 'mateo'] },
+    { title: 'NO HARD SHOTS', text: 'Ray books Mateo and 1ton for rounds every Thursday. Ray says "no hard shots" every Thursday. Every Thursday, there are hard shots.', bg: 'gym', who: ['ray', 'mateo', 'oneton'] },
+    { title: 'THE NANA', text: 'Mateo\'s grandmother comes to watch sparring. She brings tamales. 1ton calls her "señora" and she adopts him on the spot.', bg: 'gym', who: ['mateo', 'oneton', 'ray'] },
+    { title: 'ROUNDS', text: 'The sparring session everybody has been waiting for. Ray has a stopwatch, a whistle and a chair he will not sit in.', bg: 'gym', who: ['ray', 'mateo', 'oneton'] },
+  ],
+  audit: [
+    { title: 'ZENITH SENDS A SUIT', text: '', who: [] },
+    { title: 'THE CONTRACT', text: 'Six fights, six wins at Xavier\'s. Dane finally has a budget. 1ton signs with the warehouse, twice, the second time with a name he scribbles out.', who: ['dane', 'oneton', 'xavier'] },
+    { title: 'THE MAIN EVENT', text: 'A Mexican fighter in the main event at the warehouse. 1ton asked for it for twelve years. He gets it. He can\'t eat the morning of.', who: ['oneton', 'ray', 'dane'] },
+    { title: 'THE PHOTO', text: 'Bradie has a photo he wishes he hadn\'t taken: 1ton, the Zenith tower, the staff door, eleven at night.', who: ['bradie', 'dane'] },
+    { title: 'THE AUDITOR', text: 'The Auditor weighs in with a clipboard. He makes weight. The clipboard does not.', who: ['verity', 'oneton', 'dane'] },
+  ],
+  homecoming: [
+    { title: 'MONCTON', text: 'The warehouse goes on the road. Ray rides in the front of the van with a map from 1994 and directions Marie wrote on the back.', bg: 'street', who: ['ray', 'han', 'dane'] },
+    { title: 'THE COLISEUM', text: 'Ray walks into the Moncton Coliseum for the first time since 1987. He stands in the ring where Butch hit him and laughs until he has to sit down.', bg: 'cage', who: ['ray', 'han'] },
+    { title: 'THE LOBSTER', text: 'Luc Arsenault fishes lobster in Shediac. He knew Han\'s father. He says so at the presser, quietly, and then says he is going to knock 1ton\'s head off.', bg: 'presser', who: ['oneton', 'han'] },
+    { title: 'TYLER', text: 'Tyler Vance asks Han for the exhibition himself. "For Ray\'s rent. And because I never beat you." Gordon pays for the posters and says it was a tax thing.', bg: 'gym', who: ['tyler', 'han', 'gordon'] },
+    { title: 'SOUP FOR THE SOUL', text: 'Moncton Coliseum, sold out. Ray in the front row in the cardigan. Half the crowd is Ray\'s old fighters. The other half is their kids.', bg: 'cage', who: ['ray', 'han', 'tyler'] },
+  ],
+  the_board: [
+    { title: 'THE BOARD', text: '', who: [] },
+    { title: 'THE WHITE BEAST', text: 'Spadam Biggs is back, two years after Han beat him, and Zenith has paid for him to say so on every channel they own.', bg: 'presser', who: ['han', 'dane'] },
+    { title: 'THE COLD SHOULDER', text: '1ton stops coming to Sunday soup. He says he\'s busy. Ray sets his place anyway.', bg: 'gym', who: ['ray', 'han'] },
+    { title: 'THE EXHIBITION', text: 'The Chairman trains in a boardroom with the furniture pushed back. Somebody leaks the footage. He is better than anybody expected.', bg: 'zenith', who: ['verity', 'dane'] },
+    { title: 'FIVE ROUNDS', text: '1ton asked for this fight. Ray asks him why. He says "to prove something". Ray asks to who. He doesn\'t answer.', bg: 'locker', who: ['ray', 'oneton'] },
+  ],
+  rematch: [
+    { title: 'THE KNIFE IN A SUIT', text: '', who: [] },
+    { title: 'THE TV SLOT', text: 'A Zenith television slot. Han says yes before Dane can say no. "Ray needs a new roof," he says. "And I need to hit something."', bg: 'office', who: ['han', 'dane'] },
+    { title: 'THE THIRD ROW', text: '1ton watches Han\'s camp from the third row of the warehouse, with the notebook out again, for the first time in a year.', who: ['oneton', 'han'] },
+    { title: 'METAPHORS', text: 'El Cuchillo brings the knife to every media day. The commission finally takes it off him. He has a second knife.', bg: 'presser', who: ['han', 'dane'] },
+    { title: 'THE SLOT', text: 'Fight night. The Old Dome is half Zenith and half Ray\'s. You can tell which half by the soup.', bg: 'cage', who: ['han', 'ray'] },
+  ],
+  the_signing: [
+    { title: 'THE GOLD PEN', text: 'The fortieth floor of the Zenith tower. A glass room, a gold pen, Verity Kane. 1ton signs every page. Then he goes downstairs and calls Ray first.', bg: 'zenith', who: ['verity', 'oneton'] },
+    { title: 'THE CALL', text: 'Ray takes the call by the soup pot. He listens for a long time. He says "okay, son". He hangs up and makes soup for an hour without talking to anybody.', bg: 'gym', who: ['ray', 'han', 'mateo'] },
+    { title: 'SYNERGY', text: '1ton\'s Zenith debut: their prospect, their card, their cameras. He wins. In the interview he thanks Verity Kane. He does not mention Ray.', bg: 'cage', who: ['oneton', 'verity'] },
+    { title: 'THE CREW', text: 'Zenith gives 1ton an entourage: Duke Kessler, Rico Alvarez, Cesar Rios. They follow him everywhere. Mateo says they look at Ray\'s gym like it owes them money.', bg: 'street', who: ['mateo', 'dane'] },
+    { title: 'TWO FACES', text: 'A masked man from Monterrey challenges Han for the warehouse belt. Everybody knows who is paying for the mask.', who: ['han', 'dane'] },
+  ],
+  brother: [
+    { title: 'THE BROTHER YOU MADE', text: '', who: [] },
+    { title: 'THE BOOKING', text: 'Zenith books Mateo against 1ton. A message, they call it. Ray reads the bout agreement twice and then tears it up and then tapes it back together because Mateo already signed it.', bg: 'gym', who: ['ray', 'mateo'] },
+    { title: 'THE LAST SUNDAY', text: 'Sunday dinner in the ring. A tablecloth from 1991. A place set for 1ton. Han takes a photo.', bg: 'gym', who: ['ray', 'han', 'mateo', 'dane'] },
+    { title: 'THE LOCKER ROOM', text: '1ton wraps his own hands, the way Ray taught him. Over the knuckles, under the thumb.', bg: 'locker', who: ['oneton', 'dane'] },
+    { title: 'THE LOADING DOCK', text: 'After the fight, Ray goes to find 1ton\'s crew. He takes his bucket. He does not take anybody with him.', bg: 'street', who: ['ray'] },
+  ],
+  the_wake: [
+    { title: 'THE FUNERAL', text: 'Four hundred people at a funeral for a man who ran a gym with one working shower. Every one of them has a bowl of soup. Han reads the eulogy off the back of a menu.', bg: 'gym', who: ['han', 'mateo', 'dane', 'tyler'] },
+    { title: 'THE RECIPE', text: 'Han finds Marie\'s recipe in the cutlery drawer, in her handwriting, with Ray\'s notes in the margin. The last note says "a little chile. Don\'t tell anyone".', bg: 'gym', who: ['han', 'mateo'] },
+    { title: 'THE LEDGER', text: 'Dane goes through Ray\'s books. Ray fed two hundred people a week for thirty years and charged none of them. The gym has been losing money since 1994.', bg: 'office', who: ['dane', 'bradie'] },
+    { title: 'THE TAPE', text: 'Mateo finds Ray\'s roll of hand tape. There is enough left for one more fight. He puts it in his bag and does not say what for.', bg: 'locker', who: ['bigmateo', 'han'] },
+    { title: 'THREE NAMES', text: 'The police have three names and nothing to charge them with. Han writes the same three names on a napkin and pins it over the heavy bag.', bg: 'gym', who: ['han', 'bigmateo', 'zac'] },
+  ],
+  street_justice: [
+    { title: 'THE CREW', text: '', who: [] },
+    { title: 'NAME ONE', text: 'Duke Kessler is waiting by the door he used to work. He is not hiding.', bg: 'street', who: ['han'] },
+    { title: 'TUESDAY CLASS', text: 'Zac Buna makes two people learn every gameplan. In case, Ray used to say.', bg: 'gym', who: ['zac', 'bigmateo', 'han'] },
+    { title: 'NAME TWO', text: 'Rico Alvarez is in the lot behind the Old Dome. The payphone is in evidence. Rico is not. Han starts the cut to light heavyweight the next day.', bg: 'lot', who: ['han'] },
+    { title: 'NAME THREE', text: 'The knee. Then the kid. Mateo carries the bucket into the loading bay himself.', bg: 'street', who: ['bigmateo', 'han'] },
+  ],
+  the_camp: [
+    { title: 'EIGHT WEEKS', text: 'Eight weeks to 1ton. Han coaches from a stool with his knee in ice. Zac has a whiteboard. Tyler holds pads and mops between rounds.', bg: 'gym', who: ['han', 'bigmateo', 'zac', 'tyler'] },
+    { title: 'THE CROC', text: 'A tune-up at light heavyweight. Zenith pays for the Australian\'s plane ticket and does not pay for his ticket home.', who: ['bigmateo', 'han'] },
+    { title: 'THE SOUP', text: 'Han makes the soup Marie\'s way, with a little chile. It is the first time anybody has made it since the funeral. Nobody says anything. Everybody has two bowls.', bg: 'gym', who: ['han', 'bigmateo', 'dane'] },
+    { title: 'ALBERTO', text: 'Two in the morning, the door unlocked, somebody sitting in Ray\'s chair by the cold pot.', bg: 'gym', who: ['oneton', 'dane'] },
+    { title: 'THE WEIGH-IN', text: 'Mateo makes weight. 1ton makes weight. They stare at each other for a long time and neither of them says anything about Ray.', bg: 'presser', who: ['bigmateo', 'oneton'] },
+  ],
+  buyback: [
+    { title: 'THE BUYBACK', text: '', who: [] },
+    { title: 'THE CONTRACT', text: 'The buyback contract is fourteen pages. Dane reads every word. Clause nine: the company goes to whoever holds the light heavyweight belt at the end of the night.', bg: 'office', who: ['dane', 'verity'] },
+    { title: 'THE OLD DOME', text: 'Eighteen thousand tickets in four hours. Half of Moncton is driving down. Xavier has rented three horse trailers.', bg: 'cage', who: ['xavier', 'dane'] },
+    { title: 'THE BUCKET', text: 'Ray\'s bucket goes in Mateo\'s corner. It still smells a little like onions.', bg: 'locker', who: ['bigmateo', 'han'] },
+    { title: 'THE WALK', text: 'The walk to the cage. Han on crutches behind him. The bucket. The tape Ray left. Hands up. Chin down.', bg: 'cage', who: ['bigmateo', 'han'] },
+  ],
+  legacy: [
+    { title: 'THE TORCH', text: '', who: [] },
+    { title: 'THE KNEE', text: 'Eight months. Han runs the stairs for the first time since the injury. He does not stop at the top.', bg: 'gym', who: ['han', 'bigmateo'] },
+    { title: 'THE BELT', text: 'Mateo has a belt. Han has a belt. The warehouse has one cage. Something has to give.', who: ['bigmateo', 'han', 'dane'] },
+    { title: 'THE POSTER', text: 'Dane puts Ray on the poster: a photo from 1987, the mullet guy cut out of it. The tagline is HANDS UP.', bg: 'office', who: ['dane'] },
+    { title: 'THE NIGHT BEFORE', text: 'The night before, the gym is closed but the lights are on, and somebody is making soup.', bg: 'gym', who: ['han', 'bigmateo'] },
+  ],
+};
+
+const partActor = (save: StorySave, w: PartWho, x: number, facing: 1 | -1): Actor => {
+  switch (w) {
+    case 'dane': return dane(x, facing);
+    case 'oneton': return oneton(x, facing);
+    case 'ray': return ray(x, facing);
+    case 'mateo': return mateo(x, facing);
+    case 'han': return han(save, x, facing, save.flags.hanInjured && !save.flags.legacyDone ? { pose: 'headDown' } : {});
+    case 'bigmateo': return bigMateo(save, x, facing);
+    case 'xavier': return npc('xavier', 'XAVIER "ALLSTAR" COCKETT', x, facing);
+    case 'gordon': return gordon(x, facing);
+    case 'tyler': return npcTyler(x, facing);
+    case 'zac': return npcZac(x, facing);
+    case 'verity': return verity(x, facing);
+    case 'bradie': return bradie(x, facing);
+  }
+};
+
+/** The card that opens a part: its title, where we are, who is there, what has happened. */
+export function partScene(save: StorySave, part: number): Cutscene | null {
+  const ch = storyChapter(save);
+  const p = PARTS[ch.id]?.[part - 1];
+  if (!p || !p.text) return null;
+  const n = p.who.length;
+  const cast = p.who.map((w, i) => partActor(save, w, Math.round(120 + (i + 0.5) * (240 / Math.max(1, n))), i < n / 2 ? 1 : -1));
+  return {
+    title: `PART ${part}: ${p.title}`,
+    film: true,
+    shots: [shot(p.bg ?? ch.bg, cast, [{ who: null, text: p.text }], `CHAPTER ${ch.no}  /  PART ${part} OF 5`)],
+  };
+}
+
+export const partTitle = (chId: string, part: number): string => PARTS[chId]?.[part - 1]?.title ?? '';
+
+// ---------------------------------------------------------------- the new chapters
+
+function introAllstar(save: StorySave): Cutscene {
+  return {
+    film: true,
+    shots: [
+      shot('warehouse', [npc('xavier', 'XAVIER "ALLSTAR" COCKETT', 150, 1), oneton(260, -1), mateo(340, -1), ray(420, -1)], [
+        { who: null, text: 'A barn outside Moncton. Bleachers for six hundred, a cage Xavier won in a card game and a goat called Commissioner Pete.' },
+        { who: 'xavier', text: 'Welcome to the big time! Well, the medium time. The time with bleachers.' },
+        { who: 'ray', text: 'There is hay in the cage.' },
+        { who: 'xavier', text: 'That is padding.' },
+        { who: 'oneton', text: 'I am undefeated in this barn.' },
+        { who: 'mateo', text: 'You have had one fight in this barn.' },
+        { who: 'oneton', text: 'Undefeated.' },
+      ], 'ALLSTAR FC'),
+    ],
+    choices: [
+      { id: 'spotlight', label: 'PUT 1TON ON EVERY POSTER', reply: [{ who: 'xavier', text: 'The beard sells, Ray. The beard SELLS.' }, { who: 'ray', text: 'The beard is going to get a big head.' }] },
+      { id: 'protect', label: 'KEEP HIM OFF THE POSTERS. LET HIM WORK.', reply: [{ who: 'ray', text: 'Good. Fighters who are on posters forget how to sweep the floor.' }, { who: 'oneton', text: 'I do not sweep the floor.' }, { who: 'ray', text: 'You do now.' }] },
+    ],
+  };
+}
+function outroAllstar(save: StorySave): Cutscene {
+  const won = fightWon(save, chapterFights(storyChapter(save)).slice(-1)[0]);
+  return {
+    film: true,
+    shots: [
+      shot('warehouse', [oneton(190, 1, won ? { pose: 'armUp' } : { pose: 'headDown' }), ray(290, -1), npc('xavier', 'XAVIER "ALLSTAR" COCKETT', 380, -1)], won ? [
+        { who: null, text: 'Buck Harlan hands over the belt. He hands over one of the hats too. Nobody asked him to.' },
+        { who: 'xavier', text: 'Allstar FC champion! The first Mexican champion in the history of the barn!' },
+        { who: 'ray', text: 'The barn has had four cards.' },
+        { who: 'oneton', text: 'History is history, Ray.' },
+        { who: 'ray', text: '...Yes. Yes it is. Come here.' },
+        { who: null, text: 'Ray hugs him in front of everybody, which Ray never does. 1ton does not know what to do with his arms.' },
+      ] : [
+        { who: null, text: 'Buck Harlan keeps the belt and both hats.' },
+        { who: 'ray', text: 'Monday. Six a.m.' },
+        { who: 'oneton', text: 'I know.' },
+        { who: 'ray', text: 'Bring the notebook. Write down what he did. Then we fix it.' },
+      ], won ? 'THE BELT' : 'MONDAY'),
+    ],
+  };
+}
+
+function introHomecoming(save: StorySave): Cutscene {
+  return {
+    film: true,
+    shots: [
+      shot('street', [ray(150, 1), han(save, 250, -1), dane(340, -1), oneton(420, -1)], [
+        { who: null, text: 'Moncton. Main Street in the rain. The Coliseum sign says CAGE BOSS II: HOMECOMING, and underneath, in smaller letters someone paid extra for: SOUP AT THE DOOR.' },
+        { who: 'ray', text: 'I was thirty-three. Marie was in the third row. Butch had a mullet you could hide a cat in.' },
+        { who: 'han', text: 'You have told us, Uncle Ray.' },
+        { who: 'ray', text: 'I am telling him. He has not heard it.' },
+        { who: 'oneton', text: 'I have heard it nine times.' },
+        { who: 'ray', text: 'Then the tenth is free.' },
+      ], 'MONCTON'),
+    ],
+  };
+}
+function outroHomecoming(save: StorySave): Cutscene {
+  const won = fightWon(save, chapterFights(storyChapter(save)).slice(-1)[0]);
+  return {
+    film: true,
+    shots: [
+      shot('cage', [han(save, 190, 1), npcTyler(280, -1), ray(370, -1)], [
+        { who: null, text: won ? 'Han wins on the cards. Tyler takes the microphone afterwards and gives the whole purse to Ray\'s rent.' : 'Tyler wins on the cards, for the first time in his life. He takes the microphone and gives the whole purse to Ray\'s rent.' },
+        { who: 'tyler', text: 'I trained at my dad\'s gym for ten years. I learned to fight at Ray\'s in two.' },
+        { who: null, text: 'In the stands, Gordon Vance stands up. He claps. He stays until the lights go out.' },
+        { who: 'ray', text: 'Marie would have liked this.' },
+        { who: 'han', text: 'She would have hated the fighting.' },
+        { who: 'ray', text: 'She would have hated the fighting and liked this.' },
+      ], 'SOUP FOR THE SOUL'),
+    ],
+  };
+}
+
+function introSigning(save: StorySave): Cutscene {
+  return {
+    film: true,
+    shots: [
+      shot('zenith', [verity(160, 1), oneton(290, -1, { clothes: undefined })], [
+        { who: null, text: 'The fortieth floor. Glass on three sides. The city very small underneath. A gold pen on a black table.' },
+        { who: 'verity', text: 'Your own promotion, Mr. Fuente. Your own roster, your own name on the building. A main event every month.' },
+        { who: 'oneton', text: 'And Dane?' },
+        { who: 'verity', text: 'Mr. Whyte will be fine. Mr. Whyte is always fine. That has always been the problem with Mr. Whyte.' },
+        { who: null, text: 'He signs every page. He signs it with the gold pen. He keeps the pen.' },
+      ], 'THE FORTIETH FLOOR'),
+    ],
+  };
+}
+function outroSigning(save: StorySave): Cutscene {
+  return {
+    film: true,
+    shots: [
+      shot('gym', [ray(170, 1), dane(290, -1), han(save, 380, -1)], [
+        { who: null, text: 'Ray has moved 1ton\'s locker. He has not emptied it. He has just moved it, closer to the soup.' },
+        { who: 'dane', text: 'You could be angry, Ray.' },
+        { who: 'ray', text: 'I am angry. I am angry the way you are angry at the weather.' },
+        { who: 'han', text: 'He will come back.' },
+        { who: 'ray', text: 'Everybody comes back. That is not the question. The question is what they come back as.' },
+      ], 'THE LOCKER'),
+    ],
+    choices: [
+      { id: 'ask_why', label: 'CALL 1TON', reply: [{ who: null, text: 'It goes to voicemail. The greeting is still the old one: "This is 1ton. Leave a question."' }, { who: 'dane', text: 'When are you coming home?' }] },
+      { id: 'thank', label: 'LET HIM GO', reply: [{ who: 'ray', text: 'Good. You can\'t hold a man. You can only leave the door open.' }] },
+    ],
+  };
+}
+
+function introWake(save: StorySave): Cutscene {
+  return {
+    film: true,
+    shots: [
+      shot('gym', [han(save, 140, 1), bigMateo(save, 230, -1), dane(320, -1), npcTyler(410, -1, { pose: 'headDown' })], [
+        { who: null, text: 'Ray\'s Boxing & Soup. A hand-written sign on the door: CLOSED UNTIL FURTHER NOTICE. Somebody has written under it: SOUP STILL ON.' },
+        { who: null, text: 'Somebody has. Nobody knows who. There is a pot on the stove every morning.' },
+        { who: 'tyler', text: 'It is not me.' },
+        { who: 'mateo', text: 'It is not me.' },
+        { who: 'han', text: '...It is me. I can\'t sleep. I make the soup.' },
+      ], 'THE MORNING AFTER'),
+    ],
+  };
+}
+function outroWake(save: StorySave): Cutscene {
+  return {
+    film: true,
+    shots: [
+      shot('gym', [han(save, 170, 1), bigMateo(save, 290, -1)], [
+        { who: null, text: 'Han takes the CLOSED sign off the door. Mateo writes a new one in marker.' },
+        { who: null, text: 'RAY\'S BOXING & SOUP. OPEN. HANDS UP. CHIN DOWN. EAT SOMETHING.' },
+        { who: 'han', text: 'Three names.' },
+        { who: 'mateo', text: 'Three names.' },
+      ], 'OPEN'),
+    ],
+  };
+}
+
+function introCamp(save: StorySave): Cutscene {
+  return {
+    film: true,
+    shots: [
+      shot('gym', [han(save, 140, 1, { pose: 'headDown' }), bigMateoFight(save, 240, -1), npcZac(330, -1), npcTyler(410, -1)], [
+        { who: null, text: 'Eight weeks. A whiteboard. Zac\'s handwriting is terrible. Han\'s is worse.' },
+        { who: 'zac', text: 'He drops his right when he jabs. Ray told him. He never fixed it.' },
+        { who: 'han', text: 'He wanted to fix it. He wanted Ray to keep telling him.' },
+        { who: 'mateo', text: 'Then I make him pay for it.' },
+        { who: 'tyler', text: 'I will hold the pads. And mop. Mostly mop.' },
+      ], 'THE CAMP'),
+    ],
+  };
+}
+function outroCamp(save: StorySave): Cutscene {
+  return {
+    film: true,
+    shots: [
+      shot('locker', [bigMateoFight(save, 180, 1), han(save, 300, -1)], [
+        { who: null, text: 'The night before the Old Dome. Han tapes Mateo\'s hands with the last of Ray\'s tape. There is exactly enough.' },
+        { who: 'han', text: 'Over the knuckles. Under the thumb.' },
+        { who: 'mateo', text: 'Not so tight the fingers go blue.' },
+        { who: 'han', text: 'He said that to everybody.' },
+        { who: 'mateo', text: 'He meant it to everybody.' },
+      ], 'THE TAPE'),
+    ],
+  };
+}
+
 // ---------------------------------------------------------------- talk scenes
 
 /** The young men in the flashbacks: Ray at 33 in the Golden Gloves final, Butch and his mullet, Han's dad on the wharf. */
@@ -1080,6 +1404,140 @@ export function talkScene(save: StorySave): Cutscene | null {
           ]],
         ),
       };
+    case 'homecoming':
+      return {
+        title: 'THE THIRD ROW',
+        film: true,
+        shots: [
+          shot('cage', [ray(170, 1), han(save, 280, -1)], [
+            { who: null, text: 'The Moncton Coliseum, empty, the night before. Ray is sitting in the third row. The seat is the same colour it was in 1987.' },
+            { who: 'ray', text: 'She sat here. I could hear her over three thousand people. She had a voice like a fire alarm.' },
+            { who: 'han', text: 'Do you miss it? The fighting?' },
+          ], 'THE THIRD ROW'),
+        ],
+        choices: answers(
+          ['HAN: "Sit with me tomorrow. Third row."', [
+            { who: 'han', text: 'Sit here tomorrow. Third row. Be loud.' },
+            { who: 'ray', text: 'I have a voice like a door hinge.' },
+            { who: 'han', text: 'Be loud anyway.' },
+            { who: null, text: 'The next night, over three thousand people, Han can hear him.' },
+          ]],
+          ['HAN: "Tell me about the night you met her."', [
+            { who: 'han', text: 'Tell me about the night you met her.' },
+            { who: 'ray', text: 'A dance at the Legion. I stepped on her foot. She said "you hit like you dance" and I said "how would you know". She said "I watch". She watched every fight I ever had.' },
+          ]],
+          ['HAN: "You could have gone pro."', [
+            { who: 'han', text: 'You could have gone pro.' },
+            { who: 'ray', text: 'I did better. I went soup.' },
+          ]],
+        ),
+      };
+    case 'board':
+      return {
+        title: 'THE EMPTY CHAIR',
+        film: true,
+        shots: [
+          shot('gym', [ray(180, 1), dane(300, -1)], [
+            { who: null, text: 'Sunday. Ray has set 1ton\'s place again. Third week in a row. The soup in his bowl goes cold.' },
+            { who: 'ray', text: 'He called. He said he is busy. He has never been busy in his life. He is a reporter.' },
+          ], 'SUNDAY'),
+        ],
+        choices: answers(
+          ['"I will go and get him."', [
+            { who: 'dane', text: 'I will go and get him.' },
+            { who: 'ray', text: 'You will go and ask him. You do not get people, Dane. You ask them. That is the whole job.' },
+          ]],
+          ['"He will come when he is hungry."', [
+            { who: 'dane', text: 'He will come when he is hungry.' },
+            { who: 'ray', text: 'He is hungry. That is why he is not here.' },
+          ]],
+          ['"Stop setting his place, Ray."', [
+            { who: 'dane', text: 'Stop setting his place, Ray.' },
+            { who: 'ray', text: 'No.' },
+            { who: null, text: 'Ray sets it again the next Sunday. And the next.' },
+          ]],
+        ),
+      };
+    case 'signing':
+      return {
+        title: 'THE VOICEMAIL',
+        film: true,
+        shots: [
+          shot('office', [dane(180, 1), han(save, 300, -1)], [
+            { who: null, text: 'The warehouse office. Dane has the phone on speaker. 1ton\'s voice, from a hotel room: "I am sorry. I am not sorry. Both. Tell Ray I am sorry. Do not tell him I am not."' },
+            { who: 'han', text: 'What do you want to say to him?' },
+          ], 'THE OFFICE'),
+        ],
+        choices: answers(
+          ['"Come home. The door is open."', [
+            { who: 'dane', text: 'Come home. The door is open. Ray left it open.' },
+            { who: null, text: 'The line is quiet for a long time. Then it goes dead.' },
+          ]],
+          ['"Win every fight. Then come home."', [
+            { who: 'dane', text: 'Win every fight. Then come home and tell us about it.' },
+            { who: 'han', text: 'That was a nice thing to say.' },
+            { who: 'dane', text: 'Do not tell anyone.' },
+          ]],
+          ['"Keep the pen. You will need it."', [
+            { who: 'dane', text: 'Keep the gold pen. You will need it to sign the next thing they put in front of you.' },
+            { who: 'han', text: 'That was not a nice thing to say.' },
+          ]],
+        ),
+      };
+    case 'wake':
+      return {
+        title: 'TWO BOWLS',
+        film: true,
+        shots: [
+          shot('gym', [han(save, 170, 1), bigMateo(save, 290, -1)], [
+            { who: null, text: 'Midnight. Han and Mateo at the soup counter with two bowls. Neither of them is eating.' },
+            { who: 'mateo', text: 'He taped my hands the first day. He did not ask. He just held them out and I gave him mine.' },
+          ], 'MIDNIGHT'),
+        ],
+        choices: answers(
+          ['HAN: "He did that to everybody."', [
+            { who: 'han', text: 'He did that to everybody. Me, at fifteen. Tyler. 1ton.' },
+            { who: 'mateo', text: '1ton.' },
+            { who: 'han', text: '1ton too.' },
+          ]],
+          ['HAN: "Eat something."', [
+            { who: 'han', text: 'Eat something.' },
+            { who: null, text: 'Mateo laughs, and then he does not, and then he eats. Han eats too. It is the first meal either of them has had in two days.' },
+          ]],
+          ['HAN: "We do not do anything stupid."', [
+            { who: 'han', text: 'Whatever we do next, we do not do anything stupid.' },
+            { who: 'mateo', text: 'We are going to do something stupid.' },
+            { who: 'han', text: 'Yes. But in a cage, with a referee.' },
+          ]],
+        ),
+      };
+    case 'camp':
+      return {
+        title: 'THE WHITEBOARD',
+        film: true,
+        shots: [
+          shot('gym', [han(save, 170, 1, { pose: 'headDown' }), bigMateo(save, 290, -1)], [
+            { who: null, text: 'Two weeks out. The whiteboard is full. Han is drawing a left hook on it and getting it wrong.' },
+            { who: 'mateo', text: 'Do you hate him?' },
+          ], 'TWO WEEKS OUT'),
+        ],
+        choices: answers(
+          ['HAN: "No. That is the worst part."', [
+            { who: 'han', text: 'No. That is the worst part. He made the soup with us. He sat in the third row. I cannot hate him and I cannot forgive him.' },
+            { who: 'mateo', text: 'Then I will beat him for both of us.' },
+          ]],
+          ['HAN: "Ray would not want us to."', [
+            { who: 'han', text: 'Ray would not want us to.' },
+            { who: 'mateo', text: 'Ray set his place for three weeks.' },
+            { who: 'han', text: 'Ray would have set it for thirty years.' },
+          ]],
+          ['HAN: "Yes. Use it."', [
+            { who: 'han', text: 'Yes. Use it. For five rounds. Then put it down.' },
+            { who: 'mateo', text: 'And after?' },
+            { who: 'han', text: 'After, we make soup.' },
+          ]],
+        ),
+      };
     case 'crew':
       return {
         title: 'THE WHARF',
@@ -1390,7 +1848,7 @@ export function fightIntro(save: StorySave, def: StoryFightDef): Cutscene {
     };
   }
   const p = def.player === 'han' ? hanFight(save, 180, 1) : def.player === 'mateo' ? bigMateoFight(save, 180, 1) : oneTonFight(save, 180, 1);
-  const guest = ['dusty', 'buck', 'tyler', 'toro', 'spadam', 'synergy', 'doscaras'].includes(def.opponent);
+  const guest = ['dusty', 'buck', 'tyler', 'toro', 'spadam', 'synergy', 'doscaras', 'ranch', 'lobster', 'croc', 'intern', 'prince'].includes(def.opponent);
   const o = guest ? fighterActor(def.opponent, buildOpponent(save, def.opponent).last.toUpperCase(), buildOpponent(save, def.opponent), 320, -1)
     : def.opponent === 'cuchillo' || def.opponent === 'cuchillo_rematch' ? cuchillo(save, def.opponent === 'cuchillo_rematch', 320, -1)
       : def.opponent === 'brick' ? brick(save, 320, -1)
@@ -1459,6 +1917,22 @@ export function fightIntro(save: StorySave, def: StoryFightDef): Cutscene {
                 { who: 'doscaras', text: 'I have two faces. You will only see one.' },
                 { who: 'han', text: 'Zenith sent you.' },
                 { who: 'doscaras', text: '...Both of my faces deny that.' },
+              ] : def.opponent === 'intern' ? [
+                { who: 'intern', text: 'Zenith would love to have you back. I am authorized to use force. Light force. Brand-safe force.' },
+                { who: 'han', text: 'Tell Trent I said hi.' },
+              ] : def.opponent === 'prince' ? [
+                { who: 'prince', text: 'My father owns a television network. What did your father do?' },
+                { who: 'oneton', text: 'Lost his name. Kept his hands.' },
+              ] : def.opponent === 'ranch' ? [
+                { who: 'ranch', text: 'I have wrestled steers bigger than you.' },
+                { who: 'oneton', text: 'Did the steers have a left hook?' },
+              ] : def.opponent === 'lobster' ? [
+                { who: 'lobster', text: 'I fished with Marc Tibular. Good man. Never saw his boy fight.' },
+                { who: 'oneton', text: '...I am sorry.' },
+                { who: 'lobster', text: 'Don\'t be sorry. Be awake.' },
+              ] : def.opponent === 'croc' ? [
+                { who: 'croc', text: 'They flew me eight thousand kilometres to hurt you, mate.' },
+                { who: 'mateo', text: 'They did not book your flight home.' },
               ] : def.opponent === 'duke' ? [
                 { who: 'duke', text: 'Security usually handles this part.' },
                 { who: 'han', text: 'Security is not here.' },
@@ -1524,7 +1998,18 @@ export function fightHighlight(save: StorySave, def: StoryFightDef, won: boolean
 
 export function chapterIntro(save: StorySave): Cutscene {
   const ch = storyChapter(save);
-  switch (ch.id) {
+  const scene = chapterIntroRaw(save, ch.id);
+  // the order of the chapters sets the number; part one is the intro
+  return { ...scene, title: `CHAPTER ${ch.no}: ${ch.title}`, shots: scene.shots.map((sh, i) => (i === 0 && !sh.caption ? { ...sh, caption: 'PART 1 OF 5' } : sh)) };
+}
+
+function chapterIntroRaw(save: StorySave, id: string): Cutscene {
+  switch (id) {
+    case 'allstar': return introAllstar(save);
+    case 'homecoming': return introHomecoming(save);
+    case 'the_signing': return introSigning(save);
+    case 'the_wake': return introWake(save);
+    case 'the_camp': return introCamp(save);
     case 'back_row': return introBackRow(save);
     case 'mexican_math': return introMexicanMath(save);
     case 'brick_by_brick': return introBrick(save);
@@ -1542,6 +2027,11 @@ export function chapterIntro(save: StorySave): Cutscene {
 export function chapterOutro(save: StorySave): Cutscene {
   const ch = storyChapter(save);
   switch (ch.id) {
+    case 'allstar': return outroAllstar(save);
+    case 'homecoming': return outroHomecoming(save);
+    case 'the_signing': return outroSigning(save);
+    case 'the_wake': return outroWake(save);
+    case 'the_camp': return outroCamp(save);
     case 'back_row': return outroBackRow(save);
     case 'mexican_math': return outroMexicanMath(save);
     case 'brick_by_brick': return outroBrick(save);

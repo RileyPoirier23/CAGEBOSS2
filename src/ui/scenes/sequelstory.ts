@@ -1,5 +1,5 @@
 /**
- * Story mode's office: ten chapters (and a secret eleventh), one trainee, one notebook and a contract
+ * Tales of Legacy's office: fifteen chapters of five parts (and a secret one), one trainee, one notebook and a contract
  * on the desk that is always slightly worse than it looks.
  *
  * This is the room between the cutscenes. Everything that changes a number lives
@@ -28,12 +28,12 @@ import {
   STORY_CHAPTERS, buildOneTon, cornerFighter, cornerName, cornerKey, chapterFights, nextChapterFight, storyProgress, storyCorner, storyOverall, storyChapter, storyNextLabel,
   storyRecord, storyDoc, resolveStoryDoc, pressQuestions, applyPressAnswer, finishPressDay,
   canAct, mediaDay, dinnerWithOneTon, applyTalkChoice, applyChapterChoice, talkTo,
-  dueBeat, movesOf, storyDate, storyWeek, chapterWeeks, fightDue, fightThisWeek, endStoryWeek, restDay, talkedThisChapter, chapterReady,
+  dueBeat, movesOf, storyDate, storyPart, storyWeek, chapterWeeks, fightDue, fightThisWeek, endStoryWeek, restDay, talkedThisChapter, chapterReady,
   trainSession, gradeFor, TRAIN_TIERS, DAYS_PER_WEEK, type TrainTier, type OneTonTrack,
   fightDone, recordStoryFight, advanceStoryChapter, sideOffers, sideFightReady,
   recordSideFight, type StoryFightDef, type StorySideOpponent, type StoryDocMode,
 } from '../../sequel/story';
-import { beatScene, chapterIntro, chapterOutro, fightHighlight, fightIntro, storyEndingScene, talkScene } from './storycuts';
+import { beatScene, chapterIntro, chapterOutro, fightHighlight, fightIntro, partScene, partTitle, storyEndingScene, talkScene } from './storycuts';
 import { newStorySave } from '../../sequel/story';
 import { readStory, writeStory, addStoryTrophy, forgetStory } from '../../sequel/storysession';
 import { newSlot, listSlots } from '../../sequel/slots';
@@ -101,7 +101,7 @@ export class SequelStoryHubScene extends Scene {
     const r = this.root;
     r.addChild(new Graphics().rect(0, 0, SW, 28).fill({ color: 0x0a080e, alpha: 0.95 }).rect(0, 27, SW, 1).fill({ color: PAL.gold, alpha: 0.55 }));
     r.addChild(text('CAGE BOSS II  /  TALES OF LEGACY', 6, 4, { small: true, color: PAL.gold }));
-    r.addChild(text(`CHAPTER ${storyProgress(save)}`, 170, 4, { small: true, color: PAL.bone }));
+    r.addChild(text(`CHAPTER ${storyProgress(save)}  /  PART ${storyPart(save)}/5`, 150, 4, { small: true, color: PAL.bone }));
     r.addChild(text(`WEEK ${storyWeek(save)}/${chapterWeeks(ch)}  DAY ${Math.min(DAYS_PER_WEEK, DAYS_PER_WEEK + 1 - save.actionsLeft)}/${DAYS_PER_WEEK}`, 262, 4, { small: true, color: save.actionsLeft ? PAL.bone : PAL.ember }));
     r.addChild(text(storyDate(save), 262, 14, { small: true, color: PAL.ash }));
     r.addChild(text(`CASH ${money(save.cash)}`, 366, 4, { small: true, color: save.cash < 0 ? PAL.blood : PAL.bone }));
@@ -116,7 +116,7 @@ export class SequelStoryHubScene extends Scene {
     c.addChild(box(300, 202, 0x16121a, PAL.slate, { alpha: 0.95, bevel: true }));
     c.addChild(text('THE CHAPTER', 6, 4, { small: true, color: PAL.gold }));
     c.addChild(text(ch.title, 6, 15, { width: 288, color: PAL.bone, maxLines: 2 }));
-    c.addChild(text(ch.kicker, 6, 34, { small: true, color: PAL.ember, width: 288, maxLines: 1 }));
+    c.addChild(text(`PART ${storyPart(save)}: ${partTitle(ch.id, storyPart(save)) || ch.kicker}`, 6, 34, { small: true, color: PAL.ember, width: 288, maxLines: 1 }));
     c.addChild(text(ch.blurb, 6, 45, { width: 288, small: true, color: PAL.fog, maxLines: 3, lineGap: 0 }));
     c.addChild(new Graphics().rect(6, 74, 288, 1).fill({ color: PAL.slate, alpha: 0.7 }));
 
@@ -242,6 +242,16 @@ export class SequelStoryHubScene extends Scene {
     if (save.status === 'ended' || this.g.modals.length) return;
     const ch = storyChapter(save);
     if (save.flags[`intro_${ch.id}`]) {
+      // a new part of the chapter opens with its card
+      const part = storyPart(save);
+      if (part >= 2 && !save.flags[`part_${ch.id}_${part}`]) {
+        save.flags[`part_${ch.id}_${part}`] = true;
+        const card = partScene(save, part);
+        if (card) {
+          playCutscene(this.g, card, () => { writeStory(save); this.refresh(); setTimeout(() => this.maybeIntro(save), 200); });
+          return;
+        }
+      }
       // the story between the fights: a scene when its week comes round
       const beat = dueBeat(save);
       const scene = beat ? beatScene(save, beat) : null;

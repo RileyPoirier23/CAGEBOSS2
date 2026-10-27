@@ -16,7 +16,7 @@ import {
   ensureDesk, flagKey, pendingCount, resolveDoc, takeBribe,
 } from '../src/sequel/desk';
 import {
-  advanceStoryChapter, applyChapterChoice, applyPressAnswer, buildHan, chapterWeeks, endStoryWeek, fightDue, storyWeek, talkedThisChapter, trainSession, sparSession, gradeFor, storyDate, DAYS_PER_WEEK, movesOf, buildMateoGrown, buildOneTon, chapterFights, chapterReady, STORY_CHAPTERS, finishPressDay, newStorySave,
+  advanceStoryChapter, applyChapterChoice, applyPressAnswer, MAIN_CHAPTERS, buildHan, chapterWeeks, endStoryWeek, fightDue, storyWeek, talkedThisChapter, trainSession, sparSession, gradeFor, storyDate, DAYS_PER_WEEK, movesOf, buildMateoGrown, buildOneTon, chapterFights, chapterReady, STORY_CHAPTERS, finishPressDay, newStorySave,
   pressQuestions, recordSideFight, recordStoryFight, resolveStoryDoc, sideOffers, storyChapter,
   storyCorner, storyDoc, storyEnding, trainOneTon,
 } from '../src/sequel/story';
@@ -485,11 +485,17 @@ describe('sequel story mode', () => {
     expect(movesOf(save, 'corner')).toEqual([]);
   });
 
-  it('books more than one key fight in the chapters before nine', () => {
-    for (const id of ['mexican_math', 'brick_by_brick', 'sparring_partner', 'audit', 'the_board', 'rematch', 'brother']) {
+  it('books at least two key fights in every chapter before Ray dies', () => {
+    for (const id of ['mexican_math', 'allstar', 'brick_by_brick', 'sparring_partner', 'audit', 'homecoming', 'the_board', 'rematch', 'the_signing', 'brother']) {
       const ch = STORY_CHAPTERS.find((c) => c.id === id)!;
       expect(chapterFights(ch).length, id).toBeGreaterThanOrEqual(2);
     }
+  });
+
+  it('has fifteen chapters of five parts (and the secret one)', () => {
+    expect(MAIN_CHAPTERS).toBe(15);
+    expect(STORY_CHAPTERS.length).toBe(16);
+    expect(STORY_CHAPTERS.map((c) => c.no)).toEqual(STORY_CHAPTERS.map((_, i) => i + 1));
   });
 
   it('runs the story over a few years of calendar', () => {

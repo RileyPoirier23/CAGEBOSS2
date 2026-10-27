@@ -332,6 +332,8 @@ export interface Look2 {
    * Chest: 1 wings, 2 an eagle, 3 a medallion, 4 script on the collarbones. Back: 1 a cross, 2 wings.
    */
   tats?: { sleeveF: number; sleeveB: number; chest: number; back: number; ribs: boolean; knuckles: boolean; color: number };
+  /** CAGE BOSS II's kit: a cut, a pattern, an accent, a waistband and ankle wraps, all from the fighter's bio (kitII) */
+  kit2?: KitII;
   /** the middle finger is up (the flip-off taunt) */
   bird?: boolean;
   /** the mouthpiece has been knocked out (it's lying on the canvas) */
@@ -412,6 +414,41 @@ export function kitFor(f: Fighter, champ = false): Kit {
   return { trunks: main, trim, pattern: shade(main, lum > 170 ? -0.18 : lum < 60 ? 0.22 : -0.28), champ: false };
 }
 
+export type KitCut = 'short' | 'thai' | 'board';
+export type KitPattern = 'plain' | 'chevron' | 'flames' | 'stripes' | 'split' | 'stars' | 'checker' | 'camo' | 'tiger';
+export interface KitII { cut: KitCut; pattern: KitPattern; accent: number; band: number; wraps: number | null }
+
+const ANIMAL = /tiger|beast|bull|toro|wolf|snake|lion|bear|panther|cobra|shark|gorilla|dragon/i;
+
+/**
+ * CAGE BOSS II: a kit per fighter, from who they are. The cut follows the style (Muay Thai shorts for
+ * the kickboxers, board shorts for the brawlers and the old school, short and tight for the
+ * wrestlers), the colours their flag (or their own, for the loud ones), the pattern their character
+ * (flames for showmen, tiger stripes for a Beast, camo for the mysterious, split panels for trash
+ * talkers), ankle wraps on the strikers, and the id decides the rest, so nobody changes kit twice.
+ */
+export function kitII(f: Fighter, base: Kit): KitII {
+  let h = [...f.id].reduce((a, ch) => (a * 33 + ch.charCodeAt(0)) >>> 0, 11);
+  const r = (n: number) => ((h = (h * 1103515245 + 12345) >>> 0) >>> 8) % n;
+  const st = f.styles;
+  const tr = f.traits;
+  const striker = st.some((x) => /Muay Thai|Kickboxer|Counter|Point/.test(x));
+  const cut: KitCut = st.some((x) => /Muay Thai|Kickboxer/.test(x)) ? 'thai' : st.some((x) => /Wrestler|Grinder|Sub Hunter|Ground/.test(x)) ? 'short' : st.includes('Brawler') || f.age >= 35 ? 'board' : (['short', 'thai', 'board'] as KitCut[])[r(3)];
+  const nick = f.nick ?? '';
+  const pattern: KitPattern = base.champ ? 'stripes'
+    : ANIMAL.test(nick) ? 'tiger'
+      : tr.some((t) => /Showman|Showboat|Clout/.test(t)) ? (r(2) ? 'flames' : 'stars')
+        : tr.some((t) => /Mysterious/.test(t)) ? 'camo'
+          : tr.some((t) => /Trash Talker/.test(t)) ? 'split'
+            : tr.some((t) => /Veteran|Loyal/.test(t)) && r(2) ? 'plain'
+              : (['chevron', 'stripes', 'checker', 'split', 'plain'] as KitPattern[])[r(5)];
+  const [, flag2] = COUNTRY_KIT[f.country] ?? [0x4a4a52, 0xe8e8e8];
+  const accent = base.champ ? 0xd9a441 : pattern === 'flames' ? (r(2) ? 0xf08a24 : 0xf2c12e) : pattern === 'camo' ? shade(base.trunks, -0.3) : r(3) ? base.trim : flag2;
+  const band = base.champ ? 0xd9a441 : r(2) ? base.trim : shade(base.trunks, -0.35);
+  const wraps = striker && r(3) ? (r(2) ? 0xe8e4d8 : accent) : null;
+  return { cut, pattern, accent, band, wraps };
+}
+
 export function lookFor(f: Fighter, corner: 0 | 1, champ = false): Look2 {
   const kit = kitFor(f, champ);
   return {
@@ -447,6 +484,7 @@ export function lookFor(f: Fighter, corner: 0 | 1, champ = false): Look2 {
     mask: f.look.mask,
     fade: !!f.look.fade,
     tats: tattooLayout(f),
+    kit2: isII() ? kitII(f, kit) : undefined,
     glasses: f.look.glasses === 2 ? 2 : undefined,
     beanie: !!f.look.beanie,
     freckles: !!f.look.freckles,
@@ -993,11 +1031,62 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
     // fight shorts: waist block + near leg, waistband trim, side stripe, little logo
     const wb: V[] = [P(0.86, tw * 0.5), P(0.86, -tw * 0.5), P(1.08, -tw * 0.5), P(1.08, tw * 0.5)];
     g.poly(wb.flatMap((p) => T(p))).fill(L.trunks).stroke({ color: OUT, width: 1.6 * s });
-    group([{ a: rig.hip, b: lerp(rig.hip, rig.knF, 0.52), wa: TH.a + 2.4, wm: TH.m + 2.6, wb: TH.m + 2, color: L.trunks, shadow: shade(L.trunks, -0.22) }]);
-    line(P(0.88, tw * 0.5), P(0.88, -tw * 0.5), L.trim, 1.8); // waistband
-    line(lerp(rig.hip, rig.knF, 0.08), lerp(rig.hip, rig.knF, 0.5), L.trim, 1.1); // side stripe
+    const k2 = L.kit2;
+    // the cut: Muay Thai shorts sit high and flare, board shorts go past the knee's top, fight shorts in between
+    const hem = !k2 ? 0.52 : k2.cut === 'thai' ? 0.42 : k2.cut === 'board' ? 0.7 : 0.5;
+    const flare = !k2 ? 0 : k2.cut === 'thai' ? 1.6 : k2.cut === 'board' ? 0.8 : -0.4;
+    group([{ a: rig.hip, b: lerp(rig.hip, rig.knF, hem), wa: TH.a + 2.4, wm: TH.m + 2.6 + flare * 0.5, wb: TH.m + 2 + flare, color: L.trunks, shadow: shade(L.trunks, -0.22) }]);
+    line(P(0.88, tw * 0.5), P(0.88, -tw * 0.5), k2 ? k2.band : L.trim, k2?.cut === 'thai' ? 2.6 : 1.8); // waistband
+    if (!k2 || k2.pattern !== 'split') line(lerp(rig.hip, rig.knF, 0.08), lerp(rig.hip, rig.knF, hem - 0.02), L.trim, 1.1); // side stripe
+    if (k2) {
+      const a = rig.hip;
+      const b = lerp(rig.hip, rig.knF, hem);
+      const dl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      const d: V = [(b[0] - a[0]) / dl, (b[1] - a[1]) / dl];
+      const q: V = [-d[1], d[0]];
+      const wHalf = (TH.m + 2) / 2;
+      const ac = k2.accent;
+      switch (k2.pattern) {
+        case 'flames':
+          for (const off of [-0.6, 0.1, 0.8]) {
+            const base0 = add(b, q, off * wHalf);
+            g.poly([...T(add(base0, q, -1.2)), ...T(add(add(base0, d, -dl * 0.42), q, off * 0.6)), ...T(add(base0, q, 1.2))]).fill(ac);
+          }
+          break;
+        case 'stripes':
+          for (const t of [0.62, 0.78]) line(add(lerp(a, b, t), q, -wHalf), add(lerp(a, b, t), q, wHalf), ac, 1.1);
+          break;
+        case 'split':
+          g.poly([...T(add(a, q, 0.2)), ...T(add(a, q, wHalf + 1)), ...T(add(b, q, wHalf + 1)), ...T(add(b, q, 0.2))]).fill({ color: ac, alpha: 0.9 });
+          break;
+        case 'stars':
+          for (const t of [0.3, 0.55, 0.8]) g.circle(...T(add(lerp(a, b, t), q, (t * 7) % 2 > 1 ? 1.4 : -1.2)), 0.7 * s).fill(ac);
+          break;
+        case 'checker':
+          for (let k = -2; k <= 2; k++) if ((k + 2) % 2 === 0) g.rect(...T(add(add(b, d, -1.6), q, k * 1.6)), 1.4 * s, 1.4 * s).fill(ac);
+          break;
+        case 'camo':
+          for (const [t, o2, rr] of [[0.25, 0.8, 1.6], [0.5, -1.2, 1.9], [0.75, 0.4, 1.4]] as [number, number, number][]) g.circle(...T(add(lerp(a, b, t), q, o2)), rr * s).fill({ color: ac, alpha: 0.75 });
+          break;
+        case 'tiger':
+          for (const t of [0.25, 0.45, 0.65, 0.85]) line(add(lerp(a, b, t), q, -wHalf), add(lerp(a, b, t + 0.08), q, -wHalf * 0.2), 0x141416, 0.9);
+          break;
+        case 'chevron':
+          for (const t of [0.34, 0.6, 0.84]) {
+            const c = lerp(a, b, t);
+            line(add(add(c, q, 2.6), d, -1.6), c, ac, 0.9);
+            line(add(add(c, q, -2.6), d, -1.6), c, ac, 0.9);
+          }
+          break;
+        default:
+          break;
+      }
+      // a hem in the accent; wraps round the ankles for the strikers
+      line(add(b, q, -wHalf), add(b, q, wHalf), shade(L.trunks, -0.35), 0.8);
+      if (k2.wraps !== null) for (const t of [0.84, 0.9]) line(lerp(rig.knF, rig.ftF, t), add(lerp(rig.knF, rig.ftF, t), [0.1, 0.4]), k2.wraps, 2.6);
+    }
     // chevron print down the leg (the fourth-gen kit look)
-    if (L.pattern !== undefined) {
+    if (L.pattern !== undefined && !L.kit2) {
       const a = rig.hip;
       const b = lerp(rig.hip, rig.knF, 0.5);
       const dl = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;

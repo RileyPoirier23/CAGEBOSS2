@@ -238,9 +238,10 @@ function sandboxStory(g: Game): void {
         save.chapter = i;
         // the chapters before are history: their intros are skipped and Han's knee is where the story left it
         for (const c of STORY_CHAPTERS.slice(0, i)) save.flags[`intro_${c.id}`] = save.flags[`outro_${c.id}`] = save.flags[`talk_${c.id}`] = true;
-        if (i >= 8) save.flags.rayDead = true;
-        if (i >= 9) save.flags.hanInjured = true;
-        if (i >= 10) { save.flags.finalWinner = 'player'; save.choices.ch_buyback = 'callout_han'; }
+        const at = (id: string) => i > STORY_CHAPTERS.findIndex((c) => c.id === id);
+        if (at('brother')) save.flags.rayDead = true;
+        if (at('street_justice')) save.flags.hanInjured = true;
+        if (at('buyback')) { save.flags.finalWinner = 'player'; save.choices.ch_buyback = 'callout_han'; }
         writeStory(save);
         void import('./sequel').then((m) => m.openStoryMode(g));
       });

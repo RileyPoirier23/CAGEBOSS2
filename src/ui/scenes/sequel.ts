@@ -101,7 +101,7 @@ export function openSequelHelp(g: Game): void {
   b.addChild(text(
     'Three straight wins makes a champion. Champions sell tickets and defend belts. CAMPS takes one to four weeks off: ' +
     'the rent keeps running and the crowd forgets, but bodies heal and a fighter can come back permanently better. ' +
-    'SEASON shows the quarters, the belts and the buyback number. TALES OF LEGACY is ten chapters (and one secret), Han Tibular, Mateo and one trainee with a plan.',
+    'SEASON shows the quarters, the belts and the buyback number. TALES OF LEGACY is fifteen chapters of five parts (and a secret one), Han Tibular, Mateo and one trainee with a plan.',
     8, 193, { width: 404, small: true, color: PAL.ink, maxLines: 3 },
   ));
   b.addChild(button('BACK TO THE WAREHOUSE', 134, 226, 156, 15, () => win.close(), { small: true, fill: PAL.moss, border: PAL.ink }));

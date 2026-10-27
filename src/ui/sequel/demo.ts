@@ -53,7 +53,7 @@ export function demoToPromoter(g: Game): void {
 
 /** Four weeks done: the poster, then home. */
 export function demoOver(g: Game): void {
-  alertBox(g, 'END OF THE DEMO', 'CAGE BOSS II: THE BUYBACK is its own game: TALES OF LEGACY (ten chapters and a secret one, Han Tibular, Mateo, 1ton), PROMOTER MODE (forty weeks, the desk, the buyback) and QUICK FIGHT.', () => exitSequelDemo(g));
+  alertBox(g, 'END OF THE DEMO', 'CAGE BOSS II: THE BUYBACK is its own game: TALES OF LEGACY (fifteen chapters, five parts each, and a secret one, Han Tibular, Mateo, 1ton), PROMOTER MODE (forty weeks, the desk, the buyback) and QUICK FIGHT.', () => exitSequelDemo(g));
 }
 
 export function exitSequelDemo(g: Game): void {

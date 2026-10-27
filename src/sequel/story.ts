@@ -119,6 +119,28 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     talk: 'father',
   },
   {
+    id: 'allstar',
+    no: 3,
+    title: 'ALLSTAR FC',
+    kicker: 'A BARN, A BELT, A HORSE TRAILER',
+    blurb: 'Xavier Cockett\'s Allstar Fighting Championship runs out of a barn outside Moncton with real bleachers and a goat for a commissioner. 1ton is undefeated there. Mateo has his first fight. Ray works both corners and refuses to sit down.',
+    bg: 'warehouse',
+    actions: 2,
+    fights: [
+      {
+        id: 'allstar_ranch', name: 'ALLSTAR FC 3: THE RANCH HAND', opponent: 'ranch', player: 'oneton', rounds: 3, venue: "XAVIER'S BARN",
+        stakes: 'A man who wrestles steers for a living. He has never been knocked down by anything with fewer than four legs.',
+        hook: '1TON  vs  WADE "THE RANCH HAND" PRUITT',
+      },
+      {
+        id: 'allstar_title', name: 'ALLSTAR FC 4: THE BELT', opponent: 'buck', player: 'oneton', rounds: 5, venue: "XAVIER'S BARN",
+        stakes: 'Xavier has a belt. It is a real belt, from a real rodeo. Buck Harlan has held it for two years and both of his hats.',
+        hook: '1TON  vs  BUCK "TWO HATS" HARLAN  /  ALLSTAR FC TITLE', week: 3,
+      },
+    ],
+    talk: 'ray',
+  },
+  {
     id: 'brick_by_brick',
     no: 3,
     title: 'BRICK BY BRICK',
@@ -128,9 +150,9 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     actions: 2,
     fights: [
       {
-        id: 'allstar_title', name: 'ALLSTAR FC 4: THE BELT', opponent: 'buck', player: 'oneton', rounds: 5, venue: "XAVIER'S BARN",
-        stakes: 'Xavier has a belt. It is a real belt, from a real rodeo. Buck Harlan has held it for two years and both of his hats.',
-        hook: '1TON  vs  BUCK "TWO HATS" HARLAN  /  ALLSTAR FC TITLE', week: 3,
+        id: 'han_intern', name: 'TALENT RELATIONS', opponent: 'intern', player: 'han', rounds: 3, venue: 'THE WAREHOUSE',
+        stakes: 'Zenith sends a man from "talent relations" to bring their champion home. He has a business card, a lanyard and a black belt in something.',
+        hook: 'HAN TIBULAR  vs  BROCK "THE INTERN" HALE',
       },
       {
       id: 'brick',
@@ -155,9 +177,9 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     actions: 2,
     fights: [
       {
-        id: 'han_tyler', name: 'SOUP FOR THE SOUL', opponent: 'tyler', player: 'han', rounds: 3, venue: 'THE WAREHOUSE',
-        stakes: 'A charity exhibition for Ray\'s back rent. Han against Tyler Vance, the rival who mops the floor now. Neither of them is going to take it easy, because neither of them knows how.',
-        hook: 'HAN TIBULAR  vs  TYLER "TRUST FUND" VANCE  /  EXHIBITION', week: 3,
+        id: 'oneton_rodeo', name: 'ALLSTAR FC 7: THE RODEO RETURNS', opponent: 'dusty', player: 'oneton', rounds: 3, venue: "XAVIER'S BARN",
+        stakes: 'Dusty Cole wants the rematch. He has been training. He has been training a lot. He has a new hat.',
+        hook: '1TON  vs  DUSTY "THE RODEO" COLE II',
       },
       {
       id: 'mateo_spar',
@@ -197,7 +219,29 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       hook: '1TON  vs  THE AUDITOR',
     },
     ],
-    talk: 'ray',
+    talk: 'contract',
+  },
+  {
+    id: 'homecoming',
+    no: 7,
+    title: 'HOMECOMING',
+    kicker: 'MONCTON, NEW BRUNSWICK',
+    blurb: 'The warehouse goes on the road: one show at the Moncton Coliseum, where Ray lost to Butch in 1987 and where Han grew up. Gordon Vance owns the parking. Tyler Vance wants the fight.',
+    bg: 'gym',
+    actions: 2,
+    fights: [
+      {
+        id: 'moncton_undercard', name: 'MONCTON: THE UNDERCARD', opponent: 'lobster', player: 'oneton', rounds: 3, venue: 'MONCTON COLISEUM',
+        stakes: 'A local favourite who fishes lobster in the summer and fights in the winter. The whole Coliseum is on his side. 1ton has never been booed in English before.',
+        hook: '1TON  vs  LUC "THE LOBSTER" ARSENAULT',
+      },
+      {
+        id: 'han_tyler', name: 'SOUP FOR THE SOUL', opponent: 'tyler', player: 'han', rounds: 3, venue: 'THE WAREHOUSE',
+        stakes: 'A charity exhibition for Ray\'s back rent. Han against Tyler Vance, the rival who mops the floor now. Neither of them is going to take it easy, because neither of them knows how.',
+        hook: 'HAN TIBULAR  vs  TYLER "TRUST FUND" VANCE  /  EXHIBITION', week: 3,
+      },
+    ],
+    talk: 'homecoming',
   },
   {
     id: 'the_board',
@@ -224,7 +268,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       hook: '1TON  vs  THE CHAIRMAN',
     },
     ],
-    talk: 'contract',
+    talk: 'board',
   },
   {
     id: 'rematch',
@@ -236,9 +280,9 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     actions: 2,
     fights: [
       {
-        id: 'zenith_prospect', name: 'ZENITH FIGHT NIGHT: SYNERGY', opponent: 'synergy', player: 'oneton', rounds: 3, venue: 'THE OLD DOME',
-        stakes: 'Zenith puts 1ton on its own card against its own prospect, a man with a podcast and a brand deal. Win and they want you more. Lose and they want you cheaper.',
-        hook: '1TON  vs  KYLE "SYNERGY" BRANDT', week: 3,
+        id: 'oneton_prince', name: 'THE PRINCE', opponent: 'prince', player: 'oneton', rounds: 3, venue: 'THE WAREHOUSE',
+        stakes: 'Zenith\'s golden boy comes to the warehouse to "scout the market". He scouts 1ton. 1ton does not like being scouted.',
+        hook: '1TON  vs  NICO "THE PRINCE" SANDOVAL',
       },
       {
       id: 'cuchillo_rematch',
@@ -254,6 +298,28 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     talk: 'cuchillo',
   },
   {
+    id: 'the_signing',
+    no: 10,
+    title: 'THE GOLD PEN',
+    kicker: '1TON SIGNS',
+    blurb: 'The gold envelope gets opened. 1ton signs with Zenith in a glass room on the fortieth floor with a gold pen, then calls Ray to tell him before anybody else. Ray does not shout. Ray never shouts. That is worse.',
+    bg: 'zenith',
+    actions: 2,
+    fights: [
+      {
+        id: 'zenith_prospect', name: 'ZENITH FIGHT NIGHT: SYNERGY', opponent: 'synergy', player: 'oneton', rounds: 3, venue: 'THE OLD DOME',
+        stakes: 'Zenith puts 1ton on its own card against its own prospect, a man with a podcast and a brand deal. Win and they want you more. Lose and they want you cheaper.',
+        hook: '1TON  vs  KYLE "SYNERGY" BRANDT', week: 3,
+      },
+      {
+        id: 'han_dos_caras', name: 'TWO FACES', opponent: 'doscaras', player: 'han', rounds: 5, venue: 'THE WAREHOUSE',
+        stakes: 'Han defends the warehouse\'s middleweight belt against a masked man from Monterrey who will not say who sent him. Everybody knows who sent him.',
+        hook: 'HAN TIBULAR  vs  DIEGO "DOS CARAS" RUIZ', week: 3,
+      },
+    ],
+    talk: 'signing',
+  },
+  {
     id: 'brother',
     no: 8,
     title: 'THE BROTHER YOU MADE',
@@ -263,9 +329,9 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     actions: 2,
     fights: [
       {
-        id: 'han_dos_caras', name: 'TWO FACES', opponent: 'doscaras', player: 'han', rounds: 5, venue: 'THE WAREHOUSE',
-        stakes: 'Han defends the warehouse\'s middleweight belt against a masked man from Monterrey who will not say who sent him. Everybody knows who sent him.',
-        hook: 'HAN TIBULAR  vs  DIEGO "DOS CARAS" RUIZ', week: 3,
+        id: 'han_brick2', name: 'BRICK BY BRICK II', opponent: 'brick', player: 'han', rounds: 3, venue: 'THE WAREHOUSE',
+        stakes: 'Brick Bastion is back with a new permit and a grudge. Gordon Vance is not paying for him this time. Somebody else is.',
+        hook: 'HAN TIBULAR  vs  BRICK BASTION II',
       },
       {
       id: 'mateo_betrayal',
@@ -279,6 +345,16 @@ export const STORY_CHAPTERS: StoryChapter[] = [
     },
     ],
     talk: 'brother',
+  },
+  {
+    id: 'the_wake',
+    no: 12,
+    title: 'THE WAKE',
+    kicker: 'RAY\'S BOXING & SOUP IS CLOSED UNTIL FURTHER NOTICE',
+    blurb: 'Ray is gone. The gym is full of people who do not know what to do with their hands. Han finds the recipe. Mateo finds the tape Ray used on everybody. Dane finds out how many people Ray fed for free, and it is everyone.',
+    bg: 'gym',
+    actions: 2,
+    talk: 'wake',
   },
   {
     id: 'street_justice',
@@ -321,6 +397,23 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       },
     ],
     talk: 'crew',
+  },
+  {
+    id: 'the_camp',
+    no: 14,
+    title: 'THE CAMP',
+    kicker: 'EIGHT WEEKS TO 1TON',
+    blurb: 'Han is on crutches and coaching. Zac has a gameplan. Tyler mops and holds pads. Mateo has eight weeks to get ready for the man who taught him to throw a left hook, at a weight he has never fought at, for the company.',
+    bg: 'gym',
+    actions: 2,
+    fights: [
+      {
+        id: 'camp_tuneup', name: 'TUNE-UP', opponent: 'croc', player: 'mateo', rounds: 3, venue: 'THE WAREHOUSE',
+        stakes: 'One fight at light heavyweight before the big one. Jarrah Kane is long, mean and Australian, and Zenith paid for his plane ticket.',
+        hook: 'MATEO VARGA  vs  JARRAH "THE CROC" KANE',
+      },
+    ],
+    talk: 'camp',
   },
   {
     id: 'buyback',
@@ -379,7 +472,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
 ];
 
 /** The length a story shows: the secret eleventh chapter only counts once you are in it. */
-export const MAIN_CHAPTERS = 10;
+export const MAIN_CHAPTERS = 15;
 
 // ---------------------------------------------------------------- the clock
 
@@ -389,16 +482,29 @@ export const DAYS_PER_WEEK = 7;
 export const CHAPTER_GAP_WEEKS = 9;
 
 /** How long each chapter lives, in weeks: a couple of months each. */
-const CHAPTER_WEEKS: Record<string, number> = {
-  back_row: 3, mexican_math: 6, brick_by_brick: 6, sparring_partner: 6, audit: 6, the_board: 8,
-  rematch: 6, brother: 6, street_justice: 10, buyback: 6, legacy: 6,
-};
+/** Every chapter is ten weeks: five parts of two weeks each. The first chapter is a short prologue. */
+const CHAPTER_WEEKS: Record<string, number> = { back_row: 5 };
+export const PARTS_PER_CHAPTER = 5;
 /** Fights that are not on the chapter's last week (chapter nine: one name every few weeks). */
-const FIGHT_WEEKS: Record<string, number> = { crew_duke: 3, crew_rico: 6, crew_cesar: 10 };
-for (const ch of STORY_CHAPTERS) {
-  ch.weeks ??= CHAPTER_WEEKS[ch.id] ?? 6;
-  for (const f of chapterFights(ch)) f.week ??= FIGHT_WEEKS[f.id] ?? ch.weeks;
+/** The early fight of a chapter is in part three (weeks 5-6); the crew's are a name a part. */
+const FIGHT_WEEKS: Record<string, number> = {
+  allstar_debut: 5, allstar_ranch: 5, han_intern: 5, oneton_rodeo: 5, oneton_prince: 5, han_brick2: 5, han_tyler: 10, moncton_undercard: 5, han_spadam: 5, zenith_prospect: 5, han_dos_caras: 10,
+  warehouse_main: 5, camp_tuneup: 5, crew_duke: 4, crew_rico: 7, crew_cesar: 10,
+};
+STORY_CHAPTERS.forEach((ch, i) => {
+  ch.no = i + 1;
+  ch.weeks = CHAPTER_WEEKS[ch.id] ?? 10;
+  for (const f of chapterFights(ch)) f.week = FIGHT_WEEKS[f.id] ?? ch.weeks;
+});
+
+/** Which part of the chapter this week is in (1..5). */
+export function storyPart(save: StorySave): number {
+  const w = chapterWeeks(storyChapter(save));
+  return Math.min(PARTS_PER_CHAPTER, Math.max(1, Math.ceil((storyWeek(save) / w) * PARTS_PER_CHAPTER)));
 }
+
+/** The first week of a part. */
+export const partWeek = (ch: StoryChapter, part: number): number => Math.floor(((part - 1) * chapterWeeks(ch)) / PARTS_PER_CHAPTER) + 1;
 
 export const chapterWeeks = (ch: StoryChapter): number => ch.weeks ?? 6;
 export const storyWeek = (save: StorySave): number => save.week ?? 1;
@@ -535,14 +641,14 @@ export function restDay(save: StorySave): string {
  */
 export const STORY_BEATS: { id: string; chapter: string; week: number }[] = [
   { id: 'first_day', chapter: 'mexican_math', week: 1 },
-  { id: 'xavier_league', chapter: 'mexican_math', week: 2 },
-  { id: 'dane_contract', chapter: 'audit', week: 2 },
-  { id: 'soup_lesson', chapter: 'brick_by_brick', week: 3 },
+  { id: 'xavier_league', chapter: 'mexican_math', week: 3 },
+  { id: 'soup_lesson', chapter: 'brick_by_brick', week: 5 },
   { id: 'mop_years', chapter: 'sparring_partner', week: 3 },
-  { id: 'tower_photo', chapter: 'the_board', week: 4 },
-  { id: 'last_dinner', chapter: 'brother', week: 3 },
+  { id: 'dane_contract', chapter: 'audit', week: 3 },
+  { id: 'tower_photo', chapter: 'audit', week: 7 },
+  { id: 'last_dinner', chapter: 'brother', week: 5 },
   { id: 'tuesday_class', chapter: 'street_justice', week: 5 },
-  { id: 'true_name', chapter: 'buyback', week: 3 },
+  { id: 'true_name', chapter: 'the_camp', week: 7 },
 ];
 
 /** The beat waiting to play this week, if any. */
@@ -1264,6 +1370,11 @@ const GUESTS: Record<string, { div: string; tier: 'journeyman' | 'gatekeeper' | 
   toro: { div: 'middle', tier: 'gatekeeper', first: 'Rafa', last: 'Medina', nick: 'El Toro', country: 'Mexico', hometown: 'Tijuana, Baja California', age: 31, height: 182, reach: 186, styles: ['Pressure Striker'], traits: ['Hungry'], rec: [15, 4], look: { hair: 11, beard: 1, build: 2, tattoo: 2 }, boost: 0 },
   spadam: { div: 'welter', tier: 'elite', first: 'Spadam', last: 'Biggs', nick: 'The White Beast', country: 'USA', hometown: 'Halifax (he says Boston)', age: 31, height: 201, reach: 208, styles: ['Kickboxer', 'Pressure Striker'], traits: ['Showman', 'Trash Talker'], rec: [27, 1], look: { hair: 12, hairColor: 4, beard: 0, build: 2, tattoo: 1 }, boost: 14 },
   synergy: { div: 'middle', tier: 'contender', first: 'Kyle', last: 'Brandt', nick: 'Synergy', country: 'USA', hometown: 'Scottsdale, Arizona', age: 26, height: 186, reach: 190, styles: ['Point Fighter'], traits: ['Clout Chaser'], rec: [11, 0], look: { hair: 12, hairColor: 4, beard: 0, build: 1 }, boost: 4 },
+  intern: { div: 'middle', tier: 'gatekeeper', first: 'Brock', last: 'Hale', nick: 'The Intern', country: 'USA', hometown: 'Greenwich, Connecticut', age: 29, height: 186, reach: 188, styles: ['Wrestler', 'Grinder'], traits: ['Clout Chaser'], rec: [12, 3], look: { hair: 12, hairColor: 2, beard: 0, build: 1 }, boost: 2 },
+  prince: { div: 'middle', tier: 'contender', first: 'Nico', last: 'Sandoval', nick: 'The Prince', country: 'Mexico', hometown: 'Polanco, Mexico City', age: 25, height: 184, reach: 189, styles: ['Counter Striker', 'Kickboxer'], traits: ['Showman'], rec: [14, 0], look: { hair: 11, hairColor: 0, beard: 0, build: 1, chain: 1 }, boost: 6 },
+  ranch: { div: 'middle', tier: 'journeyman', first: 'Wade', last: 'Pruitt', nick: 'The Ranch Hand', country: 'USA', hometown: 'Cheyenne, Wyoming', age: 30, height: 188, reach: 190, styles: ['Wrestler'], traits: ['Hungry'], rec: [9, 3], look: { hair: 10, beard: 2, build: 2, hat: 1 }, boost: -5 },
+  lobster: { div: 'middle', tier: 'gatekeeper', first: 'Luc', last: 'Arsenault', nick: 'The Lobster', country: 'Canada', hometown: 'Shediac, New Brunswick', age: 32, height: 183, reach: 186, styles: ['Brawler'], traits: ['Loyal'], rec: [13, 5], look: { hair: 1, beard: 3, build: 2, tattoo: 1 }, boost: 0 },
+  croc: { div: 'lightheavy', tier: 'contender', first: 'Jarrah', last: 'Kane', nick: 'The Croc', country: 'Australia', hometown: 'Darwin, Northern Territory', age: 28, height: 193, reach: 198, styles: ['Kickboxer'], traits: ['Trash Talker'], rec: [16, 2], look: { hair: 14, beard: 0, build: 2, tattoo: 3 }, boost: 6 },
   doscaras: { div: 'middle', tier: 'contender', first: 'Diego', last: 'Ruiz', nick: 'Dos Caras', country: 'Mexico', hometown: 'Monterrey, Nuevo Leon', age: 29, height: 184, reach: 188, styles: ['Counter Striker', 'Sub Hunter'], traits: ['Mysterious'], rec: [19, 2], look: { hair: 0, beard: 0, build: 1, mask: 0x2a4ad8, tattoo: 2 }, boost: 10 },
 };
 
@@ -1544,7 +1655,7 @@ export const STORY_DOCS: Record<string, StoryDoc> = {
   mexican_math: {
     id: 'first_bout',
     chapter: 'mexican_math',
-    title: 'BOUT AGREEMENT — 1TON MORALES vs EL CUCHILLO',
+    title: 'BOUT AGREEMENT — GORDO "1TON" FUENTE vs EL CUCHILLO',
     kicker: 'THE WAREHOUSE / 3 ROUNDS',
     intro: 'El Cuchillo\'s manager sent the bout agreement on a napkin. The napkin has a lawyer.',
     clauses: [
@@ -1640,7 +1751,7 @@ export const STORY_DOCS: Record<string, StoryDoc> = {
   brother: {
     id: 'mateo_booking',
     chapter: 'brother',
-    title: 'BOUT AGREEMENT — 1TON MORALES vs MATEO VARGA',
+    title: 'BOUT AGREEMENT — GORDO "1TON" FUENTE vs MATEO VARGA',
     kicker: 'ZENITH PRESENTS / FAMILY DISCOUNT',
     intro: 'The kid\'s name is on the contract. The kid is not on the phone.',
     clauses: [
