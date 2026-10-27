@@ -3,6 +3,7 @@
  * this file puts them in rooms, points a camera at them and lets the beard do
  * the talking.
  */
+import { partLines } from './partlines';
 import type { Cutscene, Line, Shot, Actor } from '../cutscene';
 import { CAST } from '../cutscene';
 import {
@@ -918,7 +919,8 @@ export function partScene(save: StorySave, part: number): Cutscene | null {
   return {
     title: `PART ${part}: ${p.title}`,
     film: true,
-    shots: [shot(p.bg ?? ch.bg, cast, [{ who: null, text: p.text }], `CHAPTER ${ch.no}  /  PART ${part} OF 5`)],
+    // the card, then what happens in the room
+    shots: [shot(p.bg ?? ch.bg, cast, [{ who: null, text: p.text }, ...partLines(ch.id, part)], `CHAPTER ${ch.no}  /  PART ${part} OF 5`)],
   };
 }
 

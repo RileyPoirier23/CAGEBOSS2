@@ -60,3 +60,30 @@ describe('stage directions from narration', () => {
     expect(acted).toBeGreaterThan(10);
   });
 });
+
+describe('the parts of Tales of Legacy', () => {
+  it('every part after the intro has a scene, and everyone in it is in the room', async () => {
+    content();
+    const { PARTS } = await import('../src/ui/scenes/storycuts');
+    const { PART_LINES } = await import('../src/ui/scenes/partlines');
+    const idOf: Record<string, string> = { verity: 'zenith', bigmateo: 'mateo' };
+    let scenes = 0;
+    for (const [ch, parts] of Object.entries(PARTS)) {
+      parts.forEach((p, i) => {
+        const rows = PART_LINES[ch]?.[i];
+        if (!p.text) return;
+        expect(rows?.length ?? 0, `${ch} part ${i + 1}`).toBeGreaterThan(1);
+        const ids = new Set(p.who.map((w) => idOf[w] ?? w));
+        for (const [who, , act] of rows ?? []) {
+          if (who) expect(ids.has(who), `${ch} part ${i + 1}: ${who}`).toBe(true);
+          for (const a of act ?? []) {
+            if ('who' in a) expect(ids.has(a.who), `${ch} part ${i + 1}: ${a.who}`).toBe(true);
+            if ('target' in a) expect(ids.has(a.target), `${ch} part ${i + 1}: ${a.target}`).toBe(true);
+          }
+        }
+        scenes++;
+      });
+    }
+    expect(scenes).toBeGreaterThan(60);
+  });
+});

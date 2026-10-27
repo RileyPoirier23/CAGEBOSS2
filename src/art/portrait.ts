@@ -195,8 +195,8 @@ export function drawPortrait(inp: PortraitInput): PixelBuf {
   FACE_ANCHORS.set(inp.id, { eyeL, eyeR, eyeY, browY, noseY, mouthY, top, chinY });
 
   // ------------------------------------------------------------ long hair behind the head
-  // the sequel's new rig styles draw as their nearest portrait style (mullet: long, curls: curly, slick: swept, afro: curly, mohawk: buzz)
-  const PORTRAIT_HAIR: Record<number, number> = { 10: 9, 11: 8, 12: 3, 13: 8, 14: 1 };
+  // the sequel's styles: 10 mullet, 11 high fade + curls, 12 slick back and 13 afro have their own portraits; 14 is the mohawk
+  const PORTRAIT_HAIR: Record<number, number> = { 14: 4 };
   const hs = PORTRAIT_HAIR[look.hair] ?? look.hair;
   const recede = age >= 33 && !female ? Math.min(4, Math.floor((age - 31) / 3)) : 0;
   if (hs === 9) {
@@ -208,6 +208,18 @@ export function drawPortrait(inp: PortraitInput): PixelBuf {
       for (let x = CX - hw; x < CX + hw; x++) {
         const curl = ((x * 5 + y * 3 + rnd(x & 31)) % 7 === 0) ? 0.22 : ((x + y * 2) % 9 === 0 ? -0.15 : 0);
         b.set(x, y, ramp(HR, 0.3 + 0.45 * (1 - (x - (CX - hw)) / (2 * hw)) + curl - (y - top) / 200, x, y));
+      }
+      b.set(CX - hw - 1, y, shade(HR[0], -0.4));
+      b.set(CX + hw, y, shade(HR[0], -0.4));
+    }
+  }
+  if (hs === 10) {
+    // the mullet: business at the front, the party behind the neck, down past the shoulders
+    for (let y = eyeY - 2; y < 58; y++) {
+      const hw = Math.max(hwAt(Math.min(y, chinY)), shape.temple) + 2 + (y > chinY ? Math.min(3, (y - chinY) / 3) : 0);
+      for (let x = CX - hw; x < CX + hw; x++) {
+        const v = 0.35 + 0.4 * (1 - (x - (CX - hw)) / (2 * hw)) + ((x * 5 + y + rnd(x & 31)) % 6 === 0 ? 0.2 : 0);
+        b.set(x, y, ramp(HR, v - (y - top) / 160, x, y));
       }
       b.set(CX - hw - 1, y, shade(HR[0], -0.4));
       b.set(CX + hw, y, shade(HR[0], -0.4));
@@ -398,6 +410,18 @@ export function drawPortrait(inp: PortraitInput): PixelBuf {
 
   // ------------------------------------------------------------ hair (front)
   /** Hair cap: the head silhouette pushed up by `vol` px, down to a hairline `rows` below the crown. */
+  /** a fade: the sides go from short hair to skin toward the ears (`hi` takes it higher) */
+  const fadeSides = (hi = 0) => {
+    const hair = new Set(HR);
+    for (let y = top + 1 - hi * 2; y < browY + 1; y++) {
+      const k = (y - top + hi * 2) / Math.max(1, browY - top + hi * 2);
+      for (const side of [-1, 1]) for (let d = 0; d < 4 + hi; d++) {
+        const yy = Math.max(top, y);
+        const x = side < 0 ? CX - hwAt(yy) - 1 + d : CX + hwAt(yy) - d;
+        if (hair.has(b.get(x, y))) b.set(x, y, lerpColor(HR[1], SK[2], Math.min(1, 0.35 + k * 0.6)));
+      }
+    }
+  };
   const capRows = (rows: number, rec = recede, vol = 3, sideburns = true, pattern = 0, side = 1) => {
     for (let y = top - vol; y < browY + 1; y++) {
       // hair has body at the sides too: it stands off the skull above the ears
@@ -529,18 +553,56 @@ export function drawPortrait(inp: PortraitInput): PixelBuf {
     case 7: // man bun / ponytail
       capRows(6, 0, 2);
       for (let y = top - 7; y < top - 1; y++) for (let x = CX - 3; x < CX + 4; x++) if (Math.hypot(x - CX, y - (top - 4)) < 3.6) b.set(x, y, ramp(HR, 0.6 - (x - CX) / 8, x, y));
-      if (look.fade) {
-        // a fade: the sides go from short hair to skin toward the ears
-        const hair = new Set(HR);
-        for (let y = top + 1; y < browY + 1; y++) {
-          const k = (y - top) / Math.max(1, browY - top);
-          for (const side of [-1, 1]) for (let d = 0; d < 4; d++) {
-            const x = side < 0 ? CX - hwAt(y) - 1 + d : CX + hwAt(y) - d;
-            if (hair.has(b.get(x, y))) b.set(x, y, lerpColor(HR[1], SK[2], Math.min(1, 0.35 + k * 0.6)));
-          }
-        }
+      if (look.fade) fadeSides();
+      break;
+    case 10: // mullet: short on top (the back was drawn behind the head)
+      capRows(6, recede, 2);
+      if (look.fade) fadeSides();
+      break;
+    case 11: { // high fade, curls on top
+      capRows(6, 0, 2);
+      const cy = top - 2;
+      for (let y = cy - 8; y < top + 3; y++) for (let x = CX - 12; x < CX + 12; x++) {
+        const nx = (x - CX + 0.5) / 12;
+        const ny = (y - cy) / 8;
+        const wob = ((rnd((x * 7 + y * 13) & 63) % 5) - 2) / 14;
+        if (nx * nx + ny * ny > 1 + wob) continue;
+        const curl = ((x + y * 2) % 3 === 0 || (x * 3 + y) % 5 === 0) ? 0.25 : 0;
+        b.set(x, y, ramp(HR, 0.55 - nx * 0.3 - ny * 0.15 + curl - ((x ^ y) & 1) * 0.1, x, y));
+      }
+      fadeSides(1);
+      break;
+    }
+    case 12: // slick back: combed straight back, wet-looking, a shine running front to back
+      capRows(7, recede, 3, true, 0, 0);
+      for (let y = top - 2; y < top + 5; y++) for (let x = CX - hwAt(Math.max(top, y)); x < CX + hwAt(Math.max(top, y)); x++) {
+        if (b.get(x, y) === -1) continue;
+        if ((x * 2 + y * 5) % 7 === 0) b.set(x, y, HR[3]);
+        else if ((x + y * 3) % 11 === 0) b.set(x, y, shade(HR[0], -0.25));
+      }
+      for (let x = CX - 6; x < CX + 2; x++) b.set(x, top - 1, lerpColor(HR[3], 0xffffff, 0.35)); // the gel catches the light
+      break;
+    case 13: { // afro: a big round halo
+      const R = 18;
+      const cy = top + 1;
+      for (let y = cy - R; y < eyeY; y++) for (let x = CX - R - 3; x < CX + R + 3; x++) {
+        const nx = (x - CX + 0.5) / (R + 2);
+        const ny = (y - cy) / R;
+        const wob = ((rnd((x * 5 + y * 11) & 63) % 3) - 1) / 30;
+        if (nx * nx + ny * ny > 1 + wob) continue;
+        if (y >= top + 5 && Math.abs(x - CX + 0.5) < hwAt(Math.min(chinY, y)) - 1) continue;
+        const tex = ((x * 3 + y * 5) % 4 === 0) ? 0.18 : ((x + y) % 5 === 0 ? -0.12 : 0);
+        b.set(x, y, ramp(HR, 0.55 - nx * 0.3 - ny * 0.2 + tex, x, y));
+      }
+      // the rim, darker
+      for (let a = 0; a < 64; a++) {
+        const ang = (a / 64) * Math.PI * 2;
+        const x = Math.round(CX + Math.cos(ang) * (R + 2));
+        const y = Math.round(cy + Math.sin(ang) * R);
+        if (y < eyeY && b.get(x, y) !== -1) b.set(x, y, shade(HR[0], -0.35));
       }
       break;
+    }
   }
   // grey temples on older men
   if (grey > 0.3 && hs !== 0) for (let y = eyeY - 6; y < eyeY; y++) {

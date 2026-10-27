@@ -26,7 +26,8 @@
     "build:sequel": "tsc --noEmit && vite build --config vite.sequel.config.ts",
     "desktop:sequel": "vite build --config vite.sequel.config.ts && electron electron/sequel.cjs",
     "desktop:sequel:windowed": "vite build --config vite.sequel.config.ts && electron electron/sequel.cjs --windowed",
-    "dist:sequel:win": "tsc --noEmit && vite build --config vite.sequel.config.ts && electron-builder --config electron-builder.sequel.json --win portable --x64 -c.win.signAndEditExecutable=false --publish never",
+    "dist:sequel:win": "tsc --noEmit && vite build --config vite.sequel.config.ts && electron-builder --config electron-builder.sequel.json --win dir --x64 -c.win.signAndEditExecutable=false && node tools/stamp-exe.mjs \"release-sequel/win-unpacked/CAGE BOSS II.exe\" build/icon-sequel.ico && electron-builder --config electron-builder.sequel.json --win portable --x64 --prepackaged release-sequel/win-unpacked -c.win.signAndEditExecutable=false --publish never",
+    "icon:sequel": "node tools/make-sequel-icon.mjs",
     "dist:sequel:win:setup": "tsc --noEmit && vite build --config vite.sequel.config.ts && electron-builder --config electron-builder.sequel.json --win nsis --x64 --publish never",
     "dist:sequel:linux": "tsc --noEmit && vite build --config vite.sequel.config.ts && electron-builder --config electron-builder.sequel.json --linux AppImage --x64 --publish never"
   },

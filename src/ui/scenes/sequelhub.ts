@@ -1,6 +1,7 @@
 /**
  * The weekly office: a leaking warehouse, two fights and four numbers.
  */
+import { isCustom, loadCustomFighters, offerCustomFighters } from '../../sequel/custom';
 import { isGrudge, mainGrudge, rivalryOf, zenithCounter } from '../../sequel/rivals';
 import { fairOpponent } from '../../sequel/model';
 import { maybeLesson2 } from '../sequel/tutorial2';
@@ -369,6 +370,8 @@ export function openSequelRoster(g: Game): void {
 export function openSequelSignings(g: Game): void {
   const run = readRun();
   if (!run) return;
+  // your creations walk in first
+  if (offerCustomFighters(run, loadCustomFighters())) writeRun(run);
   const win = openWindow(g, 'FREE AGENTS', 424, 238, { paper: 'cream' });
   const sb = new ScrollBox(404, 190);
   sb.position.set(6, 2);
@@ -387,6 +390,7 @@ export function openSequelSignings(g: Game): void {
     row.addChild(text(`${record(f.record)}  OVR ${overallOf(f)}  ST★${opponentStar(f)}  ${f.division.toUpperCase()}`, 40, 13, { small: true, color: PAL.shadow }));
     row.addChild(text(f.traits.slice(0, 3).join(', ') || f.styles.slice(0, 2).join(', '), 40, 23, { small: true, color: PAL.slate, width: 250, maxLines: 1 }));
     row.addChild(text(`ASKING ${money(signingCost(f))}`, 40, 32, { small: true, color: PAL.blood }));
+    if (isCustom(run, f.id)) row.addChild(text('YOUR CREATION', 230, 32, { small: true, color: PAL.moss }));
     row.addChild(button('SIGN', 326, 12, 64, 16, () => {
       const msg = signFreeAgent(run, f.id);
       writeRun(run);

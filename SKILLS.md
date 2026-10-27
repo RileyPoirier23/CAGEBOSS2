@@ -183,6 +183,12 @@ storylines. Original characters (1ton, the crew, Zenith) can.
   `act: [...]` on a line to say exactly what happens (key scenes do: Ray's last stand, the 1987 left hook); `act: []`
   turns the reading off. Lines with `poses` are left alone. **When you write narration, write what we can see**, and
   check it plays (`window.__cine.cast` shows who is where). `tests/stage.test.ts` covers the reader.
+- **Part scenes:** `PART_LINES` in `src/ui/scenes/partlines.ts` (rows of `[who, text, act?]`), played after the part
+  card by `partScene`. Who has to be in that part's `who` list (verity is `zenith`, bigmateo is `mateo`).
+- **Props in cutscenes:** `{ do: 'prop', who, prop }`, or `meet` with `prop` to hand it over (`Prop` in `stage.ts`).
+- **Story levels:** `xpForLevel(lv)` / `levelForXp(xp)` in `story.ts` (rising cost; don't divide by XP_PER_LEVEL).
+- **Custom fighters:** `src/sequel/custom.ts` (`loadCustomFighters`, `offerCustomFighters`).
+- **Icons:** `build/icon-sequel.*` from `tools/make-sequel-icon.mjs`; game 1 keeps `build/icon.*`.
 - **Scenes and refresh:** `Scene.refresh()` destroys the root's children. A Graphics kept on a field must be made
   new in `build()`, or the next refresh re-adds a destroyed object (pointer events then crash).
 

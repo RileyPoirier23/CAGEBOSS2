@@ -647,3 +647,23 @@ describe("Ray's notebook and the Legacy Tapes", () => {
     }
   });
 });
+
+describe('your creations in promoter mode', () => {
+  it('walk in as free agents once, and sign like anybody else', async () => {
+    const { offerCustomFighters, isCustom } = await import('../src/sequel/custom');
+    const { newSequelRun, signFreeAgent } = await import('../src/sequel/model');
+    const run = newSequelRun(12);
+    const mine = JSON.parse(JSON.stringify(run.freeAgents[run.freeAgents.length - 1]));
+    mine.id = 'cus_test';
+    mine.first = 'Testy';
+    expect(offerCustomFighters(run, [mine])).toBe(1);
+    expect(run.freeAgents[0].id).toBe('cus_test');
+    expect(isCustom(run, 'cus_test')).toBe(true);
+    expect(offerCustomFighters(run, [mine])).toBe(0);
+    run.cash = 1e7;
+    expect(signFreeAgent(run, 'cus_test')).toContain('Testy');
+    expect(run.roster.some((x) => x.f.id === 'cus_test')).toBe(true);
+    // released or signed, he doesn't come back as a free agent on his own
+    expect(offerCustomFighters(run, [mine])).toBe(0);
+  });
+});

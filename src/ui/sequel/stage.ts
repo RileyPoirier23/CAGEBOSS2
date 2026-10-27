@@ -20,10 +20,29 @@ export type StageAct =
   | { do: 'face'; who: string; to?: string; away?: boolean }
   /** off with the jacket */
   | { do: 'strip'; who: string }
-  /** walk up to someone and both take a pose: a hug, a handshake, handing something over */
-  | { do: 'meet'; who: string; target: string; pose: Pose; both?: boolean }
+  /** walk up to someone and both take a pose: a hug, a handshake, handing something over (`prop` changes hands) */
+  | { do: 'meet'; who: string; target: string; pose: Pose; both?: boolean; prop?: Prop }
+  /** something in his hand (or nothing: `prop` left out) */
+  | { do: 'prop'; who: string; prop?: Prop }
   /** the room shakes (a fist on a table, a door slamming) */
   | { do: 'jolt' };
+
+/** What a hand can hold in a cutscene. */
+export type Prop = 'bowl' | 'mop' | 'bucket' | 'belt' | 'card' | 'envelope' | 'paper' | 'notebook' | 'clipboard' | 'mask' | 'phone' | 'mic' | 'ladle' | 'pen' | 'photo' | 'tape' | 'pot';
+const PROP_WORDS: [RegExp, Prop][] = [
+  [/\bbowls?\b|\bsoup\b/i, 'bowl'], [/\bmop\b/i, 'mop'], [/\bbucket\b/i, 'bucket'], [/\bbelt\b/i, 'belt'], [/\bgold envelope\b|\benvelope\b/i, 'envelope'],
+  [/\bcard\b/i, 'card'], [/\bnotebook\b/i, 'notebook'], [/\bclipboard\b/i, 'clipboard'], [/\bmask\b/i, 'mask'], [/\bphone\b/i, 'phone'],
+  [/\bmicrophone\b|\bmic\b/i, 'mic'], [/\bladle\b/i, 'ladle'], [/\bpen\b/i, 'pen'], [/\bphoto\b/i, 'photo'], [/\btape\b/i, 'tape'], [/\bpage\b|\bpaper\b|\bcontract\b|\bletter\b|\bmenu\b|\bnapkin\b/i, 'paper'],
+];
+/** The thing a sentence is about, if it's something a hand can hold. */
+export function propIn(s: string): Prop | undefined {
+  let best: { at: number; p: Prop } | null = null;
+  for (const [re, p] of PROP_WORDS) {
+    const m = re.exec(s);
+    if (m && (!best || m.index < best.at)) best = { at: m.index, p };
+  }
+  return best?.p;
+}
 
 export interface StageActor { id: string; name: string; female?: boolean }
 export interface StageCtx {
@@ -101,10 +120,13 @@ const RULES: Rule[] = [
     make: (s, o, line) => (o ? [{ do: 'strike', who: s, target: o, pose: /knee/i.test(line) ? 'knee' : /leg|calf|low/i.test(line) ? 'legkick' : 'headkick', ko: KO.test(line) }] : null) },
   { re: /\b(takes? off (his|her) (blazer|jacket|shirt|hoodie|coat|cardigan|sweater|suit jacket)|shirt off|jacket off|strips? (down|off))/i, make: (s) => [{ do: 'strip', who: s }] },
   { re: /\b(hugs?|hugged|embraces?|wraps (his|her) arms|holds (him|her) (close|tight)|pulls (him|her) in)\b/i, make: (s, o) => (o ? [{ do: 'meet', who: s, target: o, pose: 'clinch', both: true }] : null) },
-  { re: /\b(shakes? (his|her|their)? ?hands?|handshake|offers (his|her) hand|bump fists|fist bump)/i, make: (s, o) => (o ? [{ do: 'meet', who: s, target: o, pose: 'touch', both: true }] : null) },
+  { re: /\b(shakes? (his|her|their)? ?hands?|handshake|offers (his|her) hand|bump fists|fist bump)/i, make: (s, o) => (o ? [{ do: 'meet', who: s, target: o, pose: 'offer', both: true }] : null) },
   // handing something over: walk up, hand out
-  { re: /\b(hands (you|him|her|it|over)|gives (you|him|her|it)|holds (it|the \w+|a \w+) out|holds out|passes (you|him|her)|slides (it|the \w+) across|gives her the pieces)\b/i,
-    make: (s, o) => (o ? [{ do: 'meet', who: s, target: o, pose: 'touch' }] : [{ do: 'pose', who: s, pose: 'touch' }]) },
+  { re: /\b(hands (you|him|her|it|over)|gives (you|him|her|it)|holds (it|the \w+|a \w+) out|holds out|passes (you|him|her)|slides (it|the \w+) across|gives her the pieces|puts a bowl)\b/i,
+    make: (s, o, line) => (o ? [{ do: 'meet', who: s, target: o, pose: 'offer', prop: propIn(line) }] : [{ do: 'pose', who: s, pose: 'offer' }]) },
+  // something in the hand: "holding a bucket", "with the notebook out", "takes the microphone"
+  { re: /\b(holding|holds|carries|carrying|has (a|the|his|her)|picks up|takes (out )?(a|the|his|her)|with (a|the|his|her) (\w+ )?(bucket|mop|bowl|belt|notebook|clipboard|mask|envelope|card|phone|pen|ladle))\b/i,
+    make: (s, _o, line) => { const p = propIn(line); return p ? [{ do: 'prop', who: s, prop: p }] : null; } },
   { re: /\b(tapes (his|her|\w+'s) hands|is taping|wraps (his|her) hands|holds both of)\b/i, make: (s, o) => (o ? [{ do: 'meet', who: s, target: o, pose: 'touch' }] : null) },
   { re: /\b(leaves|walks (out|off|away)|storms (out|off)|exits|goes home|drives (off|away|toward|home)|gets in the car|heads for the door|out the door|goes downstairs)\b/i, make: (s) => [{ do: 'exit', who: s }] },
   { re: /\b(steps? (in|into|up|forward|toward|towards|closer|between|through)|walks? (over|up|in|toward|towards|across|to|into)|crosses (the|to)|comes? (over|in|closer|up)|moves? (in|closer)|approaches|gets? in (his|her) face|marches|goes over)\b/i,

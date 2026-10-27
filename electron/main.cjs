@@ -10,8 +10,8 @@ const fs = require('node:fs');
 // so CAGE BOSS II gets its own name, window title, page and save folder (userData follows the name).
 const SEQUEL = process.env.CAGEBOSS_GAME === 'sequel';
 const GAME = SEQUEL
-  ? { name: 'CAGE BOSS II', page: path.join('dist-sequel', 'sequel.html'), bg: '#0a080e' }
-  : { name: 'CAGE BOSS', page: path.join('dist', 'index.html'), bg: '#0d0b0c' };
+  ? { name: 'CAGE BOSS II', page: path.join('dist-sequel', 'sequel.html'), bg: '#0a080e', icon: 'icon-sequel.png' }
+  : { name: 'CAGE BOSS', page: path.join('dist', 'index.html'), bg: '#0d0b0c', icon: 'icon.png' };
 
 // music should start without waiting for a click, like a real game
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
@@ -28,7 +28,7 @@ function createWindow() {
     fullscreen: !process.argv.includes('--windowed'),
     backgroundColor: GAME.bg,
     title: GAME.name,
-    icon: path.join(__dirname, '..', 'build', 'icon.png'),
+    icon: path.join(__dirname, '..', 'build', GAME.icon),
     autoHideMenuBar: true,
     show: false,
     webPreferences: {

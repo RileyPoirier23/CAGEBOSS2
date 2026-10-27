@@ -7,6 +7,27 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 7: Claude (2026-10-27)
+Riley: "work on everything". Done:
+- **Every part has a scene.** `src/ui/scenes/partlines.ts` (`PART_LINES`): 60+ parts that were one narrated card now play
+  4 to 9 lines in the room after the card, with stage actions (Ray hands 1ton the bowl, Mateo and 1ton trade hard shots
+  on "no hard shots" Thursday, the weigh-in face-off, the mullet poster). New canon in there: Gordon Vance has been
+  quietly paying Ray's rent since 2011 ("tax thing" on every cheque); Mateo's nana adopts 1ton. Foreshadowing still
+  starts at THE AUDIT (ch 6). `tests/stage.test.ts` checks every speaker and actor is in the part's cast.
+- **Cutscene props**: `{ do: 'prop' }` and `meet` with `prop` (bowl, mop, bucket, belt, card, envelope, paper, notebook,
+  clipboard, mask, phone, mic, ladle, pen, photo, tape, pot), drawn at the hand; the reader picks them up from the text
+  ("holding a bucket", "hands him the mop"). A new `offer` pose (hand out at chest height) for handovers and handshakes,
+  and bystanders step aside so nobody walks through anybody.
+- **Portraits** for hairstyles 10 (mullet), 11 (high fade + curls), 12 (slick back), 13 (afro); 14 uses the mohawk.
+- **Your creations in Promoter Mode**: `src/sequel/custom.ts`. Creator fighters walk in at the top of FREE AGENTS
+  (once each), marked YOUR CREATION.
+- **Balance**: story levels cost more as they climb (`xpForLevel`, `levelForXp`; level 10 is 637 xp in all, was 300),
+  so a grinder no longer maxes everyone by chapter 6 of 15. The crowd chants about every 25-30 s now, not every 10.
+- **Sequel icon**: `tools/make-sequel-icon.mjs` (`npm run icon:sequel`) draws `build/icon-sequel.{png,ico}` and the
+  1024 png; the sequel's window, electron-builder config and `dist:sequel:win` (now stamping the exe like game 1) use it.
+- **`npm run dist:sequel:win` does not finish here**: electron-builder fails with EPERM renaming
+  `release-sequel/win-unpacked.tmp` (twice). Probably the `%TEMP%` location or antivirus. Run it from a normal folder.
+
 ### Turn 6: Claude (2026-10-27)
 - **Cutscenes do what the narration says.** Riley's example: "He takes off his blazer... steps into the cage" / "One
   punch... The heckler does" had everyone standing still. Now 1ton's jacket comes off, he walks up, throws it, and the
@@ -187,8 +208,8 @@ and the crew fights, a `mask` on the rig and `presentedGender`. It hit the usage
     broadcasts.
 
 ### P3: shipping
-12. A sequel icon (`build/icon.ico` is game 1's) and the `stamp-exe` step for the sequel exe.
-13. Test `npm run dist:sequel:win` end to end on Windows (not run yet).
+12. (Done) The sequel icon and the stamp-exe step.
+13. `npm run dist:sequel:win` fails here with EPERM on the win-unpacked rename (see turn 7). Try it outside `%TEMP%`.
 14. **Move the project out of `%TEMP%`.** (Committed: the `sequel` branch is pushed to the CageBoss2 repo.)
 
 ## Known issues

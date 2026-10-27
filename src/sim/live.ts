@@ -384,7 +384,7 @@ export class LiveFight {
       sweep: [8, 0.07], counter: [6, 0.05], taunt: [5, 0.03], parry: [3, 0.02], cut: [8, 0.05], catch: [4, 0.03],
     };
     let k = K[e.type];
-    if (e.type === 'hit') k = e.big ? [9, 0.07] : [1.2, 0.01];
+    if (e.type === 'hit') k = e.big ? [9, 0.07] : [0.5, 0.01];
     // they boo the man who fouls
     if (e.type === 'foul' || e.type === 'deduction') k = [6, -0.15];
     if (!k) return;
@@ -399,7 +399,7 @@ export class LiveFight {
     const c = this.crowd;
     const home = this.rules.crowd?.home ?? -1;
     const rest = home === 0 ? -0.3 : home === 1 ? 0.3 : 0;
-    c.energy = Math.max(10, c.energy - dt * (c.energy > 60 ? 4 : 1.6));
+    c.energy = Math.max(10, c.energy - dt * (c.energy > 60 ? 4.5 : 2.4));
     c.lean += (rest - c.lean) * Math.min(1, dt * 0.04);
     c.surge = Math.max(0, c.surge - dt);
     c.quiet += dt;

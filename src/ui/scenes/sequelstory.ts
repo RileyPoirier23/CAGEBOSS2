@@ -32,7 +32,7 @@ import {
   storyRecord, storyDoc, resolveStoryDoc, pressQuestions, applyPressAnswer, finishPressDay,
   canAct, mediaDay, dinnerWithOneTon, applyTalkChoice, applyChapterChoice, talkTo,
   dueBeat, movesOf, storyDate, storyPart, storyWeek, chapterWeeks, fightDue, fightThisWeek, endStoryWeek, restDay, talkedThisChapter, chapterReady,
-  trainSession, gradeFor, TRAIN_TIERS, DAYS_PER_WEEK, type TrainTier, type OneTonTrack,
+  trainSession, gradeFor, xpForLevel, TRAIN_TIERS, DAYS_PER_WEEK, type TrainTier, type OneTonTrack,
   fightDone, recordStoryFight, advanceStoryChapter, sideOffers, sideFightReady,
   recordSideFight, type StoryFightDef, type StorySideOpponent, type StoryDocMode,
 } from '../../sequel/story';
@@ -557,13 +557,16 @@ function openStoryTraining(g: Game, save: StorySave, after: () => void): void {
     tracks.forEach(([track, label, kind], i) => {
       const y = 48 + i * 38;
       const lv = tr[track] ?? 0;
-      const xp = (save.xp ?? {})[`${who}.${track}`] ?? lv * 30;
+      const xp = (save.xp ?? {})[`${who}.${track}`] ?? xpForLevel(lv);
+      // how far into this level, out of what it costs
+      const into = xp - xpForLevel(lv);
+      const need = xpForLevel(lv + 1) - xpForLevel(lv);
       b.addChild(box(388, 34, II.panelHi, II.edge, { bevel: true })).position.set(0, y);
       b.addChild(text(label, 8, y + 4, { small: true, color: II.gold }));
       b.addChild(text(`LEVEL ${lv}/10`, 8, y + 13, { small: true, color: II.bone }));
-      const bar = new Graphics().rect(8, y + 23, 120, 4).fill(0x221e28).rect(8, y + 23, Math.round(120 * Math.min(1, (xp % 30) / 30)), 4).fill(lv >= 10 ? II.gold : II.sodium);
+      const bar = new Graphics().rect(8, y + 23, 120, 4).fill(0x221e28).rect(8, y + 23, Math.round(120 * Math.min(1, into / need)), 4).fill(lv >= 10 ? II.gold : II.sodium);
       b.addChild(bar);
-      b.addChild(text(lv >= 10 ? 'MAXED' : `${xp % 30}/30 XP TO LEVEL ${lv + 1}`, 134, y + 21, { small: true, color: II.ash }));
+      b.addChild(text(lv >= 10 ? 'MAXED' : `${into}/${need} XP TO LEVEL ${lv + 1}`, 134, y + 21, { small: true, color: II.ash }));
       b.addChild(button('TRAIN', 316, y + 9, 64, 16, () => {
         const days = TRAIN_TIERS[tier].days;
         if (!canAct(save, days)) return alertBox(g, 'Not enough days', `A ${TRAIN_TIERS[tier].label} session takes ${days} day${days === 1 ? '' : 's'}.`);

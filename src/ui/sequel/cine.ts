@@ -25,7 +25,7 @@ import { clearOfProps, drawBg, setDressing, tvScreen, FLOOR, type Actor, type Bg
 import { II } from '../theme';
 import type { PixelText } from '../text';
 import { lerpColor as lerpRGB, shade as shadeRGB } from '../../art/palette';
-import { readStage, type StageAct, type StageCtx } from './stage';
+import { readStage, type Prop, type StageAct, type StageCtx } from './stage';
 import type { Line } from '../cutscene';
 
 /** How each room is lit: the grade (top/bottom multiply), the key light colour and where the light comes from. */
@@ -65,7 +65,7 @@ function shadowFilter(): ColorMatrixFilter {
 }
 
 /** noWalk: a shove or a knockback slides him without a walk cycle (seconds) */
-type Live = Actor & { cx: number; look2: Look2; rig: Rig; phase: number; walkPh: number; noWalk: number };
+type Live = Actor & { cx: number; look2: Look2; rig: Rig; phase: number; walkPh: number; noWalk: number; prop?: Prop };
 /** One stage direction playing out: tick until done; instant() jumps to how it ends. */
 interface Task { tick: (dt: number) => boolean; instant: () => void }
 
@@ -92,6 +92,56 @@ function alive(r: Rig, t: number, ph: number, talking: boolean, standing: boolea
     }
   }
   return o;
+}
+
+/** A thing in a hand, drawn at the hand (x, y), facing the way he faces. */
+function drawProp(g: Graphics, p: Prop, x: number, y: number, f: 1 | -1, t: number): void {
+  const X = (dx: number) => x + dx * f;
+  switch (p) {
+    case 'bowl':
+      g.poly([X(-6), y - 2, X(6), y - 2, X(4), y + 3, X(-4), y + 3]).fill(0xd8c8a8).rect(Math.min(X(-6), X(6)), y - 3, 12, 1).fill(0x8a5a2a);
+      for (let k = 0; k < 2; k++) g.rect(X(-2 + k * 3) + Math.sin(t * 3 + k) * 1.2, y - 8 - k * 2, 1, 3).fill({ color: 0xffffff, alpha: 0.35 });
+      break;
+    case 'pot':
+      g.rect(Math.min(X(-8), X(8)), y - 4, 16, 10).fill(0x8a8a90).rect(Math.min(X(-9), X(9)), y - 5, 18, 2).fill(0xb0b0b8);
+      break;
+    case 'mop':
+      g.rect(X(0), y - 40, 1.5, 58).fill(0xb08a5a).rect(Math.min(X(-5), X(5)), y + 16, 10, 5).fill(0xd8d0b8);
+      break;
+    case 'bucket':
+      g.poly([X(-6), y + 2, X(6), y + 2, X(5), y + 14, X(-5), y + 14]).fill(0x9aa0a8).rect(Math.min(X(-6), X(6)), y + 2, 12, 1).fill(0xd0d4d8);
+      g.moveTo(X(-6), y + 2).lineTo(X(0), y - 3).lineTo(X(6), y + 2).stroke({ color: 0x5a5a60, width: 1 });
+      break;
+    case 'belt':
+      g.rect(Math.min(X(-14), X(14)), y - 2, 28, 4).fill(0x2a1a10).ellipse(X(0), y, 7, 5).fill(0xe8c040).ellipse(X(0), y, 4, 3).fill(0xfff0a0);
+      break;
+    case 'card': case 'envelope': case 'paper': case 'photo': {
+      const c = p === 'envelope' ? 0xd8b040 : p === 'card' ? 0x141414 : p === 'photo' ? 0xc8c0b0 : 0xf0ece0;
+      g.rect(Math.min(X(-1), X(8)), y - 6, p === 'paper' ? 7 : 9, p === 'paper' ? 9 : 6).fill(c).stroke({ color: 0x2a2420, width: 0.5 });
+      break;
+    }
+    case 'notebook': case 'clipboard':
+      g.rect(Math.min(X(-1), X(8)), y - 8, 8, 10).fill(p === 'clipboard' ? 0x8a6a40 : 0x3a2a20).rect(Math.min(X(0), X(7)), y - 7, 6, 8).fill(0xe8e4d8);
+      break;
+    case 'mask':
+      g.ellipse(X(3), y - 3, 5, 6).fill(0xc4202c).rect(Math.min(X(0), X(6)), y - 5, 6, 2).fill(0xd8d8e0);
+      break;
+    case 'phone':
+      g.rect(Math.min(X(0), X(4)), y - 7, 4, 7).fill(0x101014).rect(Math.min(X(0.5), X(3.5)), y - 6, 3, 5).fill(0x4a7ab0);
+      break;
+    case 'mic':
+      g.rect(X(0), y - 6, 1.5, 7).fill(0x202024).circle(X(0.7), y - 7, 2).fill(0x5a5a64);
+      break;
+    case 'ladle':
+      g.rect(X(0), y - 14, 1.5, 14).fill(0xb0b0b8).ellipse(X(1), y + 1, 3, 2).fill(0xc0c0c8);
+      break;
+    case 'pen':
+      g.rect(X(0), y - 6, 1.2, 7).fill(0xe8c040);
+      break;
+    case 'tape':
+      g.circle(X(3), y - 2, 3).fill(0xe8e4d8).circle(X(3), y - 2, 1.2).fill(0x8a7a60);
+      break;
+  }
 }
 
 export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null) => void): void {
@@ -166,6 +216,15 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     return (dt: number) => (e += dt) >= max || cond();
   };
   const arrived = (a: Live) => Math.abs(a.cx - a.x) < 3;
+  /** Whoever is standing where he's going steps aside (nobody walks through anybody). */
+  const makeRoom = (x: number, a: Live, b?: Live) => {
+    for (const c of cast) {
+      if (c === a || c === b || c.pose === 'ko' || Math.abs(c.x - x) > 20) continue;
+      const away = c.x >= x ? 1 : -1;
+      const nx = clampX(x + away * 34);
+      c.x = Math.abs(nx - x) < 20 ? clampX(x - away * 34) : nx;
+    }
+  };
   const impact = (ln: Line | undefined, ko: boolean) => {
     shake = ko ? 0.5 : 0.35;
     punch = 1;
@@ -179,6 +238,8 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     switch (act.do) {
       case 'pose':
         return { tick: () => { a.pose = act.pose; return true; }, instant: () => { a.pose = act.pose; } };
+      case 'prop':
+        return { tick: () => { a.prop = act.prop; return true; }, instant: () => { a.prop = act.prop; } };
       case 'strip': {
         const off = () => {
           const o = a.look2.outfit;
@@ -239,7 +300,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       case 'meet': {
         const b = byId(act.target);
         if (!b) return null;
-        const gap = act.pose === 'clinch' ? 22 : 30;
+        const gap = act.pose === 'clinch' ? 24 : act.pose === 'guard' ? 34 : 54;
         let phase = 0;
         let w: ((dt: number) => boolean) | null = null;
         const end = () => {
@@ -247,13 +308,22 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
           b.facing = (-a.facing) as 1 | -1;
           a.pose = act.pose;
           if (act.both) b.pose = act.pose;
+          // it changes hands
+          if (act.prop) {
+            b.prop = act.prop;
+            if (a.prop === act.prop) a.prop = undefined;
+            // he holds it out in front of him, where you can see it
+            if (!act.both) b.pose = 'offer';
+          }
         };
         return {
           tick: (dt) => {
             if (phase === 0) {
               phase = 1;
               a.pose = undefined;
+              if (act.prop) a.prop = act.prop;
               a.x = clampX(b.x - sideOf(a, b) * gap);
+              makeRoom(a.x, a, b);
               w = wait(() => arrived(a), 2.6);
             }
             if (phase === 1 && w!(dt)) {
@@ -283,6 +353,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
               phase = 1;
               a.pose = undefined;
               a.x = spot();
+              makeRoom(a.x, a, b);
               w = wait(() => arrived(a), 2.2);
             }
             if (phase === 1) {
@@ -740,6 +811,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       drawRig(shadowG, r, x, 0, face, a.look2, sc);
       drawRig(rimG, r, x - light.dir, FLOOR + bob, face, a.look2, sc);
       drawRig(actorsG, r, x, FLOOR + bob, face, a.look2, sc);
+      if (a.prop && a.pose !== 'ko') drawProp(actorsG, a.prop, x + r.haF[0] * face * sc, FLOOR + bob + r.haF[1] * sc, face, t);
     }
     // the long shadow, thrown away from the light
     shadowG.position.set(0, FLOOR + 1);

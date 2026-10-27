@@ -557,8 +557,19 @@ export const GRADE_MULT: Record<Grade, number> = { S: 1.7, A: 1.4, B: 1.18, C: 1
 export function gradeFor(pct: number): Grade {
   return pct >= 95 ? 'S' : pct >= 85 ? 'A' : pct >= 75 ? 'B' : pct >= 60 ? 'C' : pct >= 45 ? 'D' : 'F';
 }
-/** 30 xp a level, 10 levels a track: a few chapters of honest work to max one out. */
+/**
+ * Level 1 costs 30 xp and every level after costs a little more (level 10 is 64 on its own, 637 in
+ * all): fifteen chapters is a long time, and the last levels should take most of it.
+ */
 export const XP_PER_LEVEL = 30;
+/** Total xp to reach a level. */
+export const xpForLevel = (lv: number): number => Math.round(XP_PER_LEVEL * lv + 3.75 * lv * (lv - 1));
+/** The level a total buys (0..10). */
+export const levelForXp = (xp: number): number => {
+  let lv = 0;
+  while (lv < 10 && xp >= xpForLevel(lv + 1)) lv++;
+  return lv;
+};
 
 const xpKey = (who: 'oneton' | 'corner', track: string): string => `${who}.${track}`;
 
@@ -569,8 +580,8 @@ function addXp(save: StorySave, who: 'oneton' | 'corner', track: OneTonTrack, xp
   const tr = (who === 'oneton' ? save.training : save.daneTraining) as unknown as Record<string, number>;
   const before = tr[track] ?? 0;
   // old saves: their levels count as banked xp
-  save.xp[key] = Math.max(save.xp[key] ?? 0, before * XP_PER_LEVEL) + xp;
-  const after = Math.min(10, Math.floor(save.xp[key] / XP_PER_LEVEL));
+  save.xp[key] = Math.max(save.xp[key] ?? 0, xpForLevel(before)) + xp;
+  const after = Math.max(before, levelForXp(save.xp[key]));
   if (track in tr) tr[track] = after;
   return { before, after };
 }

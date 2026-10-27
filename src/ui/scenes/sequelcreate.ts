@@ -21,8 +21,8 @@ import { sfx } from '../../audio/sfx';
 import { II } from '../theme';
 import { HAIR_COLORS, SKIN_TONES } from '../../art/palette';
 
-const CUSTOM_KEY = 'cageboss2.custom';
-export const loadCustomFighters = (): Fighter[] => loadJSON<Fighter[]>(CUSTOM_KEY, []);
+import { loadCustomFighters, storeCustomFighters } from '../../sequel/custom';
+export { loadCustomFighters };
 
 type Tab = 'body' | 'hair' | 'face' | 'ink' | 'kit';
 const HAIR_NAMES = ['BALD', 'BUZZ', 'SHORT', 'SWEPT', 'CROP', 'LONG', 'BRAIDS', 'BUN', 'CURLY MOP', 'LONG WAVES', 'MULLET', 'HIGH FADE CURLS', 'SLICK BACK', 'AFRO', 'MOHAWK'];
@@ -157,9 +157,9 @@ export class SequelCreateScene extends Scene {
   private save(): void {
     const list = loadCustomFighters().filter((x) => x.id !== this.f.id);
     if (list.length >= 40) return alertBox(this.g, 'Full', 'Forty custom fighters is the limit. Delete one in Quick Fight first.');
-    storeJSON(CUSTOM_KEY, [...list, this.f]);
+    storeCustomFighters([...list, this.f]);
     sfx('cash');
-    this.g.toast(`${this.f.first} ${this.f.last} IS READY. FIND THEM IN QUICK FIGHT UNDER CUSTOM.`, II.gold);
+    this.g.toast(`${this.f.first} ${this.f.last} IS READY: QUICK FIGHT (CUSTOM) AND PROMOTER FREE AGENTS.`, II.gold);
     this.leave();
   }
 

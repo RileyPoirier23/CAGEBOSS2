@@ -300,10 +300,10 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
       arena.crowdChant('STAND THEM UP!', PAL.ember);
       chantCd = 8;
     }
-    else if (chantCd <= 0 && fav >= 0 && c.energy > 45) {
+    else if (chantCd <= 0 && fav >= 0 && c.energy > 60) {
       const n = chants[fav as Side];
       arena.crowdChant(`${n}! ${n}! ${n}!`, fav === P ? PAL.moss : PAL.blood);
-      chantCd = 6 + Math.random() * 3;
+      chantCd = 14 + Math.random() * 6;
       if (c.energy > 70 && fav === P && !o.versus && behindRound !== L.round) {
         behindRound = L.round;
         callout('THE CROWD IS BEHIND YOU', PAL.moss, 1);
