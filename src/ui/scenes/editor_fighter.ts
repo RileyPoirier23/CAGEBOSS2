@@ -14,7 +14,7 @@ import { TRAITS, STYLES, generateFighter } from '../../sim/generate';
 import { content } from '../../core/content';
 import { Rng } from '../../core/rng';
 import { DIVISION_ORDER, divisionName } from '../../sim/divisions';
-import { computeStarPower } from '../../sim/fighters';
+import { computeStarPower, presentedGender } from '../../sim/fighters';
 
 const LOOK_PARTS: [keyof Look, string, number][] = [
   ['head', 'Head', 4], ['skin', 'Skin', 6], ['hair', 'Hair', 8], ['hairColor', 'Hair col', 8], ['beard', 'Beard', 5], ['brows', 'Brows', 3],
@@ -44,7 +44,7 @@ export function openFighterEditor(g: Game, id: string | null, onDone: () => void
     inputs.length = 0;
     win.body.removeChildren().forEach((c) => c.destroy({ children: true }));
     const b = win.body;
-    const p = portrait({ id: f.id, look: f.look, gender: f.gender, age: f.age, damage: f.damage, wounds: f.wounds }, 64);
+    const p = portrait({ id: f.id, look: f.look, gender: presentedGender(f), age: f.age, damage: f.damage, wounds: f.wounds }, 64);
     p.position.set(6, 4);
     b.addChild(p);
     b.addChild(text('First', 76, 6, { small: true, color: PAL.ash }));

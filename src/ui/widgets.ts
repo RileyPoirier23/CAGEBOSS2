@@ -8,6 +8,7 @@ import { PAL } from '../art/palette';
 import { isTouchDevice } from '../core/platform';
 import { W, H, SW, OX, box, text, button, btn, paper, PaperKind, hoverTip } from './kit';
 import { sfx } from '../audio/sfx';
+import { isII, II } from './theme';
 
 export interface WindowOpts {
   paper?: PaperKind;
@@ -29,9 +30,18 @@ export function openWindow(g: Game, title: string, w: number, h: number, opts: W
   frame.y = y;
   if (opts.paper) frame.addChild(paper(w, h, opts.paper));
   else frame.addChild(box(w, h, PAL.night, PAL.ash, { shadow: true, bevel: true }));
-  const titleBar = box(w, 12, opts.paper ? PAL.ink : PAL.shadow);
-  frame.addChild(titleBar);
-  frame.addChild(text(title.toUpperCase(), 4, 3, { small: true, color: PAL.bone }));
+  if (isII()) {
+    // CAGE BOSS II: a black bar with a hazard stripe and a sodium title
+    const bar = new Graphics().rect(0, 0, w, 12).fill(II.night);
+    for (let k = 0; k < 5; k++) bar.poly([w - 40 - k * 6, 12, w - 36 - k * 6, 0, w - 33 - k * 6, 0, w - 37 - k * 6, 12]).fill({ color: II.blood, alpha: 0.75 });
+    bar.rect(0, 11, w, 1).fill(II.blood).rect(0, 0, 2, 12).fill(II.sodium);
+    frame.addChild(bar);
+    frame.addChild(text(title.toUpperCase(), 6, 3, { small: true, color: II.gold }));
+  } else {
+    const titleBar = box(w, 12, opts.paper ? PAL.ink : PAL.shadow);
+    frame.addChild(titleBar);
+    frame.addChild(text(title.toUpperCase(), 4, 3, { small: true, color: PAL.bone }));
+  }
   const body = new Container();
   body.y = 14;
   frame.addChild(body);

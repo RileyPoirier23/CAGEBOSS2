@@ -6,6 +6,7 @@ import type { Fighter } from '../core/types';
 import type { ReporterDef } from '../core/content';
 import { drawPortrait, drawSignature, drawBarcode, halfSize, PixelBuf, PortraitInput, PortraitVariant } from '../art/portrait';
 import { PAL } from '../art/palette';
+import { presentedGender } from '../sim/fighters';
 
 const cache = new Map<string, Texture>();
 
@@ -34,7 +35,7 @@ export function portraitInputForFighter(f: Fighter, variant: PortraitVariant = '
   return {
     id: f.id,
     look: f.look,
-    gender: f.gender,
+    gender: presentedGender(f),
     age: f.age,
     damage: f.damage,
     wounds: f.wounds,

@@ -6,6 +6,7 @@
 import { Graphics } from 'pixi.js';
 import type { Fighter } from '../core/types';
 import { SKIN_TONES, HAIR_COLORS, shade, lerpColor, PAL } from '../art/palette';
+import { presentedGender } from '../sim/fighters';
 
 export type Joint = 'head' | 'neck' | 'shF' | 'elF' | 'haF' | 'shB' | 'elB' | 'haB' | 'hip' | 'knF' | 'ftF' | 'knB' | 'ftB';
 export type Rig = Record<Joint, [number, number]>;
@@ -316,6 +317,8 @@ export interface Look2 {
   chain?: boolean;
   /** 1 = koi on the shoulder */
   inkArt?: number;
+  /** luchador eye mask colour */
+  mask?: number;
   /** the middle finger is up (the flip-off taunt) */
   bird?: boolean;
   /** the mouthpiece has been knocked out (it's lying on the canvas) */
@@ -417,7 +420,7 @@ export function lookFor(f: Fighter, corner: 0 | 1, champ = false): Look2 {
           : f.styles.includes('Brawler') ? 'brawler'
             : f.styles.includes('Showboat') ? 'handsLow'
               : f.styles.includes('Counter Striker') ? 'sway' : 'bouncy'),
-    female: f.gender === 'W',
+    female: presentedGender(f) === 'W',
     tattoo: f.look.tattoo,
     // ink follows the contract photo: 1 = neck, 2 = shoulder/chest piece, 3 = the works
     ink: f.look.tattoo === 1 ? 4 : f.look.tattoo === 2 ? [1, 2, 5][[...f.id].reduce((a, ch) => (a * 33 + ch.charCodeAt(0)) >>> 0, 7) % 3] : f.look.tattoo >= 3 ? 0 : undefined,
@@ -428,6 +431,7 @@ export function lookFor(f: Fighter, corner: 0 | 1, champ = false): Look2 {
     hat: f.look.hat,
     chain: !!f.look.chain,
     inkArt: f.look.inkArt,
+    mask: f.look.mask,
     glasses: f.look.glasses === 2 ? 2 : undefined,
     beanie: !!f.look.beanie,
     freckles: !!f.look.freckles,
@@ -992,6 +996,21 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
       g.circle(...hpt(3.2, -4.4), 0.5 * s).fill({ color: 0xffffff, alpha: 0.5 * sweat });
       g.circle(...hpt(5.6, -3.8), 0.4 * s).fill({ color: 0xffffff, alpha: 0.45 * sweat });
     }
+  }
+  // luchador eye mask: covers the brow and cheekbones, leaves the mouth and beard
+  if (L.mask) {
+    const mask = L.mask;
+    const maskD = shade(mask, -0.28);
+    g.poly(poly([[-1.2, -5.2], [3.4, -6.4], [7.2, -4.4], [7.8, 0.2], [4.4, 1.8], [0.4, 1.2], [-1.4, -1.6]])).fill(mask).stroke({ color: OUT, width: 0.9 * s, join: 'round' });
+    // the eye holes, repainted over the mask
+    for (const [ex, ey] of [[4.4, -1.4], [5.9, -1.2]] as [number, number][]) {
+      g.circle(...hpt(ex, ey), 1.05 * s).fill(0xead9c8).stroke({ color: OUT, width: 0.35 * s });
+      g.circle(...hpt(ex + 0.5, ey), 0.52 * s).fill(0x14100e);
+    }
+    // trim: a stripe down the middle and stitches at the temples
+    hl([1.0, -5.4], [3.0, 1.2], maskD, 1.4);
+    hl([6.8, -4.6], [7.2, 0.0], shade(mask, 0.25), 0.8);
+    for (let k = 0; k < 3; k++) g.circle(...hpt(0.8 - k * 0.2, -3.8 + k * 1.6), 0.28 * s).fill(maskD);
   }
   // hair
   const hc = L.hairColor;

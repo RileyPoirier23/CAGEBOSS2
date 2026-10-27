@@ -6,9 +6,16 @@ const { app, BrowserWindow, ipcMain, shell, dialog } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 
+// One shell, two games: electron/sequel.cjs sets CAGEBOSS_GAME=sequel before requiring this file,
+// so CAGE BOSS II gets its own name, window title, page and save folder (userData follows the name).
+const SEQUEL = process.env.CAGEBOSS_GAME === 'sequel';
+const GAME = SEQUEL
+  ? { name: 'CAGE BOSS II', page: path.join('dist-sequel', 'sequel.html'), bg: '#0a080e' }
+  : { name: 'CAGE BOSS', page: path.join('dist', 'index.html'), bg: '#0d0b0c' };
+
 // music should start without waiting for a click, like a real game
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
-app.setName('CAGE BOSS');
+app.setName(GAME.name);
 
 let win = null;
 
@@ -19,8 +26,8 @@ function createWindow() {
     minWidth: 480,
     minHeight: 270,
     fullscreen: !process.argv.includes('--windowed'),
-    backgroundColor: '#0d0b0c',
-    title: 'CAGE BOSS',
+    backgroundColor: GAME.bg,
+    title: GAME.name,
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
     autoHideMenuBar: true,
     show: false,
@@ -33,7 +40,7 @@ function createWindow() {
   });
   win.setMenu(null);
   win.once('ready-to-show', () => win.show());
-  win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
+  win.loadFile(path.join(__dirname, '..', GAME.page));
   // links (credits socials) open in the real browser, never inside the game window
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https?:/.test(url)) shell.openExternal(url);
@@ -177,8 +184,8 @@ initSteam();
 
 app.whenReady().then(() => {
   createWindow();
-  // Steam builds are updated by Steam
-  if (!app.isPackaged || steam) return;
+  // Steam builds are updated by Steam; the sequel has no release channel of its own yet
+  if (!app.isPackaged || steam || SEQUEL) return;
   // Windows installer and Linux AppImage update themselves; the portable .exe and the (unsigned)
   // Mac build can't replace themselves, so they just say a new version is out
   const self = process.platform === 'win32' ? !process.env.PORTABLE_EXECUTABLE_DIR : process.platform === 'linux' ? !!process.env.APPIMAGE : false;

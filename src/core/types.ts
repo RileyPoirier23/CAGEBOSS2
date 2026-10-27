@@ -50,6 +50,7 @@ export interface Look {
   freckles?: number; // 1 = freckles across the nose and cheeks
   chain?: number; // 1 = thin gold chain, always on
   inkArt?: number; // 1 = koi on the shoulder (black and red)
+  mask?: number; // luchador eye mask colour (0/undefined = none)
 }
 
 export interface Contract {

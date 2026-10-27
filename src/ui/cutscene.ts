@@ -17,7 +17,8 @@ import { sfx } from '../audio/sfx';
 import { drawShow, showLabels, type TvShow } from './tvshows';
 import { isTouchDevice } from '../core/platform';
 
-export type Bg = 'gym' | 'tv' | 'street' | 'bingo' | 'hotel' | 'locker' | 'office' | 'presser' | 'stage' | 'cage' | 'lot' | 'booth' | 'landlord' | 'black';
+export type Bg = 'gym' | 'tv' | 'street' | 'bingo' | 'hotel' | 'locker' | 'office' | 'presser' | 'stage' | 'cage' | 'lot' | 'booth' | 'landlord' | 'black'
+  | 'warehouse' | 'roof' | 'zenith' | 'hospital' | 'lucha';
 
 export interface Actor {
   id: string;
@@ -58,6 +59,8 @@ export interface Cutscene {
   title?: string;
   shots: Shot[];
   choices?: { id: string; label: string }[];
+  /** film grain, scanlines and a vignette (the sequel's story scenes) */
+  film?: boolean;
 }
 
 // ------------------------------------------------------------ the regular cast
@@ -88,11 +91,27 @@ export const CAST: Record<string, Look2> = {
   lenny: base({ skin: 0xe0b090, hairStyle: 3, hairColor: 0x1a1412, beard: 4, build: 2, outfit: { top: 0x5a4a2a, bottom: 0x3a3020, shirt: 0xd8c890, tie: 0x8a6a1a, bulk: 2, hands: 0xe0b090 } }),
   // a reporter
   reporter: base({ skin: 0xe0b090, hairStyle: 4, hairColor: 0x6a3a1a, beard: 0, build: 0, female: true, outfit: { top: 0x6a4c72, bottom: 0x222228, mic: true, hands: 0xe0b090 } }),
+  // 1TON: the bearded reporter from the back row. Cheap blazer, press badge, a notebook he never puts down.
+  oneton: base({ skin: 0x9a6844, hairStyle: 1, hairColor: 0x1c1714, beard: 3, brows: 1, build: 2, outfit: { top: 0x3a3028, bottom: 0x2a2a30, shirt: 0xb0a890, tie: 0x8a2a2a, bulk: 2, hands: 0x9a6844, patch: 0xf2f2f2 } }),
+  // Verity Kane: Zenith Holdings. Silver bob, black suit, a gold pin that costs more than the warehouse.
+  zenith: base({ skin: 0xe8c0a0, hairStyle: 2, hairColor: 0xc8c4bc, beard: 0, build: 1, female: true, glasses: 2, outfit: { top: 0x111116, bottom: 0x111116, shirt: 0xe8e4d8, tie: 0xc4a04a, bulk: 1, hands: 0xe8c0a0 } }),
+  // The Auditor: black suit, shades, a clipboard he has never needed to read
+  auditor: base({ skin: 0xf0cfae, hairStyle: 0, hairColor: 0x1c1714, beard: 0, build: 1, glasses: 1, outfit: { top: 0x14141a, bottom: 0x14141a, shirt: 0xe8e8e4, tie: 0x8a2020, bulk: 1, shortSleeves: false, hands: 0xf0cfae, patch: 0xc4a04a } }),
+  // The Chairman: the board's legacy asset, in a suit cut for a man who has never waited in line
+  chairman: base({ skin: 0xdcae88, hairStyle: 0, hairColor: 0x1c1714, beard: 2, brows: 2, build: 2, outfit: { top: 0x1c1c24, bottom: 0x14141a, shirt: 0xe8e4d8, tie: 0x8a2020, bulk: 2, hands: 0xdcae88, patch: 0xc4a04a } }),
+  // El Cuchillo, in the suit Zenith bought him
+  cuchillo: base({ skin: 0x9a6844, hairStyle: 1, hairColor: 0x1c1714, beard: 4, brows: 1, build: 1, scar: 2, mask: 0xc8202a, outfit: { top: 0x22222a, bottom: 0x22222a, shirt: 0x2a2a30, tie: 0xc8202a, bulk: 1, hands: 0x9a6844 } }),
+  // Duke "The Door" Kessler: security black, a nose that has been broken professionally
+  duke: base({ skin: 0xe2b392, hairStyle: 0, hairColor: 0x1a1412, beard: 2, brows: 2, build: 2, scar: 1, outfit: { top: 0x141418, bottom: 0x1c1c22, shirt: 0x2a2a30, bulk: 2, shortSleeves: true, hands: 0xe2b392, patch: 0xf2f2f2 } }),
+  // Rico "Payphone" Alvarez: denim, gold chain, a phone in his pocket he did not pay for
+  rico: base({ skin: 0xc68a5e, hairStyle: 2, hairColor: 0x1a1412, beard: 1, build: 1, chain: true, outfit: { top: 0x2a3a6a, bottom: 0x1a1a20, shirt: 0xd8d0bc, bulk: 1, hands: 0xc68a5e } }),
+  // Cesar "La Mano" Rios: the quiet one. Black track jacket, taped hands, a scar with a story
+  cesar: base({ skin: 0x9a6844, hairStyle: 0, hairColor: 0x101010, beard: 1, brows: 2, build: 2, scar: 2, outfit: { top: 0x222226, bottom: 0x1a1a1e, shirt: 0x3a3a40, bulk: 2, shortSleeves: true, hands: 0xe8e2d8 } }),
 };
 
 // ------------------------------------------------------------ backgrounds
 
-const FLOOR = 196;
+export const FLOOR = 196;
 
 /**
  * The furniture people can't walk through: they stop beside it, never inside it (left, right edge).
@@ -104,6 +123,11 @@ const SOLID: Partial<Record<Bg, [number, number][]>> = {
   street: [[328, 452]],
   lot: [[18, 72], [358, 472]],
   stage: [[338, 412]],
+  warehouse: [[54, 112], [318, 340], [398, 460]],
+  roof: [[54, 118], [356, 430]],
+  zenith: [[42, 90], [386, 440]],
+  hospital: [[356, 426]],
+  lucha: [[24, 84], [192, 204], [388, 456]],
 };
 
 /** Counters, desks and tables (drawn in front): fine to stand behind, never half in one. */
@@ -113,6 +137,9 @@ const FRONT: Partial<Record<Bg, [number, number][]>> = {
   office: [[250, 450]],
   presser: [[40, 440]],
   landlord: [[140, 340]],
+  warehouse: [[150, 320]],
+  zenith: [[120, 360]],
+  hospital: [[170, 342]],
 };
 
 /** Keep a standing actor out of the solid props (and on screen). */
@@ -132,7 +159,7 @@ export function clearOfProps(bg: Bg, x: number, scale = 1.3): number {
 }
 
 /** Where each set's TV screen is (for the animated shows). */
-function tvScreen(bg: Bg, tv?: Shot['tv']): { x: number; y: number; w: number; h: number } | null {
+export function tvScreen(bg: Bg, tv?: Shot['tv']): { x: number; y: number; w: number; h: number } | null {
   if (bg === 'tv') return tv === 'feud' || tv === 'judge' ? { x: 118, y: 32, w: 244, h: 120 } : null;
   if (bg === 'gym') return { x: 356, y: 44, w: 64, h: 38 };
   if (bg === 'bingo') return { x: 400, y: 26, w: 58, h: 34 };
@@ -140,7 +167,7 @@ function tvScreen(bg: Bg, tv?: Shot['tv']): { x: number; y: number; w: number; h
   return null;
 }
 
-function drawBg(g: Graphics, fg: Graphics, bg: Bg, tv?: Shot['tv']): void {
+export function drawBg(g: Graphics, fg: Graphics, bg: Bg, tv?: Shot['tv']): void {
   g.clear();
   fg.clear();
   // in the TV close-up everything is behind the glass
@@ -419,6 +446,144 @@ function drawBg(g: Graphics, fg: Graphics, bg: Bg, tv?: Shot['tv']): void {
       lamp(240, 0, 18, 0.08);
       break;
     }
+    case 'warehouse': {
+      // the sequel's home: corrugated steel over old brick, one roller door, a cage that has been moved twice
+      g.rect(0, 0, W, FLOOR).fill(0x1a171d);
+      for (let y = 0; y < 74; y += 5) g.rect(0, y, W, 1).fill({ color: 0x2a2630, alpha: 0.9 });
+      for (let y = 74; y < FLOOR; y += 8) for (let x = (y / 8) % 2 ? -10 : 0; x < W; x += 20) g.rect(x + 1, y + 1, 18, 6).fill((x * 7 + y * 13) % 5 ? 0x3a2628 : 0x432c2e);
+      // roller door
+      g.rect(360, 38, 94, 146).fill(0x24202a).rect(360, 38, 94, 3).fill(0x3a3440);
+      for (let y = 44; y < 184; y += 6) g.rect(362, y, 90, 2).fill(0x2e2a36);
+      g.rect(356, 34, 102, 5).fill(0x141018).rect(402, 174, 8, 3).fill(0xc4a04a);
+      // the old CBFC banner, hung crooked
+      g.rect(146, 22, 196, 34).fill(0x101014).stroke({ color: 0xc4a04a, width: 2 });
+      g.rect(150, 26, 188, 26).fill(0x1c1820);
+      for (let x = 156; x < 332; x += 22) g.rect(x, 30, 16, 2).fill(0x3a3440);
+      // the cage: two panels and a padded post
+      for (let y = 102; y < FLOOR; y += 5) for (let x = 20; x < 142; x += 5) g.rect(x, y, 1, 1).fill(0x4a4a54);
+      g.rect(18, 98, 126, 3).fill(0x8e2f2f).rect(18, 98, 3, FLOOR - 98).fill(0x2a2a30).rect(140, 98, 3, FLOOR - 98).fill(0x2a2a30);
+      // string lights
+      for (let x = 12; x < W; x += 34) {
+        const sag = 8 + ((x * 7) % 9);
+        g.rect(x, 6, 1, 14 + sag).fill(0x2a2a30);
+        g.circle(x, 20 + sag, 2).fill({ color: 0xffd890, alpha: 0.9 });
+        g.circle(x, 20 + sag, 6).fill({ color: 0xffd890, alpha: 0.05 });
+      }
+      // floor: concrete, oil, tape
+      g.rect(0, FLOOR, W, H - FLOOR).fill(0x2a272c);
+      for (let x = 0; x < W; x += 28) g.rect(x, FLOOR, 1, H - FLOOR).fill(0x242126);
+      g.ellipse(268, FLOOR + 18, 34, 5).fill({ color: 0x141216, alpha: 0.7 });
+      g.rect(80, FLOOR + 8, 40, 1).fill(0xc4a04a);
+      // the desk (front)
+      f.rect(150, FLOOR - 32, 170, 32).fill(0x2a2026).rect(150, FLOOR - 32, 170, 4).fill(0x4a3a30).rect(158, FLOOR - 26, 154, 22).fill(0x221a20);
+      f.rect(166, FLOOR - 38, 26, 6).fill(0xe8e4d8).rect(200, FLOOR - 42, 34, 10).fill(0x101014).rect(204, FLOOR - 40, 26, 6).fill(0x2a3a4a);
+      f.rect(272, FLOOR - 40, 10, 8).fill(0x8a6a4a).rect(270, FLOOR - 42, 14, 2).fill(0xc4a04a);
+      break;
+    }
+    case 'roof': {
+      sky(0x080a16, 0x20203a, 170);
+      // moon and clouds
+      g.circle(390, 38, 14).fill(0xe8e4d0).circle(396, 34, 12).fill(0x20203a);
+      for (let k = 0; k < 9; k++) g.circle((k * 67 + 20) % W, 28 + (k * 17) % 40, 8 + (k % 3) * 4).fill({ color: 0x34344e, alpha: 0.45 });
+      // skyline
+      for (let i = 0; i < 26; i++) {
+        const bw = 16 + (i * 7) % 14;
+        const bh = 34 + (i * 37) % 100;
+        g.rect(i * 19 - 4, 170 - bh, bw, bh).fill(0x0c1020);
+        for (let y = 176 - bh; y < 164; y += 7) if ((i + y) % 3) g.rect(i * 19 + 2, y, 3, 3).fill({ color: 0xffd890, alpha: 0.65 });
+      }
+      // roof edge and water tower
+      g.rect(0, 166, W, 6).fill(0x2a2a34);
+      for (let x = 0; x < W; x += 36) g.rect(x, 172, 2, 8).fill(0x1a1a22);
+      g.rect(72, 96, 4, 70).fill(0x2a2a34).rect(126, 96, 4, 70).fill(0x2a2a34).rect(66, 88, 70, 10).fill(0x3a3a44);
+      g.poly([70, 88, 132, 88, 126, 74, 76, 74]).fill(0x2e2e38).rect(96, 74, 10, 14).fill(0x4a4a54);
+      // AC units and a vent
+      g.rect(54, 142, 64, 34).fill(0x3a3a44).rect(58, 146, 56, 4).fill(0x4a4a54).rect(58, 154, 56, 2).fill(0x2a2a34).circle(70, 166, 5).fill(0x1a1a22);
+      g.rect(356, 148, 74, 28).fill(0x34343e).rect(360, 152, 66, 3).fill(0x4a4a54).rect(360, 158, 66, 2).fill(0x24242e);
+      // floor: tar and gravel
+      g.rect(0, 180, W, H - 180).fill(0x24242c);
+      for (let k = 0; k < 70; k++) g.rect((k * 41) % W, 184 + (k * 23) % 50, 1, 1).fill(0x3a3a44);
+      f.rect(54, 142, 64, 34).fill({ color: 0, alpha: 0 });
+      break;
+    }
+    case 'zenith': {
+      sky(0x080c1a, 0x182840, 156);
+      // the city, sixty floors down
+      for (let i = 0; i < 30; i++) {
+        const bh = 40 + (i * 53) % 110;
+        g.rect(8 + i * 16, 156 - bh, 14, bh).fill(0x0a1020);
+        for (let y = 160 - bh; y < 150; y += 6) if ((i + y) % 3) g.rect(11 + i * 16, y, 2, 2).fill({ color: 0x8a7a40, alpha: 0.8 });
+      }
+      // window frames
+      for (let x = 0; x < W; x += 96) g.rect(x, 0, 4, 156).fill(0x0c0c14);
+      g.rect(0, 152, W, 6).fill(0x14141c);
+      // boardroom wall: black stone, gold Zenith mark
+      g.rect(0, 0, W, 26).fill(0x0c0c12);
+      g.circle(430, 32, 13).stroke({ color: 0xc4a04a, width: 2 }).rect(426, 26, 8, 2).fill(0xc4a04a).rect(430, 24, 1, 10).fill(0xc4a04a);
+      // abstract art and a plant
+      g.rect(40, 44, 52, 58).fill(0x14141c).rect(45, 49, 42, 48).fill(0x2a2438).rect(52, 58, 10, 30).fill(0x8e2f2f).rect(66, 66, 8, 22).fill(0xc4a04a);
+      g.rect(448, 120, 14, 38).fill(0x2a2020).circle(448, 112, 12).fill(0x2a4a3a).circle(438, 118, 9).fill(0x346044).circle(460, 116, 10).fill(0x2a4a3a);
+      // the long glass table (front)
+      f.rect(120, FLOOR - 34, 240, 24).fill({ color: 0x1a2a3a, alpha: 0.9 }).rect(120, FLOOR - 34, 240, 3).fill(0x5a7a8a);
+      for (let x = 132; x < 348; x += 40) f.rect(x, FLOOR - 10, 2, 16).fill(0x2a2a34);
+      f.rect(150, FLOOR - 40, 22, 6).fill(0xe8e4d8).rect(184, FLOOR - 42, 30, 8).fill(0x101014).rect(268, FLOOR - 40, 10, 8).fill(0x8a6a4a);
+      lamp(240, 0, 10, 0.06, 0xcfe0ff);
+      break;
+    }
+    case 'hospital': {
+      // pale green corridor of a hospital that has seen better decades
+      g.rect(0, 0, W, FLOOR).fill(0x6a7a72);
+      g.rect(0, 0, W, 94).fill(0x7a8a82);
+      g.rect(0, 94, W, 4).fill(0x5a6a62);
+      // window with a grey sky
+      g.rect(28, 28, 96, 56).fill(0x9aa8b0).rect(32, 32, 88, 48).fill(0x8a9aa8).rect(74, 28, 2, 56).fill(0x6a7a72);
+      // fluorescent light
+      g.rect(220, 10, 120, 6).fill(0xdfe8e0).rect(226, 16, 108, 2).fill({ color: 0xffffff, alpha: 0.2 });
+      // bed, curtain, monitor
+      g.rect(170, 104, 176, 4).fill(0x8a9a94).rect(180, 108, 4, 72).fill(0x7a8a82).rect(332, 108, 4, 72).fill(0x7a8a82);
+      g.rect(174, 118, 168, 52).fill(0xdfe8e0).rect(180, 122, 156, 10).fill(0xc8d8d0);
+      for (let x = 0; x < 70; x += 10) g.rect(356 + x, 24, 6, 150).fill({ color: 0x9ab8b0, alpha: 0.65 });
+      g.rect(380, 70, 36, 26).fill(0x2a2a30).rect(384, 74, 28, 18).fill(0x1a2a2a).rect(392, 82, 12, 2).fill(0x6aff8a);
+      // flowers and a clipboard
+      g.rect(130, 160, 12, 38).fill(0x2a4a3a).circle(136, 152, 8).fill(0x8e2f2f).circle(128, 156, 5).fill(0xc4a04a).circle(144, 156, 5).fill(0xc4a04a);
+      g.rect(320, 56, 26, 34).fill(0xe8e4d8).rect(324, 60, 18, 2).fill(0x4a4a54).rect(324, 66, 18, 2).fill(0x4a4a54);
+      // floor
+      g.rect(0, FLOOR, W, H - FLOOR).fill(0x4a5650);
+      for (let x = 0; x < W; x += 20) g.rect(x, FLOOR, 1, H - FLOOR).fill(0x424e48);
+      f.rect(170, FLOOR - 6, 184, 6).fill(0x8a9a94).rect(174, FLOOR - 12, 176, 6).fill(0xdfe8e0);
+      break;
+    }
+    case 'lucha': {
+      // a Guadalajara gym: warm adobe, paper flags, masks on the wall, a ring older than the building
+      g.rect(0, 0, W, FLOOR).fill(0x6a3a28);
+      for (let y = 0; y < FLOOR; y += 12) g.rect(0, y, W, 1).fill(0x7a442e);
+      // papel picado
+      for (let x = 0; x < W; x += 26) {
+        const c = [0xe0559a, 0xf2c12e, 0x2a8a6a, 0x8e2f2f][(x / 26) % 4 | 0];
+        g.poly([x + 2, 8, x + 22, 8, x + 18, 20, x + 12, 16, x + 6, 20]).fill(c);
+      }
+      // masks on the wall
+      for (const [mx, mc] of [[60, 0xc8202a], [100, 0x2a4a86], [400, 0xc4a04a], [440, 0x2a7a3a]] as [number, number][]) {
+        g.ellipse(mx, 58, 10, 13).fill(mc).stroke({ color: 0x2a1a14, width: 1 }).circle(mx - 3, 56, 2).fill(0xf0e0c8).circle(mx + 3, 56, 2).fill(0xf0e0c8);
+        g.rect(mx - 6, 66, 12, 3).fill(0x1a1010);
+      }
+      // ring ropes and posts
+      g.rect(24, 112, 164, 6).fill(0x2a2a30);
+      for (const [y, c] of [[118, 0xc8202a], [128, 0xf2f2f2], [138, 0x1e7a3c]] as [number, number][]) g.rect(24, y, 432, 2).fill(c);
+      g.rect(18, 100, 6, 96).fill(0x3a3a44).rect(438, 100, 6, 96).fill(0x3a3a44);
+      for (let x = 24; x < 456; x += 5) g.rect(x, 118, 1, 72).fill({ color: 0x3a3a44, alpha: 0.5 });
+      // posters and a candle shrine
+      poster(160, 56, 34, 44, 0xe2dccc, 0x8e2f2f);
+      poster(210, 64, 28, 38, 0xe2dccc, 0x2a4a86);
+      g.rect(340, 90, 34, 22).fill(0x4a3226).rect(344, 94, 26, 3).fill(0x2a1a12);
+      for (const cx of [352, 362]) g.circle(cx, 84, 2).fill(0xffd890).rect(cx - 1, 84, 2, 6).fill(0xe8e4d8);
+      // floor
+      g.rect(0, FLOOR, W, H - FLOOR).fill(0x5a3222);
+      for (let x = 0; x < W; x += 24) g.rect(x, FLOOR, 1, H - FLOOR).fill(0x4a281a);
+      // ring apron (front)
+      f.rect(24, FLOOR - 10, 432, 10).fill(0x2a2a30).rect(24, FLOOR - 10, 432, 2).fill(0xc8202a);
+      break;
+    }
     case 'black':
       g.rect(-OX, 0, SW, H).fill(0x060508);
       break;
@@ -432,13 +597,21 @@ function lerp(a: number, b: number, t: number): number {
 }
 
 /** Text drawn on the set itself (signs). */
-function setDressing(c: Container, bg: Bg): void {
+export function setDressing(c: Container, bg: Bg): void {
   if (bg === 'gym') c.addChild(text("RAY'S BOXING & SOUP", 150, 27, { width: 180, align: 'center', color: PAL.gold, small: true }));
   if (bg === 'bingo') c.addChild(text('FIGHT NIGHT  •  BINGO RESUMES AT 9', 150, 114, { width: 180, align: 'center', color: PAL.bone, small: true }));
   if (bg === 'locker') c.addChild(text('HANDS UP. CHIN DOWN. EAT SOMETHING.', 322, 104, { width: 136, align: 'center', color: 0x2a4a86, small: true, maxLines: 2 }));
   if (bg === 'street') c.addChild(text('BOXING & SOUP', 150, 85, { width: 170, align: 'center', color: 0xff6a6a, small: true }));
   if (bg === 'booth') c.addChild(text('THE LOUNGE: CONFESSIONAL', 160, 54, { width: 160, align: 'center', color: PAL.ink, small: true }));
   if (bg === 'office') c.addChild(text('CBFC', 362, 66, { width: 76, align: 'center', color: PAL.gold, small: true }));
+  if (bg === 'warehouse') {
+    c.addChild(text('CAGE BOSS II', 146, 30, { width: 196, align: 'center', color: PAL.gold, small: true }));
+    c.addChild(text('NO REFUNDS  •  NO CAMERAS  •  NO PROBLEM', 150, 60, { width: 188, align: 'center', color: PAL.ash, small: true }));
+  }
+  if (bg === 'roof') c.addChild(text('THE ROOF', 210, 6, { width: 60, align: 'center', color: PAL.gold, small: true }));
+  if (bg === 'zenith') c.addChild(text('ZENITH HOLDINGS', 366, 18, { width: 100, align: 'center', color: PAL.gold, small: true }));
+  if (bg === 'hospital') c.addChild(text('MERCY GENERAL  /  WAITING ROOM 3', 180, 8, { width: 240, align: 'center', color: PAL.ink, small: true }));
+  if (bg === 'lucha') c.addChild(text('LUCHA LIBRE  •  GUADALAJARA', 190, 30, { width: 160, align: 'center', color: PAL.gold, small: true }));
 }
 
 // ------------------------------------------------------------ player
@@ -448,7 +621,9 @@ export function playCutscene(g: Game, scene: Cutscene, done: (choice: string | n
   const root = new Container();
   const wrap = g.modal(root, { dim: 1 });
   const world = new Container();
-  root.addChild(world);
+  const filmG = new Graphics();
+  filmG.eventMode = 'none';
+  root.addChild(world, filmG);
   const bgG = new Graphics();
   const dress = new Container();
   const fx = new Graphics();
@@ -703,11 +878,33 @@ export function playCutscene(g: Game, scene: Cutscene, done: (choice: string | n
     fx.clear();
     const bg = scene.shots[shotIdx]?.bg;
     if (bg === 'street' || bg === 'lot') for (let k = 0; k < 60; k++) fx.rect(((k * 97 + t * 220) % W), ((k * 53 + t * 320) % H), 1, 4).fill({ color: 0x8aa2b8, alpha: 0.5 });
+    if (bg === 'roof') for (let k = 0; k < 70; k++) fx.rect(((k * 83 + t * 260) % W), ((k * 47 + t * 380) % H), 1, 3).fill({ color: 0x8aa2b8, alpha: 0.35 });
+    if (bg === 'warehouse') for (let k = 0; k < 18; k++) fx.rect(((k * 71 + t * 7) % W), (20 + (k * 37 + t * 11) % 200), 1, 1).fill({ color: 0xffe0a0, alpha: 0.22 });
+    if (bg === 'zenith') for (let k = 0; k < 12; k++) fx.rect((k * 41 + 8) % W, 140 + (k * 13) % 12, 2, 2).fill({ color: 0xcfe0ff, alpha: 0.16 });
+    if (bg === 'hospital') if (Math.sin(t * 9) > 0.995) fx.rect(220, 8, 120, 8).fill({ color: 0xffffff, alpha: 0.08 });
+    if (bg === 'lucha') for (let k = 0; k < 24; k++) fx.rect((k * 59 + t * 9) % W, 6 + (k * 17) % 40, 2, 1).fill({ color: [0xe0559a, 0xf2c12e, 0x2a8a6a][k % 3], alpha: 0.35 });
+    if ((bg === 'gym' || bg === 'tv') && Math.random() < dt * 1.5) { /* steam off the soup */ }
     if (bg === 'gym' || bg === 'tv') for (let k = 0; k < 4; k++) fx.circle(400 + Math.sin(t * 1.5 + k) * 6, 110 - ((t * 14 + k * 9) % 36), 3).fill({ color: 0xffffff, alpha: 0.15 });
     if ((bg === 'presser' || bg === 'stage') && Math.random() < dt * 3) fx.rect(Math.random() * W, H - 40 + Math.random() * 20, 6, 6).fill(0xffffff);
     if (flash > 0) {
       fx.rect(-OX, 0, SW, H).fill({ color: 0xffffff, alpha: Math.min(0.6, flash) });
       flash -= dt;
+    }
+    if (scene.film) {
+      filmG.clear();
+      // scanlines and a soft vignette: the sequel's story scenes are shot on bad film
+      for (let y = 0; y < H; y += 3) filmG.rect(-OX, y, SW, 1).fill({ color: 0x000000, alpha: 0.045 });
+      for (let i = 0; i < 46; i++) {
+        const gx = Math.random() * SW - OX;
+        const gy = Math.random() * H;
+        filmG.rect(gx, gy, 1, 1).fill({ color: 0xffffff, alpha: 0.035 });
+      }
+      for (let k = 0; k < 6; k++) {
+        filmG.rect(-OX + k * 3, 0, 2, H).fill({ color: 0x000000, alpha: 0.05 });
+        filmG.rect(SW - OX - k * 3 - 2, 0, 2, H).fill({ color: 0x000000, alpha: 0.05 });
+        filmG.rect(-OX, k * 3, SW, 2).fill({ color: 0x000000, alpha: 0.05 });
+        filmG.rect(-OX, H - k * 3 - 2, SW, 2).fill({ color: 0x000000, alpha: 0.05 });
+      }
     }
     drawDialog();
   };

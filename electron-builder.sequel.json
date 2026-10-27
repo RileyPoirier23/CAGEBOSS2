@@ -1,0 +1,54 @@
+{
+  "appId": "com.rpoirier.cageboss2",
+  "productName": "CAGE BOSS II",
+  "copyright": "Riley \"Monkey Man\" Poirier",
+  "extraMetadata": {
+    "name": "cage-boss-2",
+    "main": "electron/sequel.cjs",
+    "description": "CAGE BOSS II: THE BUYBACK - the sequel"
+  },
+  "directories": {
+    "output": "release-sequel",
+    "buildResources": "build"
+  },
+  "files": [
+    "dist-sequel/**/*",
+    "electron/**/*",
+    "build/icon.png",
+    "build/icon-1024.png",
+    "package.json",
+    "node_modules/**/*"
+  ],
+  "asar": true,
+  "win": {
+    "icon": "build/icon.ico",
+    "artifactName": "CAGE-BOSS-II-${version}-${arch}-${target}.${ext}"
+  },
+  "portable": {
+    "artifactName": "CAGE-BOSS-II-${version}-portable.exe"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "shortcutName": "CAGE BOSS II",
+    "artifactName": "CAGE-BOSS-II-${version}-setup.exe"
+  },
+  "linux": {
+    "icon": "build/icon-1024.png",
+    "category": "Game",
+    "synopsis": "CAGE BOSS II: one warehouse, one cage, one buyback.",
+    "target": [{ "target": "AppImage", "arch": ["x64"] }],
+    "artifactName": "CAGE-BOSS-II-${version}-linux-${arch}.${ext}"
+  },
+  "mac": {
+    "icon": "build/icon-1024.png",
+    "category": "public.app-category.games",
+    "identity": null,
+    "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }],
+    "artifactName": "CAGE-BOSS-II-${version}-mac-${arch}.${ext}",
+    "darkModeSupport": true
+  },
+  "afterPack": "build/afterPack.cjs",
+  "publish": null
+}

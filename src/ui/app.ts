@@ -16,7 +16,7 @@ import { bus } from '../core/events';
 import { setTextResolution, setBleep, setFontMode, type FontMode } from './text';
 import { desktop } from '../desktop';
 import { isTouchDevice } from '../core/platform';
-import { LoadingScreen } from './loading';
+import { makeLoadingScreen, type LoadingLike } from './loading';
 import { configureMusic, setMusicContext, skipTrack, unlockMusic, onTrackChange, type MusicContext } from '../audio/music';
 
 export interface Settings {
@@ -90,7 +90,7 @@ export class Game {
   feedbackLayer = new Container(); // toasts raised while a window is open (its own feedback)
   tipLayer = new Container();
   loadLayer = new Container();
-  private loader: LoadingScreen | null = null;
+  private loader: LoadingLike | null = null;
   scene: Scene | null = null;
   modals: Container[] = [];
   state: GameState | null = null;
@@ -235,7 +235,7 @@ export class Game {
    */
   loading(label: string, work: () => void, minTime = 0.9): void {
     if (this.loader) this.loader.destroy({ children: true });
-    const ls = new LoadingScreen(label);
+    const ls = makeLoadingScreen(label);
     this.loader = ls;
     this.loadLayer.addChild(ls);
     const start = performance.now();

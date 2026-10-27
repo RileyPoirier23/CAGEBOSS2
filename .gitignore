@@ -5,3 +5,5 @@ dist-web
 .DS_Store
 sim-report*.json
 release
+dist-sequel
+release-sequel

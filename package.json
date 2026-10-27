@@ -2,6 +2,7 @@
   "name": "cage-boss",
   "private": true,
   "version": "2.2.0",
+  "sequelVersion": "0.1.0",
   "type": "module",
   "description": "CAGE BOSS - a satirical MMA-promoter management sim",
   "scripts": {
@@ -12,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "sim": "tsx tools/sim.ts",
+    "sequel-sim": "tsx tools/sequel-sim.ts",
     "validate": "tsx tools/validate.ts",
     "namegen": "tsx tools/namegen.ts",
     "desktop": "vite build && electron .",
@@ -19,7 +21,14 @@
     "dist:win": "tsc --noEmit && vite build && electron-builder --win portable nsis --x64 --publish never",
     "dist:linux": "tsc --noEmit && vite build && electron-builder --linux AppImage tar.gz --x64 --publish never",
     "dist:win:nowine": "tsc --noEmit && vite build && electron-builder --win dir --x64 -c.win.signAndEditExecutable=false && node tools/stamp-exe.mjs \"release/win-unpacked/CAGE BOSS.exe\" build/icon.ico && electron-builder --win portable --x64 --prepackaged release/win-unpacked -c.win.signAndEditExecutable=false --publish never",
-    "dist:mac": "tsc --noEmit && vite build && electron-builder --mac dmg zip --x64 --arm64 --publish never"
+    "dist:mac": "tsc --noEmit && vite build && electron-builder --mac dmg zip --x64 --arm64 --publish never",
+    "dev:sequel": "vite --config vite.sequel.config.ts",
+    "build:sequel": "tsc --noEmit && vite build --config vite.sequel.config.ts",
+    "desktop:sequel": "vite build --config vite.sequel.config.ts && electron electron/sequel.cjs",
+    "desktop:sequel:windowed": "vite build --config vite.sequel.config.ts && electron electron/sequel.cjs --windowed",
+    "dist:sequel:win": "tsc --noEmit && vite build --config vite.sequel.config.ts && electron-builder --config electron-builder.sequel.json --win portable --x64 -c.win.signAndEditExecutable=false --publish never",
+    "dist:sequel:win:setup": "tsc --noEmit && vite build --config vite.sequel.config.ts && electron-builder --config electron-builder.sequel.json --win nsis --x64 --publish never",
+    "dist:sequel:linux": "tsc --noEmit && vite build --config vite.sequel.config.ts && electron-builder --config electron-builder.sequel.json --linux AppImage --x64 --publish never"
   },
   "devDependencies": {
     "@capacitor/android": "^8.5.2",

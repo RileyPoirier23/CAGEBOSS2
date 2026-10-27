@@ -10,6 +10,16 @@ export const fullName = (f: Fighter) => `${f.first} ${f.last}`;
 export const nickName = (f: Fighter) => (f.nick ? `${f.first} "${f.nick}" ${f.last}` : fullName(f));
 export const shortName = (f: Fighter) => f.last;
 
+/**
+ * How a fighter is drawn. The division is the source of truth: a typo in the
+ * gender field must never put a women's cut on a man in a men's division
+ * (or a sports bra on a 6'4" welterweight).
+ */
+export function presentedGender(f: Pick<Fighter, 'gender' | 'division'>): 'M' | 'W' {
+  if (!f.division) return f.gender;
+  return f.division.toLowerCase().startsWith('w') ? 'W' : 'M';
+}
+
 export function pronouns(f: { gender: 'M' | 'W' }): { he: string; his: string; him: string; He: string; His: string; man: string } {
   return f.gender === 'W'
     ? { he: 'she', his: 'her', him: 'her', He: 'She', His: 'Her', man: 'woman' }

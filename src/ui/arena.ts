@@ -16,6 +16,7 @@ import { heightStr } from '../core/format';
 import { ROOMS, leagueRoom, paintRoom, roomFx, type Room } from './rooms';
 import { Rig, Pose, POSES, GUARD, JOINTS, type Joint, drawRig, lerpRig, mirrorRig, rotateRig, lookFor, stanceGuard, tauntRig, TAUNT_CALL, Look2, KO_POSES, koPoseFor, CELEB_ALIAS, mouthguardColor } from './rig';
 import { Rng, hashString } from '../core/rng';
+import { presentedGender } from '../sim/fighters';
 
 export const AW = 480;
 export const AH = 150;
@@ -3563,7 +3564,7 @@ export function cornerView(A: Fighter, B: Fighter, reports: CornerReport[], roun
       bandages: (rep?.cut ?? 0) > 0 ? 1 : 0,
       noseBleed: (rep?.hp ?? 100) < 45,
     };
-    const p = portrait({ id: f.id, look: f.look, gender: f.gender, age: f.age, damage: f.damage, wounds, variant: 'corner' }, 64);
+    const p = portrait({ id: f.id, look: f.look, gender: presentedGender(f), age: f.age, damage: f.damage, wounds, variant: 'corner' }, 64);
     p.position.set(ox + 18, 20);
     c.addChild(p);
     // seated fighter, cutman crouched in front, coach behind the fence

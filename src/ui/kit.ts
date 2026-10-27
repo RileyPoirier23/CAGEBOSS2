@@ -7,6 +7,7 @@ import { PAL, C, shade } from '../art/palette';
 import { PixelText, TextOpts, measure } from './text';
 import { sfx } from '../audio/sfx';
 import { isTouchDevice } from '../core/platform';
+import { isII, II, iiBody, chamfer } from './theme';
 
 /** Design size: every screen is laid out for 480x270. */
 export const W = 480;
@@ -29,6 +30,16 @@ export function box(
   w: number, h: number, fill: number, border?: number, opts: { alpha?: number; shadow?: boolean; bevel?: boolean } = {},
 ): Graphics {
   const g = new Graphics();
+  // CAGE BOSS II: bevelled panels are glass over steel, corners cut, a lit top edge
+  if (isII() && opts.bevel && w >= 8 && h >= 8) {
+    if (opts.shadow) g.poly(chamfer(w, h, 3).map((v) => v + 2)).fill({ color: 0x000000, alpha: 0.45 });
+    g.poly(chamfer(w, h, 3)).fill({ color: fill, alpha: opts.alpha ?? 0.94 });
+    g.rect(3, 1, w - 6, 1).fill({ color: 0xffffff, alpha: 0.08 });
+    for (let y = 2; y < h - 1; y += 2) g.rect(1, y, w - 2, 1).fill({ color: 0x000000, alpha: 0.06 });
+    g.poly(chamfer(w, h, 3)).stroke({ color: border ?? II.edge, width: 1, alignment: 1 });
+    g.rect(0, 3, 1, Math.min(10, h - 6)).fill(II.sodium);
+    return g;
+  }
   if (opts.shadow) g.rect(2, 2, w, h).fill({ color: 0x000000, alpha: 0.35 });
   g.rect(0, 0, w, h).fill({ color: fill, alpha: opts.alpha ?? 1 });
   if (opts.bevel) {
@@ -164,6 +175,7 @@ export class Button extends Container {
       width: opts.align === 'left' ? undefined : w,
       align: opts.align === 'left' ? 'left' : 'center',
       maxLines: 1,
+      noExpand: true,
     });
     this.labelNode.x = opts.align === 'left' ? 4 : 0;
     this.labelNode.y = Math.floor((h - (small ? 5 : 7)) / 2);
@@ -230,13 +242,38 @@ export class Button extends Container {
     const f = this.disabled ? shade(fill, -0.35) : this.hovered ? shade(fill, 0.15) : fill;
     const g = this.bg;
     g.clear();
+    if (isII()) return this.drawII(fill);
     g.rect(1, 1, this.w, this.h).fill({ color: 0x000000, alpha: 0.4 });
     g.rect(0, 0, this.w, this.h).fill(f);
     g.rect(0, 0, this.w, 1).fill(shade(f, 0.2));
     g.rect(0, this.h - 1, this.w, 1).fill(shade(f, -0.35));
     g.rect(0, 0, this.w, this.h).stroke({ color: this.opts.border ?? PAL.ink, width: 1, alignment: 1 });
   }
+
+  /** CAGE BOSS II: chamfered steel, the button's colour as a lit edge, a sodium underline on hover. */
+  private drawII(fill: number): void {
+    const g = this.bg;
+    const { w, h } = this;
+    const c = h >= 12 ? 3 : 2;
+    const body = iiBody(fill, this.hovered, this.disabled);
+    g.poly(chamfer(w, h, c).map((v) => v + 1)).fill({ color: 0x000000, alpha: 0.5 });
+    g.poly(chamfer(w, h, c)).fill(body);
+    g.rect(c, 1, w - c * 2, 1).fill({ color: 0xffffff, alpha: this.hovered ? 0.16 : 0.08 });
+    g.rect(1, h - 2, w - c - 1, 1).fill({ color: 0x000000, alpha: 0.3 });
+    // the colour edge: a 2px strip down the left, the whole height on hover
+    g.rect(1, c, 2, h - c * 2).fill(this.disabled ? shade(fill, -0.4) : fill);
+    const border = this.opts.border && this.opts.border !== PAL.ink ? this.opts.border : shade(fill, -0.1);
+    g.poly(chamfer(w, h, c)).stroke({ color: this.disabled ? II.edge : this.hovered ? II.sodium : lerpBorder(border), width: 1, alignment: 1 });
+    if (this.hovered && !this.disabled) g.rect(c + 2, h - 1, w - c * 2 - 4, 1).fill(II.sodium);
+  }
 }
+
+/** II borders sit back a little: a bright border colour is pulled toward the steel. */
+const lerpBorder = (c: number): number => {
+  const r = (c >> 16) & 255, gg = (c >> 8) & 255, b = c & 255;
+  const er = (II.edge >> 16) & 255, eg = (II.edge >> 8) & 255, eb = II.edge & 255;
+  return (Math.round(r * 0.6 + er * 0.4) << 16) | (Math.round(gg * 0.6 + eg * 0.4) << 8) | Math.round(b * 0.6 + eb * 0.4);
+};
 
 export function button(label: string, x: number, y: number, w: number, h: number, onClick: () => void, opts: ButtonOpts = {}): Button {
   const b = new Button(label, w, h, onClick, opts);

@@ -129,3 +129,17 @@ export class LoadingScreen extends Container {
     return this.fade > 0;
   }
 }
+
+/** What the game's loading layer needs from a loading screen (CAGE BOSS II brings its own). */
+export type LoadingLike = Container & { done: boolean; update(dt: number): boolean };
+
+let factory: (label: string) => LoadingLike = (label) => new LoadingScreen(label);
+
+/** Swap the loading screen for the whole game (the sequel calls this at boot). */
+export function setLoadingScreen(make: (label: string) => LoadingLike): void {
+  factory = make;
+}
+
+export function makeLoadingScreen(label: string): LoadingLike {
+  return factory(label);
+}

@@ -149,10 +149,29 @@ export interface TextOpts {
   lineGap?: number;
   maxLines?: number;
   shadow?: number; // shadow colour
+  /** never offer the tap-to-read-all (button labels, HUD text) */
+  noExpand?: boolean;
+}
+
+/**
+ * Tap-to-read-all for text cut short with "...": a game that registers an expander (CAGE BOSS II
+ * does) gets every truncated text clickable, unless it sits inside something already clickable.
+ */
+let expander: ((full: string) => void) | null = null;
+export function setTextExpander(fn: ((full: string) => void) | null): void {
+  expander = fn;
+}
+/** Somewhere up the tree already answers taps (a button, a clickable row): leave the tap to it. */
+function insideClickable(c: Container): boolean {
+  for (let p = c.parent; p && p.parent; p = p.parent) if (p.listenerCount('pointertap') > 0 || p.listenerCount('pointerdown') > 0) return true;
+  return false;
 }
 
 export class PixelText extends Container {
   lines: string[] = [];
+  /** the words did not all fit (maxLines cut them with "...") */
+  truncated = false;
+  private expandHooked = false;
   textWidth = 0;
   textHeight = 0;
   private face: FontFace;
@@ -187,6 +206,20 @@ export class PixelText extends Container {
     this.build();
   }
 
+  private hookExpand(): void {
+    if (!this.truncated || !expander || this.opts.noExpand || this.expandHooked) return;
+    this.expandHooked = true;
+    this.eventMode = 'static';
+    this.on('pointerover', () => {
+      this.cursor = this.truncated && !insideClickable(this) ? 'zoom-in' : 'inherit';
+    });
+    this.on('pointertap', (e) => {
+      if (!this.truncated || !expander || insideClickable(this)) return;
+      e.stopPropagation();
+      expander(this.str);
+    });
+  }
+
   private build(): void {
     const small = !!this.opts.small;
     const k = small ? smallK() : 1;
@@ -202,17 +235,21 @@ export class PixelText extends Container {
     // single-line small text reads as a label: keep the small-caps look
     if (small && !this.opts.width) text = upperKeepMarkup(text);
     let lines = this.opts.width ? wrapText(face, text, Math.floor(this.opts.width / layoutScale)) : text.split('\n');
+    this.truncated = false;
     if (this.opts.maxLines === 1 && this.opts.width && lines.length > 1 && !text.includes('\n')) {
+      this.truncated = true;
       // a one-line label that doesn't fit: cut it at the character, not at the last whole word
       const maxW = Math.floor(this.opts.width / layoutScale);
       let cut = text;
       while (cut.length > 1 && measureLine(face, cut + '...') > maxW) cut = cut.slice(0, -1);
       lines = [cut.trimEnd() + '...'];
     } else if (this.opts.maxLines && lines.length > this.opts.maxLines) {
+      this.truncated = true;
       lines = lines.slice(0, this.opts.maxLines);
       lines[lines.length - 1] = lines[lines.length - 1].replace(/.{0,3}$/, '...');
     }
     this.lines = lines;
+    this.hookExpand();
     // line height in glyph pixels (small HD text keeps the old 7px logical pitch)
     const lh = this.hd ? (SMALL_LH + (this.opts.lineGap ?? 0)) / k : face.lineHeight + (this.opts.lineGap ?? 0);
     let curColor = color;
