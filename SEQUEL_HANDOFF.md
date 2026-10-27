@@ -7,6 +7,30 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 5: Claude (2026-10-27)
+Riley picked nine ideas; all nine are in:
+- **Rivalry heat maps** (`src/sequel/rivals.ts`): grudges build from results, pressers and weigh-in face-offs; a
+  grudge match sells more and pays bigger purses; the presser asks about it.
+- **Zenith counter-promotion**: Zenith books against your big nights; you get a warning and a toast.
+- **Broadcast mode** (`src/ui/sequel/broadcast.ts`): PRODUCE THE BROADCAST on show night (booth, cameras, rating).
+- **Ray's notebook** (17 pages, across every save) and **RAY, 1987**, the Golden Gloves final against Butch.
+- **Legacy Tapes**: Tyler, Xavier, Spadam, and ALBERTO (the post-game Mexican circuit: the cantina, the abuela, the
+  Prince of Polanco, El Nieto for his old belt).
+- **Live crowd** in hands-on fights: signs in the rows, chants for whoever it's behind, boos when nothing happens,
+  a second wind on big moments, and a lean on close rounds. Home crowd in Moncton, Zenith's crowd in the parking level.
+- **The corner, redone**: a big close-up face that swells and bleeds by zone (from where the shots landed). ENSWELL
+  strokes, ICE holds, GAUZE presses in the band, VASELINE seals; SIM gives a C. What you leave carries into the next
+  round. Ray works the corner in story fights.
+- **The Moncton map**: WALK MONCTON in the story hub. Home, Ray's, the Magnetic Diner, the warehouse, the Coliseum
+  and the bus station; time of day follows the days left; snow in winter; the story marker sits over the right door.
+
+Left for the next turn (Riley's plan: polish, then fill out the game):
+- **Polish pass:** play a whole chapter through the map instead of the button row; check the corner with a pad and
+  on a phone; the crowd's chant timing over a full five-rounder.
+- **Fill out:** most of the 80 parts are still only cards. Give them scenes, and put the story beats *in place* on
+  the map (a beat at the diner plays when you walk in).
+- Pedestrians and cameos on the map (Tyler mopping outside Ray's, Xavier's truck, Zenith's car at the Coliseum).
+
 ### Turn 4: Claude (2026-10-27)
 Done (Riley's open list, in order):
 - **Kits per fighter** (`kitII` in `src/ui/rig.ts`, II only): cut from style (Muay Thai / fight shorts / board shorts),
@@ -161,13 +185,11 @@ and the crew fights, a `mask` on the rig and `presentedGender`. It hit the usage
 ### P3: shipping
 12. A sequel icon (`build/icon.ico` is game 1's) and the `stamp-exe` step for the sequel exe.
 13. Test `npm run dist:sequel:win` end to end on Windows (not run yet).
-14. **Move the project out of `%TEMP%` and commit it.** Nothing from either assistant is committed.
+14. **Move the project out of `%TEMP%`.** (Committed: the `sequel` branch is pushed to the CageBoss2 repo.)
 
 ## Known issues
-- **Game 1 test failing:** `tests/fighter.test.ts` "the whole road" fails because OpenCode changed six welterweights
-  from `gender: "W"` to `"M"` in `data/roster/ranked.json`. The data fix is correct, but it reshuffles the seeded
-  Road To Champion run. Either re-seed or adjust that test, or revert the JSON (`presentedGender` already fixes the
-  visuals). This is Riley's call because it's game 1 data.
+- (Fixed) The welterweight gender test: `isWomensDivision` replaced the `startsWith('w')` checks, so welter is a
+  men's division everywhere and all tests pass.
 - `Look2.mask` and `presentedGender` changes touch game 1's shared files (`rig.ts`, `sprites.ts`, `arena.ts`,
   `editor_fighter.ts`). They're harmless for game 1, but they are game 1 changes.
 - In promoter mode the WATCH tape is snapshotted after the records update, so the walkout record is off by the

@@ -129,6 +129,9 @@ is **"Hands up. Chin down. Eat something."**
 **Sequel-established canon:** Ray lost the **1987 Golden Gloves final** to **Butch** (the mullet). Han's father **Marc
 Tibular** fished lobster out of **Shediac** on the **MARIE-ANNE** and was lost in a November gale when Han was 15.
 **Tyler Vance** mops at Ray's, **Zac Buna** runs the Tuesday class, and **Xavier Cockett** runs Allstar FC out of a barn.
+In 1987 Ray was **Ray "The Electrician" Tibodeau**, 33; Butch is **Butch "The Mullet" Comeau** from Dieppe. The final
+was at the **Moncton Coliseum**; Marie met Ray at the bus with two bowls of soup. Moncton's diner is **the Magnetic
+Diner** (waitress: Denise). Han's apartment is **2B, over the laundromat**.
 
 Content rule from game 1 (see `CONTENT_GUIDE.md`): parodies of real people never get crime, doping or abuse
 storylines. Original characters (1ton, the crew, Zenith) can.
@@ -162,6 +165,23 @@ storylines. Original characters (1ton, the crew, Zenith) can.
 - **Kits:** `kitII` (from the bio) or `Look.kit2` (the creator's). **Ink:** `tattooLayout` or `Look.ink2`.
 - **The phone:** `src/sequel/phone.ts` (calls, Bleeter, the plug), `src/ui/sequel/phoneui.ts`.
 - **Tutorial:** `src/ui/sequel/tutorial2.ts` (`maybeLesson2(g, key)`).
+- **Grudges, Zenith nights, the broadcast (promoter):** `src/sequel/rivals.ts` (`run.rivalries`, `isGrudge`,
+  `grudgeBoost`, `zenithCounter`, `rateBroadcast`), the truck UI in `src/ui/sequel/broadcast.ts`.
+- **Ray's notebook:** `src/sequel/notebook.ts` (`PAGES`, kept in `cageboss2.notebook` across every save). A full book
+  unlocks RAY, 1987 (`playRay1987` in `src/ui/sequel/notebookui.ts`). **Legacy Tapes:** `src/sequel/tapes.ts` (steps:
+  scenes and fights; progress in `cageboss2.tapes`), shelf in `src/ui/sequel/tapesui.ts`. ALBERTO is the post-game
+  Mexican circuit.
+- **The live crowd (II):** `LiveRules.crowd` in `src/sim/live.ts`: `L.crowd` energy/lean from events, a second wind for
+  the side it's behind, and a close round (diff < 3) leans its way on the cards (`rcrowd`). `livefight.ts` turns it
+  on for II (not at Ray's, not in a lot) and draws signs and chants (`arena.setSigns`, `arena.crowdChant`). Pass
+  `crowd: { home, signs, chants }` on `openLiveFight`; venues say `crowd: 'home' | 'away'` (`venueCrowd`).
+- **The face and the corner (II):** `LiveRules.face`: `L.face[side]` tracks swelling, cut and seal for six zones
+  (brows, eyes, nose, mouth) from where shots land (`faceHit`, its own RNG so game 1 fights don't change). A swollen
+  spot takes more, a swollen nose breathes worse. Between rounds `src/ui/sequel/corner2.ts` (ENSWELL, ICE, GAUZE,
+  VASELINE; SIM = C) works it and sets `faceWorked`; the CPU's corner is the automatic version in `nextRound`.
+- **The Moncton map:** `src/sequel/moncton.ts` (`PLACES`, `placeFor(venue)`, `storyMarker(save)`), the street in
+  `src/ui/sequel/moncton.ts`, opened by WALK MONCTON in the Tales of Legacy hub (`openMap`). Every hub action is
+  behind a door; the marker says where the story wants you.
 - **Scenes and refresh:** `Scene.refresh()` destroys the root's children. A Graphics kept on a field must be made
   new in `build()`, or the next refresh re-adds a destroyed object (pointer events then crash).
 

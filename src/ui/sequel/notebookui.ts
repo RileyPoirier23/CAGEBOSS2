@@ -79,6 +79,7 @@ export function playRay1987(g: Game): void {
       bout, A: ray, B: butch, skills: [ray.skills, butch.skills], player: 0, plan: 'pressure', oppPlan: 'counter', cutTier: 2, seed: 1987,
       event: 'GOLDEN GLOVES FINAL  /  1987', judges: ['A man called Lou', 'Mrs. Leblanc', 'A priest'], referee: 'Father Doucet',
       canvas: { ...where.canvas, room: 'hall', logo: 'GOLDEN GLOVES 1987' },
+      crowd: { home: 0, chants: ['RAY', 'BUTCH'], signs: ['RAY!', 'MONCTON', 'BUTCH!', 'GOLDEN GLOVES', 'GO RAY'] },
       done: (r) => {
         const won = r.winner === ray.id;
         alertBox(g, won ? 'RAY WINS' : 'BUTCH WINS', won

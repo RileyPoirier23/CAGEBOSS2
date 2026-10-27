@@ -16,7 +16,7 @@ import { sfx } from '../../audio/sfx';
 import { fighterPortrait } from '../sprites';
 import { seqVenueArt } from '../sequelart';
 import { playCine as playCutscene } from '../sequel/cine';
-import { storyVenue } from '../sequel/venues';
+import { storyVenue, venueCrowd } from '../sequel/venues';
 import { openDrill, type DrillKind } from '../sequel/drills';
 import { openSpar } from '../sequel/spar';
 import { II } from '../theme';
@@ -40,6 +40,8 @@ import { beatScene, chapterIntro, chapterOutro, fightHighlight, fightIntro, part
 import { newStorySave } from '../../sequel/story';
 import { readStory, writeStory, addStoryTrophy, forgetStory, takeNewPages } from '../../sequel/storysession';
 import { openNotebook } from '../sequel/notebookui';
+import { openMoncton, type MapAct } from '../sequel/moncton';
+import { storyMarker, type PlaceId } from '../../sequel/moncton';
 import { newSlot, listSlots } from '../../sequel/slots';
 import type { StorySave } from '../../sequel/types';
 import { StoryEndScene } from './storyend';
@@ -241,10 +243,53 @@ export class SequelStoryHubScene extends Scene {
       void import('./sequel').then((m) => this.g.goto(new m.SequelTitleScene(this.g)));
     }, { small: true, fill: PAL.shadow }));
     r.addChild(button('NOTEBOOK', 88, 232, 50, 10, () => openNotebook(this.g), { small: true, fill: PAL.shadow, border: PAL.gold }));
+    r.addChild(button('WALK MONCTON', 142, 232, 70, 10, () => this.openMap(save), { small: true, fill: II.blood, border: II.gold }));
     // a page of Ray's notebook filled in since the last look
     for (const title of takeNewPages()) setTimeout(() => this.g.toast(`RAY'S NOTEBOOK: NEW PAGE  /  ${title}`, PAL.gold), 600);
     r.addChild(button('PHONE', 44, 232, 40, 10, () => openPhone(this.g, ownerForStory(save), () => writeStory(save), () => this.refresh()), { small: true, fill: PAL.blood, border: PAL.gold }));
     void gap;
+  }
+
+  /** The city: every hub action behind its door, and the story's next beat behind the marked one. */
+  private openMap(save: StorySave): void {
+    const marker = storyMarker(save);
+    const talked = talkedThisChapter(save);
+    const acts: Record<PlaceId, MapAct[]> = {
+      home: [
+        { label: 'SLEEP ON IT (END WEEK)', fn: () => this.doEndWeek(save) },
+        { label: 'CALL SOMEBODY (PHONE)', fn: () => openPhone(this.g, ownerForStory(save), () => writeStory(save), () => this.refresh()) },
+        { label: "READ RAY'S NOTEBOOK", fn: () => openNotebook(this.g) },
+      ],
+      rays: [
+        { label: 'TRAIN', fn: () => openStoryTraining(this.g, save, () => this.refresh()) },
+        { label: 'SPAR IN THE RING', fn: () => this.doSpar(save) },
+        { label: 'TALK', fn: () => this.doTalk(save), hot: !talked },
+      ],
+      diner: [
+        { label: 'SUNDAY DINNER', fn: () => this.doDinner(save) },
+        { label: 'MEDIA IN A BOOTH', fn: () => this.doMedia(save) },
+        { label: 'READ THE PAPER', fn: () => openStoryDoc(this.g, save, () => this.refresh()) },
+      ],
+      warehouse: [
+        { label: 'THE UNDERCARD', fn: () => openStoryUndercard(this.g, save, () => this.refresh()) },
+        { label: 'PRESS CONFERENCE', fn: () => openStoryPress(this.g, save, () => this.refresh()) },
+      ],
+      coliseum: [],
+      bus: [],
+    };
+    // the story's next beat (the fight at its venue, or the chapter moving on) waits at the marked door
+    if (marker && marker.label !== 'TALK') acts[marker.place].unshift({ label: marker.label, fn: () => this.doNext(save), hot: true });
+    if (!acts.coliseum.length) acts.coliseum.push({ label: 'WHAT IS BOOKED?', fn: () => this.doNext(save) });
+    if (!acts.bus.length) acts.bus.push({ label: 'CHECK THE SCHEDULE', fn: () => this.doNext(save) });
+    const signed = STORY_CHAPTERS.findIndex((c) => c.id === 'the_signing');
+    const month = Math.floor(((save.totalWeeks ?? 0) % 52) / 4.34) + 1;
+    openMoncton(this.g, {
+      walker: save.chapter < signed ? buildOneTon(save) : cornerFighter(save),
+      acts, marker,
+      dusk: Math.max(0, Math.min(1, 1 - save.actionsLeft / DAYS_PER_WEEK)),
+      snow: month <= 3 || month === 12,
+      status: `${storyDate(save)}  /  ${save.actionsLeft} OF ${DAYS_PER_WEEK} DAYS LEFT`,
+    });
   }
 
   private maybeIntro(save: StorySave): void {
@@ -387,7 +432,7 @@ export class SequelStoryHubScene extends Scene {
         plan: 'balanced', oppPlan: 'balanced', cutTier: 3, seed,
         event: def.venue, judges: ['Lenny Pratt', 'Marla Cross', 'Dexter Bell'], referee: where.referee,
         canvas: where.canvas, refLook: where.refLook, bare: where.bare,
-        rules: { moves: { 0: movesOf(save, def.player === 'oneton' ? 'oneton' : 'corner') } },
+        rules: { moves: { 0: movesOf(save, def.player === 'oneton' ? 'oneton' : 'corner') } }, crowd: venueCrowd(where), cutman: 'RAY',
         done: (r) => this.afterStoryFight(save, def, player.id, opponent.id, r),
       });
     });

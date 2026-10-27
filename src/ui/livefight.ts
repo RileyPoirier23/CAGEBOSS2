@@ -45,6 +45,8 @@ import { liveTutorial } from './tutorial';
 import type { GamePlan } from '../sim/fight';
 import { openCorner } from './cutman';
 import { openFightLab } from './scenes/fightlab';
+import { isII } from './theme';
+import { openCorner2 } from './sequel/corner2';
 
 export interface LiveFightOpts {
   bout: Bout;
@@ -71,6 +73,10 @@ export interface LiveFightOpts {
   /** special rules for this fight (the story's boss fights), and a referee who looks like himself */
   rules?: LiveRules;
   refLook?: Look2;
+  /** CAGE BOSS II's live crowd: who the building came to see, its signs and chants (false: an empty room) */
+  crowd?: { home?: Side | -1; signs?: string[]; chants?: [string, string] } | false;
+  /** CAGE BOSS II: who works your corner between rounds (Ray, in the story) */
+  cutman?: string;
   done: (r: FightResult) => void;
 }
 
@@ -126,6 +132,13 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
   const L = new LiveFight(o.A, o.B, o.skills[0], o.skills[1], o.bout.rounds, o.seed);
   // knockdown rules follow the promotion: bareknuckle and amateur smokers give a count, MMA doesn't
   L.rules = { koRules: o.bare || o.canvas?.style === 'bk' || o.canvas?.style === 'local' ? 'count' : 'mma', ...(o.rules ? { referee: o.referee, ...o.rules } : {}) };
+  // CAGE BOSS II: the building is part of the fight (not a spar at Ray's, not an empty lot)
+  const crowdOn = isII() && o.crowd !== false && o.canvas?.room !== 'rays' && o.canvas?.enclosure !== 'none';
+  const crowdCfg = o.crowd || {};
+  const crowdHome: Side | -1 = crowdCfg.home ?? -1;
+  if (crowdOn) L.rules.crowd = { home: crowdHome };
+  // CAGE BOSS II: the face keeps score zone by zone, and the corner works it
+  if (isII()) L.rules.face = true;
   (window as unknown as { __live?: LiveFight }).__live = L; // debug / automated testing hook
   const P = o.player;
   const O = (1 - P) as Side;
@@ -259,6 +272,47 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
   arena.x = AX;
   root.addChild(arena);
   arena.setMode(g.settings.fightCam ?? 'side');
+  // the crowd's chant for each man: his nickname if it fits on a sign, his surname if not
+  const chantName = (f: Fighter) => (f.nick && f.nick.length <= 8 ? f.nick : f.last).toUpperCase();
+  const chants: [string, string] = crowdCfg.chants || [chantName(o.A), chantName(o.B)];
+  if (crowdOn) {
+    const hn = crowdHome === -1 ? chants[0] : chants[crowdHome];
+    arena.setSigns(crowdCfg.signs || [`${chants[0]}!`, 'HANDS UP', crowdHome === -1 ? `${chants[1]}!` : `${hn} #1`, 'CHIN DOWN', `GO ${hn}`]);
+  }
+  let chantCd = 4;
+  let lastSurge = 0;
+  let behindRound = 0;
+  /** the building: loud when it's loud, a chant for the man it's behind, boos when nothing happens */
+  const crowdTick = (dt: number) => {
+    if (!crowdOn) return;
+    const c = L.crowd;
+    arena.heat = Math.min(1, c.energy / 110);
+    chantCd -= dt;
+    const fav = L.crowdFor();
+    const rising = c.surge > lastSurge + 0.5;
+    lastSurge = c.surge;
+    if (rising) {
+      arena.crowdChant(L.F.some((f) => f.down > 0) ? 'OHHHHHHHH!' : 'OOOOOH!', PAL.gold);
+      chantCd = 3;
+    }
+    else if (chantCd <= 0 && c.quiet > 14 && L.pos === 'stand') {
+      arena.crowdChant('BOOOOOO! FIGHT!', PAL.ember);
+      chantCd = 7;
+    }
+    else if (chantCd <= 0 && L.pos === 'ground' && c.quiet > 8) {
+      arena.crowdChant('STAND THEM UP!', PAL.ember);
+      chantCd = 8;
+    }
+    else if (chantCd <= 0 && fav >= 0 && c.energy > 45) {
+      const n = chants[fav as Side];
+      arena.crowdChant(`${n}! ${n}! ${n}!`, fav === P ? PAL.moss : PAL.blood);
+      chantCd = 6 + Math.random() * 3;
+      if (c.energy > 70 && fav === P && !o.versus && behindRound !== L.round) {
+        behindRound = L.round;
+        callout('THE CROWD IS BEHIND YOU', PAL.moss, 1);
+      }
+    }
+  };
   /** C / View: side -> TV -> top-down */
   const cycleCam = () => {
     const order = ['side', 'tv', 'top'] as const;
@@ -1024,7 +1078,7 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
     const f = P === 0 ? o.A : o.B;
     const me = L.F[P];
     const rep: CornerReport = { round: L.round, side: P, coach: me.hp < 40 ? "You're hurt. Hands up, move your head, and stop trading." : L.F[O].gas < 40 ? "He's tired. Go to the body, then go upstairs." : 'Good round. Keep that jab in his face.', cutman: '', hp: Math.round(me.hp), cut: me.cut, injury: null, quit: false, scoreGuess: scoreGuess() };
-    openCorner(g, f, rep, o.cutTier, L.round, (aid, plan) => {
+    const after = (aid: number, plan: GamePlan) => {
       auto.plan = plan;
       L.nextRound([P === 0 ? aid : 0.5, P === 1 ? aid : 0.5]);
       if ((L.phase as string) === 'over') {
@@ -1046,7 +1100,9 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
       primed = false;
       freeze = 1.4;
       arena.showCallout(`ROUND ${L.round}`);
-    });
+    };
+    if (L.rules.face) openCorner2(g, { f, L, side: P, tier: o.cutTier, round: L.round, coach: rep.coach, scoreGuess: rep.scoreGuess, cutman: o.cutman, done: after });
+    else openCorner(g, f, rep, o.cutTier, L.round, after);
   };
 
   const scoreGuess = (): string => {
@@ -1185,6 +1241,7 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
     if (closed) return;
     const dt = Math.min(0.05, t.deltaMS / 1000);
     realT += dt;
+    if (stage === 'fight' && L.phase === 'fight' && !paused) crowdTick(dt);
     rangeT -= dt;
     fumbleT -= dt;
     for (const i of SIDES) {

@@ -15,7 +15,12 @@ export interface StoryVenue {
   bare?: boolean;
   /** a sparring session: one round, no judges worth the name */
   spar?: boolean;
+  /** who the building is behind: you (a hometown night) or him (Zenith's crowd) */
+  crowd?: 'home' | 'away';
 }
+
+/** The live fight's crowd option for a venue (the player is always side 0 in the story). */
+export const venueCrowd = (v: StoryVenue): { home: 0 | 1 } | undefined => (v.crowd === 'home' ? { home: 0 } : v.crowd === 'away' ? { home: 1 } : undefined);
 
 export function storyVenue(venue: string): StoryVenue {
   const v = venue.toUpperCase();
@@ -27,17 +32,17 @@ export function storyVenue(venue: string): StoryVenue {
     return { canvas: { style: 'bk', room: v.includes('LOADING BAY') ? 'hangar' : 'lot', enclosure: 'none' }, referee: 'Bradie (filming it)', refLook: CAST.bradie, bare: true };
   }
   if (v.includes('GUADALAJARA')) {
-    return { canvas: { style: 'regional', room: 'hall', logo: 'ARENA GUADALAJARA', accent: 0x1e7a3c }, referee: 'Don Chuy', refLook: CAST.ray };
+    return { canvas: { style: 'regional', room: 'hall', logo: 'ARENA GUADALAJARA', accent: 0x1e7a3c }, referee: 'Don Chuy', refLook: CAST.ray, crowd: 'home' };
   }
   if (v.includes('BARN')) {
-    return { canvas: { style: 'local', room: 'barn', logo: 'ALLSTAR FC', accent: 0xc8a040 }, referee: "Commissioner Pete's owner" };
+    return { canvas: { style: 'local', room: 'barn', logo: 'ALLSTAR FC', accent: 0xc8a040 }, referee: "Commissioner Pete's owner", crowd: 'home' };
   }
   if (v.includes('PARKING LEVEL')) {
-    return { canvas: { style: 'regional', room: 'lot', logo: 'ZENITH' }, referee: 'a Zenith compliance officer', refLook: CAST.auditor };
+    return { canvas: { style: 'regional', room: 'lot', logo: 'ZENITH' }, referee: 'a Zenith compliance officer', refLook: CAST.auditor, crowd: 'away' };
   }
   if (v.includes('OLD DOME')) {
-    return { canvas: { style: 'cbfc' }, referee: 'Dirty Daniel Stinkovich', refLook: CAST.daniel };
+    return { canvas: { style: 'cbfc' }, referee: 'Dirty Daniel Stinkovich', refLook: CAST.daniel, crowd: 'home' };
   }
   // the warehouse: the sequel's own cage, a few hundred folding chairs
-  return { canvas: { style: 'local', room: 'warehouse', logo: 'CAGE BOSS II', accent: 0xc4202c }, referee: 'Sal "The Whistle" Romano' };
+  return { canvas: { style: 'local', room: 'warehouse', logo: 'CAGE BOSS II', accent: 0xc4202c }, referee: 'Sal "The Whistle" Romano', crowd: 'home' };
 }

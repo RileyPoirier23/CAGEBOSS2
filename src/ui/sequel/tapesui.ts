@@ -12,7 +12,7 @@ import { II } from '../theme';
 import { CAST, type Actor } from '../cutscene';
 import { playCine } from './cine';
 import { openLiveFight } from '../livefight';
-import { storyVenue } from './venues';
+import { storyVenue, venueCrowd } from './venues';
 import { TAPES, setTapeStep, tapeFighter, tapeProgress, tapeUnlocked, type Tape, type TapeActor } from '../../sequel/tapes';
 import { loadStoryTrophy } from '../../sequel/storysession';
 import type { Bout } from '../../core/types';
@@ -79,6 +79,8 @@ export function runTape(g: Game, t: Tape): void {
     openLiveFight(g, {
       bout, A, B, skills: [A.skills, B.skills], player: 0, plan: 'balanced', oppPlan: 'balanced', cutTier: 2, seed: (i * 7919 + t.id.length * 131) >>> 0,
       event: s.venue, judges: ['Marla Cross', 'Dexter Bell', 'Lenny Pratt'], referee: where.referee, refLook: where.refLook, canvas: where.canvas, bare: where.bare,
+      // Mexico came to see Alberto
+      crowd: s.player === 'alberto' ? { home: 0, chants: ['DEL BUR-RI-TO', B.last.toUpperCase()], signs: ['DEL BURRITO!', 'EL CAMPEON', 'PERDON ABUELA', 'BIENVENIDO', 'ALBERTO #1'] } : venueCrowd(where),
       done: (r) => {
         if (r.winner === A.id) {
           sfx('roar');
