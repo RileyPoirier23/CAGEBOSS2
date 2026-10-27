@@ -53,7 +53,7 @@ export const SEQ_DESK_RULES: SeqDeskRule[] = [
   },
   {
     id: 'medical', page: 'MEDICALS', name: 'A licensed body', week: 2,
-    text: 'A fighter needs a current medical clearance, a licensed physician and the required scans. The commission does not accept "he looked fine at the gym".',
+    text: 'A fighter needs a current medical clearance, a licensed physician and the required scans. The commission doesn\'t accept "he looked fine at the gym".',
   },
   {
     id: 'permit', page: 'VENUES', name: 'The room is licensed', week: 3,
@@ -68,16 +68,16 @@ export const SEQ_DESK_RULES: SeqDeskRule[] = [
     text: 'The cage must be inspected within ninety days by a certified inspector. Pads, bolts and the door are part of the cage. The commission counts all of them.',
   },
   {
-    id: 'press', page: 'MEDIA', name: 'A lanyard is not a person', week: 6,
-    text: 'Press credentials are issued to a named person at an approved outlet. If the name, the outlet or the credential does not line up, somebody is selling a seat at your show.',
+    id: 'press', page: 'MEDIA', name: 'A lanyard isn\'t a person', week: 6,
+    text: 'Press credentials are issued to a named person at an approved outlet. If the name, the outlet or the credential doesn\'t line up, somebody is selling a seat at your show.',
   },
   {
     id: 'weighin', page: 'WEIGH-INS', name: 'The scale is the law', week: 7,
-    text: 'The scale must be certified and the fighter must make the division limit with one pound of grace. A missed weight is a catchweight, a fine, or a cancelled bout. It is not a suggestion.',
+    text: 'The scale must be certified and the fighter must make the division limit with one pound of grace. A missed weight is a catchweight, a fine, or a cancelled bout. It isn\'t a suggestion.',
   },
   {
     id: 'expense', page: 'EXPENSES', name: 'A receipt for everything', week: 8,
-    text: 'Every line on an expense claim needs a receipt and a permitted category. A jet ski is not medical equipment no matter which column you write it in.',
+    text: 'Every line on an expense claim needs a receipt and a permitted category. A jet ski isn\'t medical equipment no matter which column you write it in.',
   },
   {
     id: 'memo', page: 'MEMOS', name: 'Read the room', week: 9,
@@ -85,7 +85,7 @@ export const SEQ_DESK_RULES: SeqDeskRule[] = [
   },
   {
     id: 'zenith', page: 'ZENITH', name: 'Matching rights', week: 28,
-    text: 'Any Zenith correspondence mentioning matching rights must be refused. If the promotion is ever sold, Zenith can match the offer and buy it back for the same price. There is no version of this clause that is good for you.',
+    text: 'Any Zenith correspondence mentioning matching rights must be refused. If the promotion is ever sold, Zenith can match the offer and buy it back for the same price. There\'s no version of this clause that\'s good for you.',
   },
 ];
 
@@ -431,7 +431,7 @@ function buildBout(run: SeqRun, rng: Rng): Draft {
   });
   paper.pair('PURSE', money(a.purse), money(a.purse * (run.week === 1 ? 10 : 2)), {
     targetLabel: 'Purse on file',
-    note: 'The contract asks for {doc}. The commission filed {target}. Somebody added a zero and hoped you would not count.',
+    note: 'The contract asks for {doc}. The commission filed {target}. Somebody added a zero and hoped you wouldn\'t count.',
   });
   paper.pair('DATE', fmtDate(run.week), fmtDate(run.week + 1), {
     targetLabel: 'Fight night',
@@ -450,18 +450,18 @@ function buildBout(run: SeqRun, rng: Rng): Draft {
   const m = managerFor(run, rng, a.f);
   const visitor = rng.chance(0.55) ? fighterVisitor(a.f) : managerVisitor(m);
   return {
-    type: 'bout', title: 'BOUT AGREEMENT', subject: fighterName(a.f), subtitle: `${v.name} — ${fmtDate(run.week)}`,
+    type: 'bout', title: 'BOUT AGREEMENT', subject: fighterName(a.f), subtitle: `${v.name}  /  ${fmtDate(run.week)}`,
     visitor,
     line: rng.pick([
-      '"I do not read the contracts. I read the cheques."',
-      '"That is my name and that is my money. Mostly the money."',
+      '"I don\'t read the contracts. I read the cheques."',
+      '"That\'s my name and that\'s my money. Mostly the money."',
       '"My manager says this is standard. My manager also sells timeshares."',
       '"Just stamp it. I have a weight cut and a court date."',
     ]),
-    askClean: '"It is all there. I paid a man to make sure it is all there."',
-    askExcuse: '"That number? That is the number after tax. Or before tax. One of the taxes."',
-    askFix: '"Fine. I have the right page in the car. It will cost you a coffee and a filing fee."',
-    askBribe: '"You look like a man who understands that paperwork is a mood. There is an envelope in this for both of us."',
+    askClean: '"It\'s all there. I paid a man to make sure it\'s all there."',
+    askExcuse: '"That number? That\'s the number after tax. Or before tax. One of the taxes."',
+    askFix: '"Fine. I have the right page in the car. It\'ll cost you a coffee and a filing fee."',
+    askBribe: '"You look like a man who understands that paperwork is a mood. There\'s an envelope in this for both of us."',
     meta: { fighterId: a.f.id },
     paper,
   };
@@ -504,15 +504,15 @@ function buildMedical(run: SeqRun, rng: Rng): Draft {
   paper.plain('NOTES', 'Fighter understands the risk. Fighter has seen the risk. Fighter has fought the risk.', 'text');
   const m = managerFor(run, rng, a.f);
   return {
-    type: 'medical', title: 'MEDICAL CLEARANCE', subject: fighterName(a.f), subtitle: `Exam week ${run.week} — ${a.f.division.toUpperCase()}`,
+    type: 'medical', title: 'MEDICAL CLEARANCE', subject: fighterName(a.f), subtitle: `Exam week ${run.week}  /  ${a.f.division.toUpperCase()}`,
     visitor: rng.chance(0.7) ? fighterVisitor(a.f) : managerVisitor(m),
     line: rng.pick([
       '"I can fight. I have fought with worse. I have fought with a broken ankle and a bad divorce."',
-      '"The doctor said I am fine. He said it while looking at his phone, but he said it."',
-      '"This is the paper that says I am allowed to get hit. It is very important to the state."',
+      '"The doctor said I\'m fine. He said it while looking at his phone, but he said it."',
+      '"This is the paper that says I\'m allowed to get hit. It\'s very important to the state."',
     ]),
-    askClean: '"That is a real doctor. He has a real licence. It is in a frame."',
-    askExcuse: '"The date is a rounding error. Bodies do not expire on a Tuesday."',
+    askClean: '"That\'s a real doctor. He has a real licence. It\'s in a frame."',
+    askExcuse: '"The date is a rounding error. Bodies don\'t expire on a Tuesday."',
     askFix: '"The right scan is at the clinic. I can get it faxed if the fax machine still exists."',
     askBribe: '"The doctor is flexible. The commission is flexible. Everybody is flexible for a price."',
     meta: { fighterId: a.f.id },
@@ -548,17 +548,17 @@ function buildPermit(run: SeqRun, rng: Rng): Draft {
   });
   paper.plain('INSPECTOR', officialName(rng), 'text');
   return {
-    type: 'permit', title: 'VENUE PERMIT', subject: v.name, subtitle: `Week ${run.week} — ${v.capacity} seats`,
+    type: 'permit', title: 'VENUE PERMIT', subject: v.name, subtitle: `Week ${run.week}  /  ${v.capacity} seats`,
     visitor: { kind: 'cop', name: 'Inspector ' + officialName(rng).split(' ').pop(), role: 'City licensing', seed: 'permit_' + run.week },
     line: rng.pick([
-      '"I am not here to shut you down. I am here to make sure the shutting down is legal."',
-      '"The room is either licensed or it is a very loud crime scene."',
+      '"I\'m not here to shut you down. I\'m here to make sure the shutting down is legal."',
+      '"The room is either licensed or it\'s a very loud crime scene."',
       '"You would be surprised how many promoters think a fire exit is a suggestion."',
     ]),
-    askClean: '"Everything is in order. I checked it twice. I am as disappointed as you are."',
+    askClean: '"Everything is in order. I checked it twice. I\'m as disappointed as you are."',
     askExcuse: '"The capacity is a suggestion. The fire code is a suggestion with lawyers."',
-    askFix: '"I can amend the permit. It takes a form, a fee and a signature that is not yours."',
-    askBribe: '"There is a version of this permit that is much easier to read. It is also much more expensive."',
+    askFix: '"I can amend the permit. It takes a form, a fee and a signature that isn\'t yours."',
+    askBribe: '"There\'s a version of this permit that\'s much easier to read. It\'s also much more expensive."',
     paper,
   };
 }
@@ -592,17 +592,17 @@ function buildSponsor(run: SeqRun, rng: Rng): Draft {
   paper.extraRule('banned', 'Barred categories', 'BETTING / CRYPTO / ADULT / CBD');
   const m = managerFor(run, rng);
   return {
-    type: 'sponsor', title: 'SPONSORSHIP RIDER', subject: sp.name, subtitle: `${sp.category.toUpperCase()} — ${fmtDate(run.week)}`,
+    type: 'sponsor', title: 'SPONSORSHIP RIDER', subject: sp.name, subtitle: `${sp.category.toUpperCase()}  /  ${fmtDate(run.week)}`,
     visitor: { kind: 'exec', name: 'A rep from ' + sp.name, role: 'Sponsorship', seed: sp.id },
     line: rng.pick([
-      '"We love what you are doing with the warehouse. It is very authentic. Authentic sells."',
-      '"This is not a bribe. It is a partnership with a very flexible moral column."',
-      '"Your crowd is exactly the demographic we cannot legally advertise to."',
+      '"We love what you\'re doing with the warehouse. It\'s very authentic. Authentic sells."',
+      '"This isn\'t a bribe. It\'s a partnership with a very flexible moral column."',
+      '"Your crowd is exactly the demographic we can\'t legally advertise to."',
     ]),
-    askClean: '"It is all standard. Four weeks, approved category, money in the account before the cage goes up."',
-    askExcuse: '"The category is a courtesy label. Money does not have a category."',
+    askClean: '"It\'s all standard. Four weeks, approved category, money in the account before the cage goes up."',
+    askExcuse: '"The category is a courtesy label. Money doesn\'t have a category."',
     askFix: '"I can rewrite the rider. The number gets smaller, but the category gets cleaner."',
-    askBribe: '"There is a version of this deal where the paperwork is clean and the money is even cleaner."',
+    askBribe: '"There\'s a version of this deal where the paperwork is clean and the money is even cleaner."',
     meta: { payout, sponsor: sp.id, manager: m.id },
     paper,
   };
@@ -636,17 +636,17 @@ function buildCage(run: SeqRun, rng: Rng): Draft {
     note: 'The sheet records {doc} bolts. The actual count is {target}.',
   });
   return {
-    type: 'cage', title: 'CAGE INSPECTION', subject: cage, subtitle: `${currentVenueFor(run).name} — ${fmtDate(run.week)}`,
+    type: 'cage', title: 'CAGE INSPECTION', subject: cage, subtitle: `${currentVenueFor(run).name}  /  ${fmtDate(run.week)}`,
     visitor: { kind: 'cop', name: inspector, role: 'Cage inspector', seed: 'cage_' + run.seed },
     line: rng.pick([
       '"I have inspected a lot of cages. This one has a personality."',
       '"The bolts are the important part. The fighters are the replaceable part."',
-      '"I can pass it today. I cannot pass it if somebody dies in it tomorrow."',
+      '"I can pass it today. I can\'t pass it if somebody dies in it tomorrow."',
     ]),
-    askClean: '"Cage is tight. Pads are new. Bolts are bolts. Do not make me regret this."',
-    askExcuse: '"Ninety days is a guideline. The cage does not know what month it is."',
-    askFix: '"I can reinspect it. It will cost you the emergency fee and a coffee that is not from a machine."',
-    askBribe: '"There is an inspection certificate in my bag with today\'s date on it. It is very light."',
+    askClean: '"Cage is tight. Pads are new. Bolts are bolts. Don\'t make me regret this."',
+    askExcuse: '"Ninety days is a guideline. The cage doesn\'t know what month it is."',
+    askFix: '"I can reinspect it. It\'ll cost you the emergency fee and a coffee that isn\'t from a machine."',
+    askBribe: '"There\'s an inspection certificate in my bag with today\'s date on it. It\'s very light."',
     paper,
   };
 }
@@ -676,13 +676,13 @@ function buildPress(run: SeqRun, rng: Rng): Draft {
   });
   paper.plain('NOTE', 'Applicant has agreed to not ask about the tiger.', 'text');
   return {
-    type: 'press', title: 'PRESS CREDENTIAL', subject: rep.name, subtitle: `${outlet} — ${fmtDate(run.week)}`,
+    type: 'press', title: 'PRESS CREDENTIAL', subject: rep.name, subtitle: `${outlet}  /  ${fmtDate(run.week)}`,
     visitor: { kind: 'reporter', name: rep.name, role: outlet, seed: rep.id, reporterId: rep.id },
-    line: rep.catchphrase ? `"${rep.catchphrase}"` : '"I am here for the access. The story is whatever happens to the access."',
-    askClean: '"The name, the outlet and the lanyard all agree. It is a miracle of modern administration."',
+    line: rep.catchphrase ? `"${rep.catchphrase}"` : '"I\'m here for the access. The story is whatever happens to the access."',
+    askClean: '"The name, the outlet and the lanyard all agree. It\'s a miracle of modern administration."',
     askExcuse: '"The outlet changed its name. Or I changed my name. One of us changed something."',
     askFix: '"I can get the right letter from the outlet. They owe me a favour and a parking ticket."',
-    askBribe: '"You could use a friendly face in the room. I could use a lanyard that does not say ONE DAY."',
+    askBribe: '"You could use a friendly face in the room. I could use a lanyard that doesn\'t say ONE DAY."',
     paper,
   };
 }
@@ -717,16 +717,16 @@ function buildWeighin(run: SeqRun, rng: Rng): Draft {
     note: 'The slip is signed by {doc}. The commission official is {target}.',
   });
   return {
-    type: 'weighin', title: 'WEIGH-IN SLIP', subject: fighterName(a.f), subtitle: `${div.name} — ${fmtDate(run.week)}`,
+    type: 'weighin', title: 'WEIGH-IN SLIP', subject: fighterName(a.f), subtitle: `${div.name}  /  ${fmtDate(run.week)}`,
     visitor: fighterVisitor(a.f),
     line: rng.pick([
-      '"I made the weight. I made it this morning. I have not eaten since."',
+      '"I made the weight. I made it this morning. I haven\'t eaten since."',
       '"The scale is wrong. The scale has always been wrong. The scale is a Zenith plant."',
-      '"I can fight at this weight. I cannot promise I will be conscious."',
+      '"I can fight at this weight. I can\'t promise I\'ll be conscious."',
     ]),
     askClean: '"I made the weight. My body hates me, but I made the weight."',
-    askExcuse: '"A pound is a rounding error. A pizza is a rounding error. We are all rounding errors."',
-    askFix: '"Give me an hour and a sauna. I can lose it. I cannot promise I will enjoy it."',
+    askExcuse: '"A pound is a rounding error. A pizza is a rounding error. We\'re all rounding errors."',
+    askFix: '"Give me an hour and a sauna. I can lose it. I can\'t promise I\'ll enjoy it."',
     askBribe: '"The official is a friend. The scale is a machine. Machines can be friends."',
     meta: { fighterId: a.f.id },
     paper,
@@ -763,14 +763,14 @@ function buildExpense(run: SeqRun, rng: Rng): Draft {
     type: 'expense', title: 'EXPENSE CLAIM', subject: m.name, subtitle: `Week ${run.week} - ${items.length} lines`,
     visitor: managerVisitor(m),
     line: rng.pick([
-      '"It is all team-building. The jet ski is for cardio. The python is for morale."',
+      '"It\'s all team-building. The jet ski is for cardio. The python is for morale."',
       '"I have receipts. Some of them are from this year."',
       '"You said spend what it takes. I wrote that down. I wrote it on a napkin."',
     ]),
     askClean: '"Every line has a receipt. The python has a receipt. The python is very organized."',
     askExcuse: '"The total includes tax, tip and a small fee for the guy who adds the tax and tip."',
-    askFix: '"I can lose the jet ski. I cannot lose the python. The python knows where I live."',
-    askBribe: '"There is cash in the envelope. It is cleaner than the receipts."',
+    askFix: '"I can lose the jet ski. I can\'t lose the python. The python knows where I live."',
+    askBribe: '"There\'s cash in the envelope. It\'s cleaner than the receipts."',
     meta: { total, manager: m.id, receipts: items.map((x) => `${x.item}: ${money(x.amount)}`).join('\n') },
     paper,
   };
@@ -807,7 +807,7 @@ const MEMO_SCENARIOS: MemoScenario[] = [
   },
   {
     from: 'HAROLD VOSS, LANDLORD', subject: 'LEASE RENEWAL', directive: 'SIGN THE RENEWAL. THE LANDLORD IS WAITING.',
-    body: 'The warehouse is yours for another year at a number that has gone up because the neighbourhood has gone up because you are in it. Harold has drawn a small smiling face next to the late-fee clause.',
+    body: 'The warehouse is yours for another year at a number that has gone up because the neighbourhood has gone up because you\'re in it. Harold has drawn a small smiling face next to the late-fee clause.',
     desired: 'approve', approveCash: -2400, approveHeat: -1, approveText: 'SIGNED. The warehouse is yours for another year. Harold keeps the smiling face.',
     denyText: 'IGNORED. Harold puts a lock on the loading bay and a sign that says "AVAILABLE". The sign has a smiling face too.',
     denyHeat: 6, denyBuzz: -1, line: '"Harold is a reasonable man. Harold is also a man who owns the roof."',
@@ -815,27 +815,27 @@ const MEMO_SCENARIOS: MemoScenario[] = [
   },
   {
     from: 'B. KRANE, BUSINESS AFFAIRS', subject: 'THE 2029 TAX FILE', directive: 'SHRED THIS FILE. NOBODY NEEDS TO SEE IT.',
-    body: 'The file contains a schedule of payments that were made before you owned the company. Some of them were made to people who do not exist. The directive is typed in a font that suggests urgency and a lack of witnesses.',
-    desired: 'deny', approveHeat: 7, approveCash: 0, approveText: 'SHREDDED. The file is gone. The feeling that somebody is going to ask about it is not.',
+    body: 'The file contains a schedule of payments that were made before you owned the company. Some of them were made to people who don\'t exist. The directive is typed in a font that suggests urgency and a lack of witnesses.',
+    desired: 'deny', approveHeat: 7, approveCash: 0, approveText: 'SHREDDED. The file is gone. The feeling that somebody is going to ask about it isn\'t.',
     denyText: 'FILED. The tax file goes in the safe with the other things nobody needs to see. Somewhere, an accountant feels a chill.',
-    denyHeat: -2, denyBuzz: 1, line: '"It is a housekeeping matter. The kind of housekeeping that keeps people out of prison."',
-    ask: 'This is not housekeeping. This is evidence. Denying the directive means filing it, not destroying it.',
+    denyHeat: -2, denyBuzz: 1, line: '"It\'s a housekeeping matter. The kind of housekeeping that keeps people out of prison."',
+    ask: 'This isn\'t housekeeping. This is evidence. Denying the directive means filing it, not destroying it.',
   },
   {
     from: 'TALENT OPERATIONS', subject: 'THE RIVAL CASTOFF', directive: 'SIGN THE RIVAL CASTOFF. HE SELLS TICKETS.',
-    body: 'Zenith released a former contender with a name people recognize and a knee people do not. He will fight for cheap, sell shirts for a month and probably need a doctor by Christmas.',
+    body: 'Zenith released a former contender with a name people recognize and a knee people don\'t. He\'ll fight for cheap, sell shirts for a month and probably need a doctor by Christmas.',
     desired: 'approve', approveCash: -1200, approveBuzz: 3, approveText: 'SIGNED. The castoff gets a locker and a chance. The crowd gets a name they remember.',
     denyText: 'IGNORED. The castoff signs with a rival and calls you a coward on a podcast that same afternoon.',
-    denyHeat: 1, line: '"He is damaged goods. Damaged goods with a following is still a following."',
-    ask: 'The castoff is a real draw. He is also a real medical bill. The memo wants the draw.',
+    denyHeat: 1, line: '"He\'s damaged goods. Damaged goods with a following is still a following."',
+    ask: 'The castoff is a real draw. He\'s also a real medical bill. The memo wants the draw.',
   },
   {
     from: 'THE COMMISSION', subject: 'INSURANCE AUDIT', directive: 'COOPERATE WITH THE AUDIT. OPEN THE BOOKS.',
     body: 'Two auditors want the ledgers, the medical files and an explanation of the phrase "miscellaneous violence" that appears eleven times in the expense column. The audit is voluntary. The audit is also happening.',
     desired: 'approve', approveCash: -800, approveHeat: -4, approveText: 'OPENED. The auditors find three problems, two of which are real. Heat drops. The books breathe.',
     denyText: 'REFUSED. The auditors leave. The commission opens a formal inquiry and asks for the same books with a lawyer attached.',
-    denyHeat: 7, line: '"The commission is not asking. The commission is being polite about not asking."',
-    ask: 'Cooperate and it is a fee and a headache. Refuse and it is a headline and a lawyer.',
+    denyHeat: 7, line: '"The commission isn\'t asking. The commission is being polite about not asking."',
+    ask: 'Cooperate and it\'s a fee and a headache. Refuse and it\'s a headline and a lawyer.',
   },
 ];
 
@@ -852,9 +852,9 @@ function buildMemo(run: SeqRun, rng: Rng): Draft {
     visitor: managerVisitor(m),
     line: s.line,
     askClean: s.ask,
-    askExcuse: '"The memo is asking, not telling. That is how you know it is serious."',
+    askExcuse: '"The memo is asking, not telling. That\'s how you know it\'s serious."',
     askFix: '"I can make it go away. Some memos are easier to lose than others."',
-    askBribe: '"There is a version of this memo that never existed. It is cheaper than the version that did."',
+    askBribe: '"There\'s a version of this memo that never existed. It\'s cheaper than the version that did."',
     body: s.body,
     desired: s.desired,
     meta: {
@@ -871,10 +871,10 @@ function buildMemo(run: SeqRun, rng: Rng): Draft {
 function buildZenith(run: SeqRun, rng: Rng): Draft {
   const n = Number(run.flags.zenith_clauses ?? 0);
   const round = run.week >= 38 ? 3 : run.week >= 34 ? 2 : 1;
-  const title = round === 3 ? 'FINAL OFFER — MATCHING RIGHTS' : round === 2 ? 'AMENDMENT TO THE PURCHASE AGREEMENT' : 'LETTER OF INTENT';
+  const title = round === 3 ? 'FINAL OFFER  /  MATCHING RIGHTS' : round === 2 ? 'AMENDMENT TO THE PURCHASE AGREEMENT' : 'LETTER OF INTENT';
   const paper = new Paper();
   paper.plain('PARTY', 'ZENITH HOLDINGS');
-  paper.pair('CLAUSE', '14(b) MATCHING RIGHTS — GRANTED', '14(b) MARKETING RIGHTS', {
+  paper.pair('CLAUSE', '14(b) MATCHING RIGHTS  /  GRANTED', '14(b) MARKETING RIGHTS', {
     targetLabel: 'Clause on file',
     note: 'The letter says {doc}. The filed clause says {target}.',
   });
@@ -892,9 +892,9 @@ function buildZenith(run: SeqRun, rng: Rng): Draft {
   });
   paper.extraRule('matching', 'Matching rights', 'REFUSE EVERY VERSION');
   const variant = round === 1
-    ? 'A standard courtesy: if the promotion is ever sold, Zenith gets thirty days to match the offer. It is not a purchase. It is an option to make every future purchase impossible.'
+    ? 'A standard courtesy: if the promotion is ever sold, Zenith gets thirty days to match the offer. It isn\'t a purchase. It\'s an option to make every future purchase impossible.'
     : round === 2
-      ? 'The amendment extends the matching right to "any transaction, including a sale of control, a merger, or a sale of substantially all assets." It also adds a small administrative fee. The fee is not small.'
+      ? 'The amendment extends the matching right to "any transaction, including a sale of control, a merger, or a sale of substantially all assets." It also adds a small administrative fee. The fee isn\'t small.'
       : 'The final offer: sign the matching right, take a seat on the board and a cheque for $250,000. The cheque is real. So is the clause. The clause outlives the cheque.';
   const visitor: SeqDeskVisitor = {
     kind: round === 3 ? 'exec' : 'lawyer',
@@ -903,17 +903,17 @@ function buildZenith(run: SeqRun, rng: Rng): Draft {
     seed: 'zenith_' + round,
   };
   return {
-    type: 'zenith', title, subject: 'ZENITH HOLDINGS', subtitle: `Received week ${run.week} — clause ${n + 1}`,
+    type: 'zenith', title, subject: 'ZENITH HOLDINGS', subtitle: `Received week ${run.week}  /  clause ${n + 1}`,
     visitor,
     line: round === 1
-      ? '"Mister Vane wanted you to have this personally. He wanted you to know there is no hard feelings."'
+      ? '"Mister Vane wanted you to have this personally. He wanted you to know there\'s no hard feelings."'
       : round === 2
         ? '"The first letter was a courtesy. This one is the one the lawyers read."'
         : '"The offer expires when the ink dries. Mister Vane is very fond of deadlines."',
-    askClean: '"It is a standard clause. Every company has one. Most companies do not have one pointed at them."',
-    askExcuse: '"Matching rights are a formality. You will never sell. You will die in this warehouse, and the clause will die with you."',
+    askClean: '"It\'s a standard clause. Every company has one. Most companies don\'t have one pointed at them."',
+    askExcuse: '"Matching rights are a formality. You\'ll never sell. You\'ll die in this warehouse, and the clause will die with you."',
     askFix: '"I can remove the word MATCHING. It becomes a marketing clause. Marketing clauses are harmless."',
-    askBribe: '"There is a signing bonus for the president personally. It is not in the letter. It is in the envelope."',
+    askBribe: '"There\'s a signing bonus for the president personally. It isn\'t in the letter. It\'s in the envelope."',
     body: variant,
     desired: 'deny',
     meta: { round },
@@ -1003,12 +1003,12 @@ export interface SeqCompareResult {
  */
 export function compareFields(run: SeqRun, docId: string, docKey: string, targetKey: string): SeqCompareResult {
   const doc = deskDoc(run, docId);
-  if (!doc) return { relevant: false, mismatch: false, found: false, text: 'There is no paper on the desk.' };
+  if (!doc) return { relevant: false, mismatch: false, found: false, text: 'There\'s no paper on the desk.' };
   const link = doc.links.find((l) =>
     (l.docKey === docKey && l.targetKey === targetKey) || (l.docKey === targetKey && l.targetKey === docKey),
   );
   if (!link) {
-    return { relevant: false, mismatch: false, found: false, text: 'Those two things are not supposed to match.' };
+    return { relevant: false, mismatch: false, found: false, text: 'Those two things aren\'t supposed to match.' };
   }
   const a = fieldValue(doc, link.docKey);
   const b = targetValue(doc, link.targetKey);
@@ -1068,7 +1068,7 @@ export interface SeqBribeResult {
 /** Take the envelope. The paper goes through. Nobody writes it down except us. */
 export function takeBribe(run: SeqRun, docId: string): SeqBribeResult {
   const doc = deskDoc(run, docId);
-  if (!doc || doc.status === 'done') return { ok: false, text: 'There is no paper to approve.' };
+  if (!doc || doc.status === 'done') return { ok: false, text: 'There\'s no paper to approve.' };
   const amount = Number(doc.meta.bribeAmount ?? doc.bribe);
   run.cash += amount;
   run.heat = clamp(run.heat + 6, 0, 100);
@@ -1085,7 +1085,7 @@ export function takeBribe(run: SeqRun, docId: string): SeqBribeResult {
     const f = run.roster.find((x) => x.f.id === String(doc.meta.fighterId));
     if (f) f.morale = clamp(f.morale + 2, 0, 100);
   }
-  run.desk.log.unshift(`BRIBE: ${doc.title} (${doc.subject}) — ${money(amount)}.`);
+  run.desk.log.unshift(`BRIBE: ${doc.title} (${doc.subject})  /  ${money(amount)}.`);
   maybeFinishDesk(run);
   return { ok: true, text: doc.result };
 }
@@ -1145,7 +1145,7 @@ function approveText(doc: SeqDeskDoc): string {
     case 'permit': return 'ISSUED. The room is legal for the night. The fire marshal will remember your name.';
     case 'sponsor': return `SIGNED. The sponsor pays ${money(Number(doc.meta.payout ?? 0))} and the category is clean.`;
     case 'cage': return 'PASSED. The cage is tight. The bolts are bolts.';
-    case 'press': return 'CREDENTIALED. Somebody with a lanyard will write something you cannot control.';
+    case 'press': return 'CREDENTIALED. Somebody with a lanyard will write something you can\'t control.';
     case 'weighin': return 'FIGHT AS IS. The scale was certified and the fighter made the weight.';
     case 'expense': return `PAID. ${money(Number(doc.meta.total ?? 0))} leaves the account and the receipts go in the drawer.`;
     case 'memo': return String(doc.meta.approveText ?? 'FILED.');
@@ -1156,10 +1156,10 @@ function approveText(doc: SeqDeskDoc): string {
 function denyText(doc: SeqDeskDoc): string {
   switch (doc.type) {
     case 'bout': return 'DENIED. The bout is off until the paperwork matches the file.';
-    case 'medical': return 'REJECTED. The fighter is not cleared. The commission is relieved.';
-    case 'permit': return 'REJECTED. The room is not licensed for this show.';
+    case 'medical': return 'REJECTED. The fighter isn\'t cleared. The commission is relieved.';
+    case 'permit': return 'REJECTED. The room isn\'t licensed for this show.';
     case 'sponsor': return 'REJECTED. The money goes back in the briefcase.';
-    case 'cage': return 'FAILED. The cage is closed until it is inspected again.';
+    case 'cage': return 'FAILED. The cage is closed until it\'s inspected again.';
     case 'press': return 'REFUSED. The lanyard stays at the desk.';
     case 'weighin': return 'CANCELLED. The bout is pulled from the card.';
     case 'expense': return 'REJECTED. The claim goes back to the manager with a red circle on it.';
@@ -1268,7 +1268,7 @@ export function resolveDoc(run: SeqRun, docId: string, verdict: SeqVerdict, opts
   run.desk.processed++;
   if (correct) run.desk.correct++;
   run.stats.deskDocs++;
-  run.desk.log.unshift(`${verdict.toUpperCase()} — ${doc.title} (${doc.subject}): ${text}${opts.delegated ? ' [DELEGATED]' : ''}`);
+  run.desk.log.unshift(`${verdict.toUpperCase()}  /  ${doc.title} (${doc.subject}): ${text}${opts.delegated ? ' [DELEGATED]' : ''}`);
   const finished = maybeFinishDesk(run);
   return { doc, verdict, correct, text, citation, finished, perfect: run.desk.perfect };
 }
@@ -1305,7 +1305,7 @@ export interface SeqDelegationResult {
  * and he is not as careful, but he is a warm body and the cage can open.
  */
 export function delegateDesk(run: SeqRun): SeqDelegationResult {
-  if (!run.desk) return { ok: false, error: 'There is no desk.', fee: 0, caught: 0, missed: 0, summary: '' };
+  if (!run.desk) return { ok: false, error: 'There\'s no desk.', fee: 0, caught: 0, missed: 0, summary: '' };
   const pending = pendingDocs(run.desk);
   if (!pending.length) return { ok: false, error: 'The desk is already clear.', fee: 0, caught: 0, missed: 0, summary: '' };
   const fee = 900 + pending.length * 300;

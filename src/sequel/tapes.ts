@@ -65,25 +65,25 @@ export const TAPES: Tape[] = [
     steps: [
       sc('THE CAR PARK', 'lot', [{ who: 'gordon', name: 'GORDON VANCE', x: 160, facing: 1 }, { who: 'tyler', fighter: 'tyler', name: 'TYLER', x: 290, facing: -1 }], [
         { who: null, text: 'Years ago. The night Tyler lost the rematch to Han. His father is waiting by the car with the engine running.' },
-        { who: 'gordon', text: 'Get in. We are going home.' },
-        { who: 'tyler', text: 'I am going to Ray\'s.' },
+        { who: 'gordon', text: 'Get in. We\'re going home.' },
+        { who: 'tyler', text: 'I\'m going to Ray\'s.' },
         { who: 'gordon', text: 'Ray\'s is a soup kitchen with a ring in it.' },
         { who: 'tyler', text: 'Yeah. That\'s why.' },
       ], true),
       sc('MONDAY, SIX A.M.', 'gym', [{ who: 'ray', name: 'UNCLE RAY', x: 170, facing: 1 }, { who: 'tyler', fighter: 'tyler', name: 'TYLER', x: 290, facing: -1 }], [
-        { who: 'ray', text: 'You are early.' },
+        { who: 'ray', text: 'You\'re early.' },
         { who: 'tyler', text: 'Can I mop?' },
-        { who: null, text: 'Ray hands him the mop and does not say anything about it, which is the nicest thing Ray has ever not said.' },
+        { who: null, text: 'Ray hands him the mop and doesn\'t say anything about it, which is the nicest thing Ray has ever not said.' },
       ]),
       fight('THE PRODIGY', 'tyler', 'chad', 'THE WAREHOUSE', 3, 'Gordon\'s gym has a new golden boy. He calls Tyler "the mop" at the weigh-in. Tyler says thank you.'),
       sc('THE LETTER', 'office', [{ who: 'gordon', name: 'GORDON VANCE', x: 200, facing: 1 }], [
         { who: null, text: 'A letter from Gordon, in Gordon\'s handwriting, which nobody has seen in twenty years.' },
-        { who: 'gordon', text: '"Rocco is the best I have. Fight him. If you win, I will come to Ray\'s. I will eat the soup. I will not like it."' },
+        { who: 'gordon', text: '"Rocco is the best I have. Fight him. If you win, I\'ll come to Ray\'s. I\'ll eat the soup. I won\'t like it."' },
       ]),
       fight('THE LANDLORD\'S PICK', 'tyler', 'gordon_champ', 'MONCTON COLISEUM', 5, 'Five rounds against his father\'s champion, in front of his father, for a bowl of soup.'),
       sc('THE SOUP', 'gym', [{ who: 'gordon', name: 'GORDON VANCE', x: 150, facing: 1 }, { who: 'tyler', fighter: 'tyler', name: 'TYLER', x: 260, facing: -1 }, { who: 'ray', name: 'UNCLE RAY', x: 370, facing: -1 }], [
         { who: null, text: 'Gordon Vance sits at the soup counter in a three-piece suit. Ray puts a bowl in front of him.' },
-        { who: 'gordon', text: '...It is good.' },
+        { who: 'gordon', text: '...It\'s good.' },
         { who: 'ray', text: 'I know.' },
         { who: 'tyler', text: 'Dad. You have to wash the bowl.' },
         { who: null, text: 'He washes the bowl. It takes him four minutes. Nobody has ever been prouder of a clean bowl.' },
@@ -97,14 +97,14 @@ export const TAPES: Tape[] = [
     steps: [
       sc('SUSSEX, NEW BRUNSWICK', 'warehouse', [{ who: 'xavier', fighter: 'xavier', name: 'XAVIER, 26', x: 180, facing: 1 }], [
         { who: null, text: 'Twenty years ago. A barn, a borrowed cage and a hand-painted sign: ALLSTAR FIGHTING CHAMPIONSHIP. The A is backwards.' },
-        { who: 'xavier', text: 'I am the promoter, the main event and the man who sells the popcorn. I am also the man who cleans the goat.' },
+        { who: 'xavier', text: 'I\'m the promoter, the main event and the man who sells the popcorn. I\'m also the man who cleans the goat.' },
       ], true),
       fight('ALLSTAR FC 1 (THE ORIGINAL)', 'xavier', 'bull', 'XAVIER\'S BARN', 3, 'The first Allstar card. Xavier books himself against a bull rider because nobody else would come.'),
       sc('THE BINGO HALL', 'bingo', [{ who: 'xavier', fighter: 'xavier', name: 'XAVIER', x: 160, facing: 1 }, { who: 'ray', name: 'RAY (YOUNGER)', x: 280, facing: -1 }], [
         { who: null, text: 'A bingo hall in Moncton. A man in a cardigan is taping a kid\'s hands in the corner.' },
-        { who: 'ray', text: 'You are the cowboy with the barn.' },
-        { who: 'xavier', text: 'I am going to run my own league one day. A real one.' },
-        { who: 'ray', text: 'Then feed your fighters. That is the whole secret. Nobody believes me.' },
+        { who: 'ray', text: 'You\'re the cowboy with the barn.' },
+        { who: 'xavier', text: 'I\'m going to run my own league one day. A real one.' },
+        { who: 'ray', text: 'Then feed your fighters. A pot of soup costs eleven dollars. Nobody believes me.' },
       ], true),
       fight('THE SHERIFF', 'xavier', 'sheriff', 'XAVIER\'S BARN', 5, 'The local sheriff wants the barn shut down. Xavier suggests they settle it in the cage. The sheriff agrees, which is the worst decision in the history of law enforcement.'),
       sc('THE HAT', 'warehouse', [{ who: 'xavier', fighter: 'xavier', name: 'XAVIER', x: 220, facing: 1 }], [
@@ -123,13 +123,13 @@ export const TAPES: Tape[] = [
         { who: 'daniel', text: 'I could still ref your next one. Off the books. As a friend.' },
         { who: 'spadam', text: 'Get out of my gym, Daniel.' },
       ]),
-      fight('CLEAN SHEET', 'spadam', 'kicker', 'THE WAREHOUSE', 3, 'Spadam\'s first fight with a neutral referee in seven years. He is nervous. Six foot seven and nervous.'),
+      fight('CLEAN SHEET', 'spadam', 'kicker', 'THE WAREHOUSE', 3, 'Spadam\'s first fight with a neutral referee in seven years. He\'s nervous. Six foot seven and nervous.'),
       sc('THE SOUP', 'gym', [{ who: 'spadam', fighter: 'spadam', name: 'SPADAM', x: 170, facing: 1 }, { who: 'ray', name: 'UNCLE RAY', x: 290, facing: -1 }], [
         { who: 'spadam', text: 'Can I hit the bag?' },
-        { who: 'ray', text: 'The bag does not care who you were.' },
+        { who: 'ray', text: 'The bag doesn\'t care who you were.' },
         { who: null, text: 'He hits it for an hour. Ray gives him soup. Spadam has two bowls, then a third, then asks if he can come back on Monday.' },
       ]),
-      fight('THE EXHIBITION', 'spadam', 'daniel', 'THE WAREHOUSE', 3, 'A charity exhibition: Spadam Biggs against Daniel Stinkovich, for the kids\' program at Ray\'s. Daniel thought it was a joke. It is not a joke.'),
+      fight('THE EXHIBITION', 'spadam', 'daniel', 'THE WAREHOUSE', 3, 'A charity exhibition: Spadam Biggs against Daniel Stinkovich, for the kids\' program at Ray\'s. Daniel thought it was a joke. It isn\'t a joke.'),
     ],
   },
   {
@@ -138,7 +138,7 @@ export const TAPES: Tape[] = [
     needs: (p, finished) => finished && p.includes('alberto'),
     steps: [
       sc('THE AIRPORT', 'street', [{ who: 'han', name: 'HAN', x: 140, facing: 1 }, { who: 'alberto', fighter: 'alberto', name: 'ALBERTO', x: 250, facing: -1 }, { who: 'mateo', name: 'MATEO', x: 350, facing: -1 }], [
-        { who: null, text: 'Guadalajara. Hot. Loud. A banner at arrivals that says WELCOME HOME CAMPEON, held by one very old man.' },
+        { who: null, text: 'Guadalajara is hot and loud. At arrivals, one very old man holds up a banner that says WELCOME HOME CAMPEON.' },
         { who: 'alberto', text: 'I have not been home in fifteen years.' },
         { who: 'mateo', text: 'Ray wrote it in the notebook. "Give him the second chance nobody else did."' },
         { who: 'han', text: 'So here it is. Under your name.' },
@@ -153,7 +153,7 @@ export const TAPES: Tape[] = [
       sc('THE GRANDSON', 'presser', [{ who: 'alberto', fighter: 'alberto', name: 'ALBERTO', x: 170, facing: 1 }, { who: 'nieto', fighter: 'nieto', name: 'KEVIN "EL NIETO" RAMOS', x: 300, facing: -1 }], [
         { who: 'nieto', text: 'You made me cry when I was eight. My grandmother never let me forget it.' },
         { who: 'alberto', text: 'You are the boy from the tickets.' },
-        { who: 'nieto', text: 'I am the champion of Mexico now. Your old belt. Come and get it.' },
+        { who: 'nieto', text: 'I\'m the champion of Mexico now. Your old belt. Come and get it.' },
       ]),
       fight('EL CAMPEON', 'alberto', 'nieto', 'ARENA GUADALAJARA', 5, 'Five rounds for his old belt, against the boy he made cry, with his grandmother in the front row and Mateo and Han in his corner.'),
       sc('HOME', 'lucha', [{ who: 'han', name: 'HAN', x: 130, facing: 1 }, { who: 'alberto', fighter: 'alberto', name: 'ALBERTO', x: 240, facing: -1 }, { who: 'mateo', name: 'MATEO', x: 340, facing: -1 }], [
@@ -161,20 +161,20 @@ export const TAPES: Tape[] = [
         { who: 'alberto', text: 'When are you going to put a Mexican fighter in the main event?' },
         { who: 'mateo', text: 'Tonight.' },
         { who: 'han', text: 'Every night, if you want.' },
-        { who: null, text: 'Somebody has made soup in the locker room. It has a little chile in it. Nobody tells anyone.' },
+        { who: null, text: 'Somebody has made soup in the locker room, with a little chile in it. Han pretends he can\'t taste it.' },
       ]),
     ],
   },
   {
     id: 'pete', title: 'COMMISSIONER PETE', label: 'TAPE 5', unlock: 'Notebook pages: THE COWBOY and THE BUYBACK',
-    blurb: 'The true story of the most powerful official in Maritime combat sports. He is a goat. He has eaten four contracts and a judge\'s scorecard.',
+    blurb: 'The true story of the most powerful official in Maritime combat sports. He\'s a goat. He has eaten four contracts and a judge\'s scorecard.',
     needs: (p) => p.includes('xavier') && p.includes('belt'),
     steps: [
       sc('THE CARD GAME', 'warehouse', [{ who: 'xavier', fighter: 'xavier', name: 'XAVIER, 26', x: 170, facing: 1 }, { who: 'ray', name: 'RAY (YOUNGER)', x: 300, facing: -1 }], [
         { who: null, text: 'A barn outside Sussex, twenty years ago. A card game. Xavier is out of money, so he bets the cage. He wins the cage, and the goat that lives in it.' },
         { who: 'xavier', text: 'Every league needs a commissioner, Ray.' },
-        { who: 'ray', text: 'That is a goat.' },
-        { who: 'xavier', text: 'That is Commissioner Pete. He is impartial. He has no idea what is happening.' },
+        { who: 'ray', text: 'That\'s a goat.' },
+        { who: 'xavier', text: 'That\'s Commissioner Pete. He\'s impartial. He has no idea what\'s happening.' },
         { who: 'ray', text: 'Most commissioners are like that.' },
       ], true),
       sc('THE BOUT SHEET', 'warehouse', [{ who: 'xavier', name: 'XAVIER "ALLSTAR" COCKETT', x: 160, facing: 1 }, { who: 'oneton', name: '1TON', x: 300, facing: -1 }], [
@@ -182,18 +182,18 @@ export const TAPES: Tape[] = [
         { who: 'oneton', text: 'Who is fighting first?' },
         { who: 'xavier', text: 'Nobody knows. Pete has ruled. We go alphabetically.' },
         { who: 'oneton', text: 'My name starts with a number.' },
-        { who: 'xavier', text: 'Then you are first, partner. The commissioner has spoken.' },
+        { who: 'xavier', text: 'Then you\'re first, partner. The commissioner has spoken.' },
       ]),
-      fight('CUSTODY', 'xavier', 'sheriff', 'XAVIER\'S BARN', 3, 'The sheriff says a goat cannot hold a sanctioning license. Xavier says the goat holds it fine, it just eats it sometimes. Winner keeps Pete.'),
+      fight('CUSTODY', 'xavier', 'sheriff', 'XAVIER\'S BARN', 3, 'The sheriff says a goat can\'t hold a sanctioning license. Xavier says the goat holds it fine, it just eats it sometimes. Winner keeps Pete.'),
       sc('THE OLD DOME', 'cage', [{ who: 'xavier', name: 'XAVIER "ALLSTAR" COCKETT', x: 150, facing: 1 }, { who: 'han', name: 'HAN', x: 280, facing: -1 }], [
-        { who: null, text: 'The buyback. Eighteen thousand people. Commissioner Pete arrives at the Old Dome in his own horse trailer. Security does not stop him. Security has met him.' },
+        { who: null, text: 'The buyback. Eighteen thousand people. Commissioner Pete arrives at the Old Dome in his own horse trailer. Security doesn\'t stop him. Security has met him.' },
         { who: 'han', text: 'Is he allowed in here?' },
-        { who: 'xavier', text: 'He is the most senior official in the building.' },
-        { who: 'han', text: 'He is eating the ring card.' },
+        { who: 'xavier', text: 'He\'s the most senior official in the building.' },
+        { who: 'han', text: 'He\'s eating the ring card.' },
         { who: 'xavier', text: 'Then the round is over. Rules are rules.' },
       ]),
       sc('RETIREMENT', 'gym', [{ who: 'mateo', name: 'MATEO', x: 180, facing: 1 }, { who: 'han', name: 'HAN', x: 300, facing: -1 }], [
-        { who: null, text: 'Ray\'s Boxing & Soup. Monday. Six a.m. There is a goat on the roof.' },
+        { who: null, text: 'Monday morning at Ray\'s, there\'s a goat on the roof.' },
         { who: 'mateo', text: 'Xavier says Pete is retiring. He wants to be near the soup.' },
         { who: 'han', text: 'Ray would have let him stay.' },
         { who: 'mateo', text: 'Ray would have made him a bowl.' },
@@ -203,24 +203,24 @@ export const TAPES: Tape[] = [
   },
   {
     id: 'kid', title: 'THE KID AT THE DOOR', label: 'NEW GAME+', unlock: 'Finish TALES OF LEGACY with the torch ending',
-    blurb: 'Mateo runs Ray\'s now. There is a kid in a hoodie three sizes too big standing at the door. He has been there a week.',
+    blurb: 'Mateo runs Ray\'s now. There\'s a kid in a hoodie three sizes too big standing at the door. He has been there a week.',
     needs: (_p, finished) => finished && loadStoryTrophy().endings.includes('torch'),
     steps: [
       sc('MONDAY. SIX A.M.', 'gym', [{ who: 'mateo', fighter: 'bigmateo', name: 'MATEO', x: 180, facing: 1 }, { who: 'kid', fighter: 'kid1', name: 'THE KID', x: 330, facing: -1 }], [
         { who: null, text: 'Ray\'s Boxing & Soup. A year after the torch. Mateo runs it now, with Han on Tuesdays and a goat on the roof.' },
-        { who: null, text: 'There is a kid at the door. Hoodie three sizes too big. He has been standing there for a week.' },
-        { who: 'mateo', text: 'You are letting the cold in.' },
-        { who: 'kid', text: 'I am not coming in.' },
-        { who: 'mateo', text: 'I know. I did not come in either. For a week.' },
+        { who: null, text: 'There\'s a kid at the door. Hoodie three sizes too big. He has been standing there for a week.' },
+        { who: 'mateo', text: 'You\'re letting the cold in.' },
+        { who: 'kid', text: 'I\'m not coming in.' },
+        { who: 'mateo', text: 'I know. I didn\'t come in either. For a week.' },
         { who: null, text: 'Mateo holds out a mop. The kid looks at it for a long time. Then he takes it.', act: [{ do: 'meet', who: 'mateo', target: 'kid', pose: 'offer', prop: 'mop' }] },
-        { who: 'mateo', text: 'Theo, right? Luc Arsenault\'s grandson. Shediac. Hands up. Chin down. Eat something.' },
+        { who: 'mateo', text: 'Theo, right? Luc Arsenault\'s grandson, from Shediac. The mop\'s yours. Six tomorrow.' },
       ]),
       fight('NO HARD SHOTS', 'kid1', 'chad', "RAY'S BOXING & SOUP", 3, 'Six months of mopping. His first rounds in Ray\'s ring, against a rich kid from Rothesay who came in for "content". Mateo is refereeing. Mateo says no hard shots.', 'Mateo Varga'),
       sc('TUESDAYS', 'gym', [{ who: 'han', fighter: 'han', name: 'HAN', x: 160, facing: 1 }, { who: 'kid', fighter: 'kid2', name: 'THEO', x: 300, facing: -1 }], [
-        { who: null, text: 'Han teaches Tuesdays now. He is better at it than he thought. He is worse at the whiteboard than ever.' },
+        { who: null, text: 'Han teaches Tuesdays now. He\'s better at it than he thought. He\'s worse at the whiteboard than ever.' },
         { who: 'han', text: 'Left hook. Turn the hip, not the shoulder. A man called Butch did it to my uncle in 1987.' },
         { who: 'kid', text: 'Did your uncle win?' },
-        { who: 'han', text: 'No. He got the soup. The soup is better than winning. Do not tell Mateo I said that.' },
+        { who: 'han', text: 'No. He got the soup. The soup is better than winning. Don\'t tell Mateo I said that.' },
       ]),
       fight('THE BARN', 'kid2', 'bull', "XAVIER'S BARN", 3, 'Allstar FC. Xavier has a new hat. Commissioner Pete has a new opinion about the bout sheet. Theo\'s first fight in front of people.'),
       sc('THE BACK ROW', 'warehouse', [{ who: 'oneton', name: 'GORDO "1TON" FUENTE', x: 150, facing: 1 }, { who: 'kid', fighter: 'kid3', name: 'THEO', x: 300, facing: -1 }], [
@@ -235,13 +235,13 @@ export const TAPES: Tape[] = [
       sc('THE CALL', 'office', [{ who: 'mateo', fighter: 'bigmateo', name: 'MATEO', x: 170, facing: 1 }, { who: 'kid', fighter: 'kid4', name: 'THEO "THE HOODIE" ARSENAULT', x: 310, facing: -1 }], [
         { who: null, text: 'Zenith calls. They have a new golden boy and a hole in their card at the Old Dome. They want a local kid to lose to him.' },
         { who: 'mateo', text: 'They want you to lose.' },
-        { who: 'kid', text: 'I am not going to.' },
-        { who: 'mateo', text: 'I know. That is why I said yes. The bucket goes in your corner.' },
+        { who: 'kid', text: 'I\'m not going to.' },
+        { who: 'mateo', text: 'I know. That\'s why I said yes. The bucket goes in your corner.' },
       ]),
       fight('THE OLD DOME', 'kid4', 'synergy3', 'THE OLD DOME', 5, 'Five rounds at the Old Dome against Zenith\'s third "Synergy". Mateo in the corner with Ray\'s bucket. Han on the apron. A goat in the front row.'),
       sc('MONDAY. SIX A.M.', 'gym', [{ who: 'mateo', fighter: 'bigmateo', name: 'MATEO', x: 150, facing: 1 }, { who: 'kid', fighter: 'kid4', name: 'THEO', x: 260, facing: -1 }, { who: 'han', fighter: 'han', name: 'HAN', x: 370, facing: -1 }], [
-        { who: null, text: 'Monday. Six a.m. The soup is on. Theo is at the door at 5:58.' },
-        { who: 'kid', text: 'There is a kid outside. Hoodie three sizes too big. He has been there since Thursday.' },
+        { who: null, text: 'Monday. Theo is at the door at 5:58, two minutes early, the way somebody else used to be.' },
+        { who: 'kid', text: 'There\'s a kid outside. Hoodie three sizes too big. He has been there since Thursday.' },
         { who: 'mateo', text: 'Give him the mop.', photo: { id: 'ending_kid', title: 'THE KID AT THE DOOR' } },
         { who: 'han', text: 'Hands up.' },
         { who: 'kid', text: 'Chin down.' },

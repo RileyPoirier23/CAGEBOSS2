@@ -95,7 +95,7 @@ export type Cut = 'highlights' | 'full';
 
 export const BOOTHS: Record<Booth, { name: string; blurb: string }> = {
   hype: { name: 'JUICED BUTLER & BLOW HOGAN', blurb: 'Loud. Everything is the greatest thing they have ever seen. Casuals love it.' },
-  chaos: { name: 'SANDWICH CORMIER & BISCUIT', blurb: 'Nobody knows what is happening, including them. It goes viral, sometimes for the right reasons.' },
+  chaos: { name: 'SANDWICH CORMIER & BISCUIT', blurb: 'Nobody knows what\'s happening, including them. It goes viral, sometimes for the right reasons.' },
   credible: { name: 'LON & BRAILLE SONNEN', blurb: 'Serious. Accurate. The hardcore fans and the commission both like it.' },
 };
 export const CAMERAS: Record<Camera, string> = { side: 'SIDE ON (THE CLASSIC)', tv: 'BROADCAST (CLOSE, PUSHING IN)', top: 'OVERHEAD (THE CHESS VIEW)' };

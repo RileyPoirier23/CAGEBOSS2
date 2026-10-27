@@ -42,7 +42,7 @@ export function playStoryPress(g: Game, save: StorySave, after: () => void): voi
     }
     const q = qs[i];
     const lines: Line[] = [
-      ...(i === 0 ? [{ who: null, text: 'Press day. One folding table, two microphones, and a room that is not your friend.', sfx: 'click' as const }] : []),
+      ...(i === 0 ? [{ who: null, text: 'Press day. One folding table, two microphones, and a room that isn\'t your friend.', sfx: 'click' as const }] : []),
       { who: 'reporter', text: q.q.replace(/^"|"$/g, '') },
     ];
     playCine(g, {

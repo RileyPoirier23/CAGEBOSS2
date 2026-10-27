@@ -41,13 +41,13 @@ function scene(run: SeqRun, id: string): Cutscene | null {
             { who: null, text: `The board of Zenith Holdings meets without you. It takes seven minutes. You spend six of them in the lift.` },
             { who: 'zenith', text: `${first}. The board has decided to take the CBFC in a new direction.` },
             { who: 'dane', text: 'Which direction?' },
-            { who: 'auditor', text: 'An immersive fan journey. The cage is being replaced with a lounge experience. I am Trent. I am in strategy. I have your office.' },
-            { who: 'zenith', text: 'You will be compensated. Golden parachute. You may keep the stapler.' },
+            { who: 'auditor', text: 'An immersive fan journey. The cage is being replaced with a lounge experience. I\'m Trent. I\'m in strategy. I have your office.' },
+            { who: 'zenith', text: 'You\'ll be compensated. Golden parachute. You may keep the stapler.' },
           ] },
           { bg: 'warehouse', caption: 'NOW  /  THE WAREHOUSE', cast: [at(130, 1), npc('ray', 'UNCLE RAY', 250, -1), npc('bradie', 'BRADIE', 360, -1)], lines: [
             { who: null, text: 'You have a warehouse with a roof that leaks onto the canvas, a cage you bought from a man in a parking lot, and the stapler.' },
             { who: 'ray', text: `I brought soup. Somebody has to feed the promoter. ${first}, isn't it?` },
-            { who: 'bradie', text: 'I made us a website. It has a countdown. I do not know what it is counting down to.' },
+            { who: 'bradie', text: 'I made us a website. It has a countdown. I don\'t know what it\'s counting down to.' },
             { who: 'dane', text: 'Forty Saturdays. Then I buy it all back.' },
             { who: 'ray', text: 'Then you better start on this one. Eat something.' },
           ] },
@@ -58,7 +58,7 @@ function scene(run: SeqRun, id: string): Cutscene | null {
         film: true,
         shots: [{ bg: 'warehouse', caption: 'SOLD OUT', cast: [at(170, 1), npc('bradie', 'BRADIE', 290, -1), npc('ray', 'UNCLE RAY', 390, -1)], lines: [
           { who: null, text: 'Every folding chair in the warehouse has somebody on it. Some of them have two people on them.' },
-          { who: 'bradie', text: 'We are sold out. We are actually sold out. The fire marshal is here. He bought a ticket.' },
+          { who: 'bradie', text: 'We\'re sold out. We\'re actually sold out. The fire marshal is here. He bought a ticket.' },
           { who: 'dane', text: `This is how it started the first time. One room, full.` },
           { who: 'ray', text: `Do not get sentimental, ${first}. Count the money. Then get sentimental.` },
         ] }],
@@ -68,7 +68,7 @@ function scene(run: SeqRun, id: string): Cutscene | null {
         film: true,
         shots: [{ bg: 'cage', caption: 'THE FIRST CHAMPION', cast: [at(170, 1), npc('ray', 'UNCLE RAY', 290, -1)], lines: [
           { who: null, text: 'The warehouse has its first champion. The belt came from a trophy shop on Route 9 and the gold paint is still a little wet.' },
-          { who: 'ray', text: 'It is real if they bleed for it.' },
+          { who: 'ray', text: 'It\'s real if they bleed for it.' },
           { who: 'dane', text: `You stole that from me.` },
           { who: 'ray', text: `I stole it from Marie. She stole it from a priest.` },
         ] }],
@@ -102,7 +102,7 @@ function scene(run: SeqRun, id: string): Cutscene | null {
         film: true,
         shots: [{ bg: 'office', caption: 'WEEK 28', cast: [at(170, 1), npc('lenny', 'LENNY PRATT', 300, -1)], lines: [
           { who: null, text: 'A letter on the desk, gold envelope, the Zenith tower embossed on the back. Matching rights. Sign it, and the buyback gets more expensive.' },
-          { who: 'lenny', text: 'It is standard. Everything is standard. I am standard.' },
+          { who: 'lenny', text: 'It\'s standard. Everything is standard. I\'m standard.' },
           { who: 'dane', text: `Nothing about you is standard, Lenny.` },
         ] }],
       };

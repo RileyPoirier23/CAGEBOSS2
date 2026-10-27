@@ -25,7 +25,7 @@ function partners(save: StorySave, who: 'oneton' | 'corner'): Partner[] {
     { id: 'zac', name: 'ZAC "THE ATTACKER" BUNA', line: 'Tuesday class. Brings his own mat. Will take you down and apologise.', make: () => bossFighter('zac') },
   ];
   if (who === 'oneton') list.unshift({ id: 'mateo', name: 'MATEO VARGA', line: 'Nineteen and fast. Ray says "no hard shots". Nobody listens to Ray.', make: () => { const f = buildMateoGrown(save); f.division = 'welter'; return f; } });
-  else if (cornerKey(save) === 'mateo' && !save.flags.hanInjured) list.unshift({ id: 'han', name: 'HAN TIBULAR', line: 'The champion. He will take it easy on you. He will not.', make: () => buildHan(save) });
+  else if (cornerKey(save) === 'mateo' && !save.flags.hanInjured) list.unshift({ id: 'han', name: 'HAN TIBULAR', line: 'The champion. He\'ll take it easy on you. He won\'t.', make: () => buildHan(save) });
   else if (cornerKey(save) === 'han') list.unshift({ id: 'oneton', name: '1TON MORALES', line: 'He wants rounds with the champion. He wants them a little too much.', make: () => buildOneTon(save) });
   return list;
 }

@@ -31,11 +31,11 @@ export function radioPromoter(run: SeqRun, boss: string): RadioLine[] {
       : `Main event was a draw. Nobody won, which is also how my marriage works.` });
   }
   out.push({ who: 'butler', text: s.fill >= 0.98 ? `Sold out. ${money(s.gate)} at the gate. The fire marshal stood in the back and pretended not to count.` : s.fill < 0.5 ? `${Math.round(Math.min(1, s.fill) * 100)} percent full. You could hear every punch. You could hear every cough.` : `${money(s.gate)} at the gate, ${Math.round(Math.min(1, s.fill) * 100)} percent full. Respectable. Like a nice cardigan.` });
-  if (s.zenith) out.push({ who: 'sandwich', text: s.zenith.won ? `Zenith ran a card across town the same night. They won the ratings. They did not win my heart.` : `Zenith ran a card across town the same night. Nobody went. Somebody saw Trent from strategy eating alone.` });
+  if (s.zenith) out.push({ who: 'sandwich', text: s.zenith.won ? `Zenith ran a card across town the same night. They won the ratings by about four people.` : `Zenith ran a card across town the same night. Nobody went. Somebody saw Trent from strategy eating alone.` });
   if (s.heatAfter >= 60) out.push({ who: 'butler', text: `The commission is circling, Sandwich. Heat like that, you start getting letters. Then you start getting visitors.` });
-  else if (s.buzzAfter > s.buzzBefore + 4) out.push({ who: 'butler', text: `The buzz is up. People are talking about ${boss}. Some of it is even nice.` });
+  else if (s.buzzAfter > s.buzzBefore + 4) out.push({ who: 'butler', text: `The buzz is up. People are talking about ${boss}. Some of it's even nice.` });
   if (s.raided) out.push({ who: 'sandwich', text: `And of course the raid. I have never seen a man hide that many folding chairs that fast.` });
-  out.push({ who: 'butler', text: pick(['That is the week. Hands up, chin down, eat something.', 'That is the show. Commissioner Pete says goodnight. Baaa.', 'Back next week. Same warehouse. Same bucket.'], seed + 3) });
+  out.push({ who: 'butler', text: pick(['That\'s the week. Butler out.', 'That\'s the show. Commissioner Pete says goodnight. Baaa.', 'Back next week. Same warehouse. Same bucket.'], seed + 3) });
   return out;
 }
 
@@ -50,13 +50,13 @@ export function radioStory(save: StorySave, weekLines: string[]): RadioLine[] {
   const trained = weekLines.filter((l) => /\b(light|full|camp)\b.*grade/i.test(l));
   if (trained.length) {
     const best = trained.find((l) => /grade (S|A)/.test(l));
-    out.push({ who: 'sandwich', text: best ? `Word from the gym: an A in training this week. Ray made a second pot. That is how you know.` : `${trained.length} training session${trained.length > 1 ? 's' : ''} at Ray's. Nobody got an A. Ray says that builds character. Ray says everything builds character.` });
+    out.push({ who: 'sandwich', text: best ? `Word from the gym: an A in training this week. Ray made a second pot, which he only does for an A.` : `${trained.length} training session${trained.length > 1 ? 's' : ''} at Ray's. Nobody got an A. Ray says that builds character. Ray says everything builds character.` });
   }
-  if (has(/PRESS DAY/i)) out.push({ who: 'butler', text: `Press day at the warehouse. Somebody said something they will regret. Bradie clipped it. It is everywhere.` });
-  if (has(/dinner|tacos/i)) out.push({ who: 'sandwich', text: `Dinner with the fighters. I was not invited. I want that on the record.` });
+  if (has(/PRESS DAY/i)) out.push({ who: 'butler', text: `Press day at the warehouse. Somebody said something they\'ll regret, and Bradie had it clipped and posted before the room emptied.` });
+  if (has(/dinner|tacos/i)) out.push({ who: 'sandwich', text: `Dinner with the fighters. I wasn\'t invited. I want that on the record.` });
   if (has(/media|interview|podcast/i)) out.push({ who: 'butler', text: `A media day, too. The beard did most of the talking. The beard is very quotable.` });
   if (has(/spar/i)) out.push({ who: 'sandwich', text: `They sparred at Ray's. Ray said no hard shots. Sources say there were hard shots.` });
-  if (out.length < 3) out.push({ who: 'sandwich', text: `Quiet week. Ray made soup. That is the news. That is always the news.` });
-  out.push({ who: 'butler', text: pick(['Hands up, chin down, eat something. Goodnight, Moncton.', 'That is the week. Somebody check on the goat.', 'Back next week. Ray says six a.m. Ray always says six a.m.'], seed + 5) });
+  if (out.length < 3) out.push({ who: 'sandwich', text: `Quiet week. Somebody made soup, somebody ate it, and nobody invited Sandwich.` });
+  out.push({ who: 'butler', text: pick(['Goodnight, Moncton. Tip your waitress.', 'That\'s the week. Somebody check on the goat.', 'Back next week. The gym opens at six, if you\'re the kind of person who gets up for that.'], seed + 5) });
   return out;
 }

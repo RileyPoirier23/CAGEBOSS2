@@ -11,12 +11,12 @@ import { II } from '../theme';
 import { shade } from '../../art/palette';
 
 const TIPS = [
-  'TIP: Zenith Holdings does not lose. It "realigns". Read the realignment.',
+  'TIP: Zenith Holdings doesn\'t lose. It "realigns". Read the realignment.',
   'TIP: The desk opens before the cage does. Forged paper is still paper.',
-  'TIP: Heat at 100 means the commission brings a van. The van is not for you. It is also for you.',
+  'TIP: Heat at 100 means the commission brings a van. The van isn\'t for you. It\'s also for you.',
   'TIP: 1ton has a notebook. 1ton has always had a notebook. Mind what you say near the notebook.',
   'TIP: A fighter in camp is a fighter not selling tickets. A fighter not in camp is a fighter in hospital.',
-  'TIP: Verity Kane signs everything in gold ink. It is not ink.',
+  'TIP: Verity Kane signs everything in gold ink. It isn\'t ink.',
   'TIP: Every clause you sign with Zenith costs half a million on the way out. Every one.',
   'TIP: The warehouse roof leaks onto the canvas. Call it "home advantage".',
   'TIP: Trent from strategy now runs the CBFC. He has replaced the cage with "an immersive fan journey".',
@@ -26,14 +26,14 @@ const TIPS = [
   'TIP: Belts you invent are real if the crowd says so. The crowd says a lot of things.',
   'TIP: Uncle Ray says hands up, chin down, eat something. Uncle Ray is usually right.',
   'TIP: A bribe is a fee with a guilty conscience. The commission charges for both.',
-  'TIP: Mateo is not a kid anymore. Stop booking him like one.',
+  'TIP: Mateo isn\'t a kid anymore. Stop booking him like one.',
   'TIP: Blood on the canvas stays until somebody mops. Nobody here mops.',
   'TIP: Zenith matching-rights letters arrive in weeks 28, 34 and 38. Like a cold.',
-  'TIP: A body shot you do not see coming is still a body shot. Watch his hips.',
-  'TIP: You can buy back early from week 34. You cannot buy back your dignity at all.',
+  'TIP: A body shot you don\'t see coming is still a body shot. Watch his hips.',
+  'TIP: You can buy back early from week 34. You can\'t buy back your dignity at all.',
   'TIP: The Pride of the Maritimes still trains at Ray\'s. Ask nicely. Bring soup.',
   'TIP: Gordon Vance owns the block. Gordon Vance always owns the block.',
-  'TIP: When a fighter says "it\'s just a scratch", it is a cut. When he says "it\'s a cut", call the doctor.',
+  'TIP: When a fighter says "it\'s just a scratch", it\'s a cut. When he says "it\'s a cut", call the doctor.',
 ];
 
 const STATUS = [

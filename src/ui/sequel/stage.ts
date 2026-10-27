@@ -102,7 +102,8 @@ function mentions(s: string, cast: StageActor[], possessive = false): { id: stri
 }
 
 /** didn't happen: "does not", "never", "almost", "without" just before the verb */
-const NEG = /\b(not|never|n't|almost|nearly|without|wants to|tries to|would|could|might)\s+(\w+\s+){0,2}$/i;
+// ("doesn't throw it", "won't sit": the n't hangs off the verb, so it has no word boundary of its own)
+const NEG = /(\bnot|n't|\bnever|\balmost|\bnearly|\bwithout|\bwants to|\btries to|\bwould|\bcould|\bmight)\s+(\w+\s+){0,2}$/i;
 /** not one person: "Nobody is celebrating", "the crowd stands up" */
 const CROWD = /\b(nobody|no one|everyone|everybody|somebody|someone|the crowd|people|half the|the whole)\b/i;
 /** a memory or a description, not the scene: "where Butch hit him", "the day he fell" */

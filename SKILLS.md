@@ -206,6 +206,17 @@ R-rated satire with heart: cutthroat jokes, deadpan narration, then something th
 lines. Every character has one running bit (Ray's soup, 1ton's question, Cuchillo's "metaphorical knife"). Swear
 when it's funny, not as filler.
 
+**Write like a person, not a model** (Riley ran the humanizer over the whole sequel; keep it that way):
+- People use contractions. Everybody says "don't", "it's", "I'm". **1ton is the exception**: his formal English
+  ("I do not sweep the floor") is his voice, so leave his lines uncontracted.
+- No one-line closers that restate the scene ("That's the point.", "That's the whole job.", "Nobody says anything.").
+  End on the last concrete thing that happened.
+- No "not X, it's Y" for weight, no rows of fragments ("Boots. A hat. A trailer."), no em dashes. Pick a specific
+  detail instead ("$211 in coins and an IOU from Mateo").
+- "Hands up. Chin down. Eat something." is for Ray's big moments only (his first lesson, his last words, the funeral,
+  the final walk, the endings). Don't sign off radio segments or signings with it.
+- Before you write a scene, read some of game 1's `src/ui/storyscenes.ts`: that's the voice.
+
 ## 6. Screen and text rules (Riley has complained about these)
 
 - Every screen is **480×270 design pixels**. Wide phones add `OX`/`SW`; full-width screens use `SW` and `-OX`.

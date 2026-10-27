@@ -7,6 +7,17 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 11: Claude (2026-10-27)
+Humanizer pass over the sequel's text (Riley's humanizer skill; rules now in SKILLS.md section 5):
+- 606 strings contracted the way people talk (1ton keeps his formal English). The narration reader now treats
+  "doesn't"/"won't" as negatives (`NEG` in stage.ts).
+- About 50 lines rewritten by hand: one-line closers and sayings ("That's the point", "That's the whole job",
+  "Nobody says anything"), filler "for the first time", stock similes ("like it owes him money", twice), rows of
+  fragments in establishing narration, part scenes that repeated their own card, and the catchphrase where it was
+  a sign-off (radio, signings, a soup joke). It stays at Ray's big moments.
+- Em dashes in document titles and logs became the game's "  /  ".
+Not re-read in the game itself: the rewrite was checked by reading the diff and by the tests.
+
 ### Turn 10: Claude (2026-10-27)
 Motion pass with Riley's new animation skills (Emil Kowalski's rules: strong ease-out for things arriving, never
 ease-in on UI, UI under 300 ms, nothing from scale 0, no animation on constant actions, interruptible, reduced motion).

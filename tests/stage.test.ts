@@ -30,6 +30,7 @@ describe('stage directions from narration', () => {
     expect(readStage('In the stands, Gordon Vance stands up. He claps.', home, fresh('tyler'))).toEqual([]);
     expect(readStage('Nobody is celebrating.', home, fresh('han'))).toEqual([]);
     expect(readStage('He does not throw it away either.', home, fresh('han'))).toEqual([]);
+    expect(readStage("He doesn't throw it away either. He won't sit down.", home, fresh('han'))).toEqual([]);
     // two of them at once
     expect(readStage('Han and Tyler sit on the apron.', home, fresh()).filter((a) => a.do === 'pose').map((a) => a.do === 'pose' && a.who)).toEqual(['han', 'tyler']);
   });
