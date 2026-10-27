@@ -81,6 +81,8 @@ export interface SeqShow {
   body: string;
   notes: string[];
   raided: boolean;
+  /** Zenith ran a card the same night (rivals.ts): who won it */
+  zenith?: { name: string; won: boolean; line: string };
 }
 
 export interface SeqEventState {
@@ -253,6 +255,8 @@ export interface SeqRun {
   phaseLog: string[];
   /** the week's paperwork, generated when the week turns over */
   desk: SeqDeskState;
+  /** every pairing that has fought (rivals.ts), keyed "rosterId|opponentId" */
+  rivalries?: Record<string, Rivalry>;
   status: SeqStatus;
   ending: string | null;
   flags: Record<string, number | string | boolean>;
@@ -284,6 +288,9 @@ export interface SeqRun {
     deskDelegated: number;
   };
 }
+
+/** Two fighters who have met before (rivals.ts): the next booking is a grudge match. */
+export interface Rivalry { a: string; b: string; meetings: number; lastWinner: 'a' | 'b' | 'draw'; lastWeek: number; finishes: number }
 
 export interface SeqBest {
   score: number;

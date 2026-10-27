@@ -8,6 +8,7 @@ import { Rng } from '../core/rng';
 import { clamp } from '../core/format';
 import { beltFor, cardBouts, opponentById, rosterById } from './model';
 import type { SeqRun } from './types';
+import { mainGrudge } from './rivals';
 
 export interface PresserAnswer {
   id: string;
@@ -83,6 +84,13 @@ const BANK: PresserQuestion[] = [
   ]),
 ];
 
+/** A rematch on the main event gets its own question. */
+const GRUDGE_Q = Q('grudge', 'oneton', '1ton. {a}, {b}. You have done this before. One of you remembers it better than the other. Which one of you lied at the last press conference?', [
+  A('heat', 'Let them settle it at the table', 'The table goes over. Then the water jugs. {b} throws a chair at a chair. Security arrives late and in the wrong order.', 10, 8, -1, 'BUZZ up big. HEAT up. The clip does a million views by Friday.'),
+  A('respect', '"They respect each other. Next question."', '{a} and {b} nod at each other, which is somehow worse. 1ton writes "they respect each other" and then "(they do not)".', 4, 0, 3, 'Classy. The locker room likes it.'),
+  A('money', 'Announce a bonus for a finish', '"Ten grand to whoever ends it." Both of them stand up. The presser is over. The fight has started early.', 6, 3, 2, 'BUZZ up. The fighters are motivated. Your accountant is not.'),
+]);
+
 const fill = (s: string, a: Fighter, b: Fighter, div: string): string =>
   s.replace(/\{a\}/g, a.last).replace(/\{b\}/g, b.last).replace(/\{div\}/g, div.toUpperCase());
 
@@ -97,7 +105,8 @@ export function presserFor(run: SeqRun): PresserCard | null {
   const rng = new Rng((run.seed ^ (run.week * 2654435761)) >>> 0);
   // the room picks the question: title fights get asked about the belt, hot weeks about the van
   const weighted = BANK.filter((q) => (q.id === 'title' ? title : true)).filter((q) => (q.id === 'heat' ? run.heat >= 40 : true));
-  const q = title && rng.chance(0.5) ? BANK.find((x) => x.id === 'title')! : rng.pick(weighted);
+  // a grudge on the main event: the room only wants to talk about that
+  const q = mainGrudge(run) ? GRUDGE_Q : title && rng.chance(0.5) ? BANK.find((x) => x.id === 'title')! : rng.pick(weighted);
   const div = a.f.division;
   return {
     week: run.week,

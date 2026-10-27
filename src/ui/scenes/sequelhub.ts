@@ -1,13 +1,15 @@
 /**
  * The weekly office: a leaking warehouse, two fights and four numbers.
  */
+import { isGrudge, mainGrudge, rivalryOf, zenithCounter } from '../../sequel/rivals';
+import { fairOpponent } from '../../sequel/model';
 import { maybeLesson2 } from '../sequel/tutorial2';
 import { openPhone } from '../sequel/phoneui';
 import { bossName } from '../../sequel/model';
 import { ownerForRun } from '../../sequel/phone';
 import { maybePromoterCut } from '../sequel/promotercuts';
 import { presserDone, presserFor } from '../../sequel/presser';
-import { playPresser } from '../sequel/presser2';
+import { playPresser, playWeighIn } from '../sequel/presser2';
 import { Container, Graphics } from 'pixi.js';
 import { Scene, type Game } from '../app';
 import { PAL } from '../../art/palette';
@@ -137,6 +139,13 @@ export class SequelHubScene extends Scene {
     if (!bouts.length) {
       right.addChild(text('NOBODY CAN FIGHT. THE CAGE IS VERY CLEAN.', 12, 80, { width: 288, color: PAL.blood, small: true }));
     }
+    // Zenith has booked the same night
+    const zc = zenithCounter(run);
+    if (zc && bouts.length < 3) right.addChild(text(`ZENITH COUNTER-PROGRAMMING: ${zc.name} vs your show. Win the night with buzz and grudges.`, 6, 184, { width: 300, small: true, color: PAL.blood, maxLines: 1 }));
+    if (zc && !run.flags[`zwarn_${run.week}`]) {
+      run.flags[`zwarn_${run.week}`] = true;
+      setTimeout(() => this.g.toast(`ZENITH IS RUNNING ${zc.name} THIS SATURDAY, HEADLINED BY ${zc.headliner.toUpperCase()}`, PAL.blood), 900);
+    }
     bouts.forEach((bout, i) => {
       const a = rosterById(run, bout.a);
       const opp = opponentById(run, bout.b);
@@ -147,6 +156,9 @@ export class SequelHubScene extends Scene {
       const label = i === 0 ? 'MAIN EVENT  /  5 ROUNDS' : i === 1 ? 'CO-MAIN  /  3 ROUNDS' : 'OPENER  /  3 ROUNDS';
       row.addChild(text(label, 4, 3, { small: true, color: i === 0 ? PAL.gold : PAL.ember }));
       if (beltFor(run, a.f.id)) row.addChild(text('CHAMPION', 116, 3, { small: true, color: PAL.gold }));
+      // they have met before: a grudge match (more seats, bigger purses, a personal presser)
+      const rv = rivalryOf(run, a.f.id, opp.id);
+      if (rv) row.addChild(text(`GRUDGE MATCH  /  MEETING ${rv.meetings + 1}`, 170, 3, { small: true, color: PAL.blood }));
       const pa = fighterPortrait(a.f, 32);
       pa.position.set(4, 11);
       row.addChild(pa);
@@ -164,7 +176,7 @@ export class SequelHubScene extends Scene {
         cycleToFighter(run, i, String(id));
         this.saveAndRefresh(run);
       }));
-      row.addChild(selector(160, 40, 136, run.freeAgents.map((f) => ({ value: f.id, label: `${f.first[0]}. ${f.last}` })), opp.id, (id) => {
+      row.addChild(selector(160, 40, 136, run.freeAgents.filter((f) => fairOpponent(a.f, f)).map((f) => ({ value: f.id, label: `${f.first[0]}. ${f.last}${isGrudge(run, a.f.id, f.id) ? ' (GRUDGE)' : ''}` })), opp.id, (id) => {
         run.card.bouts[i].b = String(id);
         this.saveAndRefresh(run);
       }));
@@ -280,6 +292,17 @@ export class SequelHubScene extends Scene {
     const card = presserDone(run) ? null : presserFor(run);
     if (card) {
       playPresser(this.g, run, card, () => {
+        writeRun(run);
+        this.doRun(run);
+      });
+      return;
+    }
+    // a grudge on the main event: the weigh-in turns into a face-off
+    const grudge = mainGrudge(run);
+    const wcard = grudge && !run.flags[`weighin_${run.week}`] ? presserFor(run) : null;
+    if (grudge && wcard) {
+      run.flags[`weighin_${run.week}`] = true;
+      playWeighIn(this.g, run, wcard, grudge.meetings + 1, () => {
         writeRun(run);
         this.doRun(run);
       });

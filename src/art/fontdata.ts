@@ -273,6 +273,7 @@ function normalizeTextRaw(s: string): string {
     .replace(/[–—]/g, '-')
     .replace(/…/g, '...')
     .replace(/→/g, '>')
+    .replace(/★/g, '*')
     .replace(/ /g, ' ')
     .replace(/[éèêë]/g, 'e')
     .replace(/[áàâäã]/g, 'a')

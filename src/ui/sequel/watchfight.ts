@@ -28,6 +28,8 @@ export interface WatchOpts {
   /** the result line shown when the tape runs out ("ZETA WINS / KO R2 1:11") */
   verdict: string;
   verdictColor: number;
+  /** the broadcast's camera package: side on, the broadcast push-in, or the overhead */
+  camera?: 'side' | 'tv' | 'top';
   done?: () => void;
 }
 
@@ -59,6 +61,7 @@ export function watchFight(g: Game, o: WatchOpts): void {
   arena.position.set(Math.round((W - AW) / 2), AY);
   root.addChild(arena);
   arena.startFight();
+  if (o.camera) arena.setMode(o.camera);
 
   // header: the slot, the venue, the clock
   const head = new Graphics().rect(-OX, 0, SW, AY - 1).fill(0x000000).rect(-OX, AY - 2, SW, 1).fill(II.blood);

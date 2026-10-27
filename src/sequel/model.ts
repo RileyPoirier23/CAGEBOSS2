@@ -13,6 +13,7 @@ import { createNewGame } from '../sim/newgame';
 import { simulateFight } from '../sim/fight';
 import { AD_LEVELS, CAMPS, ENDINGS, GIMMICKS, SEASON_PHASES, VENUES, type SeqAdLevel, type SeqCampDef, type SeqGimmick, type SeqPhaseDef, type SeqVenue } from './data';
 import { pickEvent } from './events';
+import { grudgeBoost, isGrudge, recordRivalries, zenithCounter, zenithNight } from './rivals';
 import { emptyDesk, ensureDesk } from './desk';
 import {
   BUYBACK_BUZZ, BUYBACK_CASH, SEASON_WEEKS, SEQUEL_VERSION,
@@ -499,7 +500,11 @@ export function project(run: SeqRun): SeqProjection {
     if (opp) cardStar += opponentStar(opp);
   }
   cardStar = cardStar / Math.max(1, bouts.length * 2);
-  const fill = clamp(0.28 + run.buzz / 240 + cardStar / 280 + ad.fill + g.fill + (bouts.length - 2) * 0.035 + (title ? 0.035 : 0), 0.12, 1.05);
+  // grudge matches sell; a Zenith card the same night steals the casuals
+  const grudge = grudgeBoost(run, bouts);
+  const z = zenithCounter(run);
+  const fill0 = clamp(0.28 + run.buzz / 240 + cardStar / 280 + ad.fill + g.fill + (bouts.length - 2) * 0.035 + (title ? 0.035 : 0) + grudge.fill, 0.12, 1.05);
+  const fill = z ? clamp(fill0 - zenithNight(run, z, fill0, cardStar).fillHit, 0.1, 1.05) : fill0;
   const gate = Math.round(fill * v.capacity * v.ticket * g.gate * titleBoost(run));
   const stream = Math.round((run.buzz * 22 + cardStar * 13) * v.streamMult * g.stream * (title ? 1.07 : 1));
   const merch = Math.round(160 + run.buzz * 8 + cardStar * 5 + v.capacity / 25 + (title ? 650 : 0));
@@ -508,8 +513,10 @@ export function project(run: SeqRun): SeqProjection {
   for (const b of bouts) {
     const a = rosterById(run, b.a);
     const opp = opponentById(run, b.b);
-    if (a) purses += a.purse;
-    if (opp) purses += Math.round(seqPurse(opp) * 0.6);
+    // a grudge match: both corners want more
+    const k = isGrudge(run, b.a, b.b) ? 1.3 : 1;
+    if (a) purses += Math.round(a.purse * k);
+    if (opp) purses += Math.round(seqPurse(opp) * 0.6 * k);
   }
   const insurance = run.flags.insurance ? 1200 : 0;
   const costs = v.rent + v.production + g.cost + ad.cost + purses + insurance;
@@ -695,7 +702,13 @@ export function runShow(run: SeqRun): SeqShow {
   const losses = results.filter((r) => r.winner === 'b').length;
   const finishes = results.filter((r) => r.winner === 'a' && r.finish).length;
 
-  let gain = 1 + wins * 3 + finishes + Math.round(g.buzz * 0.6) + ad.buzz - losses + titleBuzz;
+  // the grudges get remembered (and the ones that were grudges pay off now), and Zenith's night is scored
+  const grudge = grudgeBoost(run, bouts.map((b) => ({ a: b.a, b: b.b })));
+  notes.push(...recordRivalries(run, results));
+  const z = zenithCounter(run);
+  const zn = z ? zenithNight(run, z, proj.fill, proj.cardStar) : null;
+  if (zn) notes.push(zn.line);
+  let gain = 1 + wins * 3 + finishes + Math.round(g.buzz * 0.6) + ad.buzz - losses + titleBuzz + grudge.buzz + (zn?.buzz ?? 0);
   run.buzz = clamp(Math.round(run.buzz * 0.97 + gain), 0, 100);
   run.heat = clamp(run.heat + v.heat + g.heat - 3 + (run.buzz > 60 ? 1 : 0) + titleHeat, 0, 100);
   run.locker = clamp(run.locker + wins * 3 - losses * 2 + g.locker + (crowned ? 2 : 0), 0, 100);
@@ -783,6 +796,7 @@ export function runShow(run: SeqRun): SeqShow {
     body,
     notes,
     raided,
+    zenith: z && zn ? { name: z.name, won: zn.won, line: zn.line } : undefined,
   };
   run.lastShow = show;
   // the tapes stay with this week's show; the archive keeps the results

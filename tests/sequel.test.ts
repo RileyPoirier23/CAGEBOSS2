@@ -580,3 +580,47 @@ describe('the phone', () => {
     expect(buyFromPlug(o, offer, 1).ok).toBe(false); // once a week
   });
 });
+
+describe('grudges, Zenith nights and the broadcast', () => {
+  it('turns a rematch into a grudge match with bigger purses and its own presser', async () => {
+    const { isGrudge, mainGrudge } = await import('../src/sequel/rivals');
+    const { project, runShow, beginNextWeek, ensureCard } = await import('../src/sequel/model');
+    const { presserFor } = await import('../src/sequel/presser');
+    const run = newSequelRun(61);
+    ensureCard(run);
+    run.desk.done = true;
+    const pair = { ...run.card.bouts[0] };
+    const before = project(run).purses;
+    runShow(run);
+    expect(isGrudge(run, pair.a, pair.b)).toBe(true);
+    run.event = null;
+    beginNextWeek(run);
+    run.card.bouts = [pair];
+    run.desk.done = true;
+    expect(mainGrudge(run)).toBeTruthy();
+    expect(presserFor(run)!.question.id).toBe('grudge');
+    expect(project(run).purses).toBeGreaterThan(Math.round(before / Math.max(1, 2)) - 1);
+  });
+
+  it('books Zenith against you on some Saturdays, and a broadcast pays', async () => {
+    const { zenithCounter, rateBroadcast, airBroadcast } = await import('../src/sequel/rivals');
+    const { runShow, ensureCard } = await import('../src/sequel/model');
+    const run = newSequelRun(62);
+    let nights = 0;
+    for (let w = 6; w <= 40; w++) {
+      run.week = w;
+      if (zenithCounter(run)) nights++;
+    }
+    expect(nights).toBeGreaterThan(2);
+    expect(nights).toBeLessThan(30);
+    run.week = 3;
+    ensureCard(run);
+    run.desk.done = true;
+    runShow(run);
+    const cash = run.cash;
+    const r = airBroadcast(run, { booth: 'hype', camera: 'tv', replay: 0, cut: 'full' });
+    expect(r.viewers).toBeGreaterThan(0);
+    expect(run.cash).toBe(cash + r.cash);
+    expect(rateBroadcast(run, { booth: 'chaos', camera: 'side', replay: 0, cut: 'highlights' }).viewers).toBeGreaterThan(0);
+  });
+});

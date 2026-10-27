@@ -19,6 +19,8 @@ import { SEASON_WEEKS } from '../../sequel/types';
 import { SequelEndScene } from './sequelend';
 import { toastSeqAchievements } from './sequelachievements';
 import { watchFight } from '../sequel/watchfight';
+import { openBroadcast } from '../sequel/broadcast';
+import { broadcastDone } from '../../sequel/rivals';
 import { isSequelDemo, DEMO_WEEKS } from '../../sequel/standalone';
 
 type Step = 'results' | 'event' | 'consequence';
@@ -147,6 +149,11 @@ export class SequelShowScene extends Scene {
     }
     r.addChild(right);
 
+    // the night against Zenith, and the TV package
+    if (show?.zenith) r.addChild(text(show.zenith.line, 8, 233, { small: true, width: SW - 16, color: show.zenith.won ? PAL.moss : PAL.blood, maxLines: 1 }));
+    if (show?.results.length && !broadcastDone(run)) {
+      r.addChild(button('PRODUCE THE BROADCAST', SW - 140, 240, 132, 18, () => openBroadcast(this.g, run, () => writeRun(run), () => this.refresh()), { small: true, fill: PAL.rust, border: PAL.gold }));
+    }
     const next = run.event ? 'FACE THE FALLOUT' : run.week >= SEASON_WEEKS ? 'CLOSE THE BOOKS' : 'NEXT WEEK';
     r.addChild(button(next, Math.round((SW - 180) / 2), 240, 180, 18, () => this.continueResults(run), {
       fill: run.event ? PAL.rust : PAL.blood,
