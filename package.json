@@ -3,7 +3,6 @@
   "private": true,
   "version": "2.2.0",
   "sequelVersion": "0.9.0",
-  "sequelVersion": "0.1.0",
   "type": "module",
   "description": "CAGE BOSS - a satirical MMA-promoter management sim",
   "scripts": {
