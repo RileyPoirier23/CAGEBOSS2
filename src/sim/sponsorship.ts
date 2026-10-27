@@ -123,7 +123,7 @@ export function answerEventOffer(s: GameState, id: string, accept: boolean): str
 }
 
 /** The room around the cage (ui/rooms.ts): each league's own, or a special venue's. */
-export type Room = 'arena' | 'hall' | 'warehouse' | 'casino' | 'lounge' | 'beach' | 'rooftop' | 'carrier' | 'barn' | 'yard' | 'lot' | 'gym' | 'lanes' | 'cruise' | 'lawn' | 'hangar';
+export type Room = 'arena' | 'hall' | 'warehouse' | 'casino' | 'lounge' | 'beach' | 'rooftop' | 'carrier' | 'barn' | 'yard' | 'lot' | 'gym' | 'lanes' | 'cruise' | 'lawn' | 'hangar' | 'rays';
 
 /** Venues (data/venues) that look like nowhere else: the fight happens in their room. */
 const VENUE_ROOM: Record<string, Room> = {

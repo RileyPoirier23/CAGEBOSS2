@@ -18,6 +18,7 @@ import { SEASON_WEEKS } from '../../sequel/types';
 import { SequelEndScene } from './sequelend';
 import { toastSeqAchievements } from './sequelachievements';
 import { watchFight } from '../sequel/watchfight';
+import { isSequelDemo, DEMO_WEEKS } from '../../sequel/standalone';
 
 type Step = 'results' | 'event' | 'consequence';
 
@@ -266,6 +267,12 @@ export class SequelShowScene extends Scene {
 
   private advance(run: SeqRun): void {
     sfx('click');
+    if (isSequelDemo() && run.week >= DEMO_WEEKS) {
+      void import('../sequel/demo').then((m) => m.demoOver(this.g, `That was week ${DEMO_WEEKS} of forty.`, () => {
+        void import('./sequel').then((t) => this.g.goto(new t.SequelTitleScene(this.g)));
+      }));
+      return;
+    }
     beginNextWeek(run);
     writeRun(run);
     toastSeqAchievements(this.g, run);

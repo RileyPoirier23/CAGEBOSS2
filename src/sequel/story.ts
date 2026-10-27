@@ -13,7 +13,7 @@ import { content } from '../core/content';
 import { Rng } from '../core/rng';
 import { clamp as clampNum } from '../core/format';
 import { generateFighter } from '../sim/generate';
-import { overall } from '../sim/fighters';
+import { overall, isWomensDivision } from '../sim/fighters';
 import { HAN } from '../sim/cast';
 import type { Bg } from '../ui/cutscene';
 import {
@@ -46,6 +46,8 @@ export interface StoryFightDef {
   hook: string;
   /** only on the books when this says so (the secret chapter's two roads) */
   when?: (save: StorySave) => boolean;
+  /** the week of the chapter it's booked for (default: the chapter's last week) */
+  week?: number;
 }
 
 export interface StoryChapter {
@@ -55,8 +57,10 @@ export interface StoryChapter {
   kicker: string;
   blurb: string;
   bg: Bg;
-  /** how many training / media / talk actions before the chapter can move */
+  /** how many training / media / talk actions before the chapter can move (old saves; the clock is weeks now) */
   actions: number;
+  /** how many weeks the chapter lasts: seven days each, and the story moves when the last one is done */
+  weeks?: number;
   fight?: StoryFightDef;
   /** a chapter can make you fight the whole crew, in order, before it lets go */
   fights?: StoryFightDef[];
@@ -164,7 +168,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       stakes: 'If 1ton wins, Zenith has to admit the warehouse is a promotion. If he loses, they call it an incident.',
       hook: '1TON  vs  THE AUDITOR',
     },
-    talk: 'contract',
+    talk: 'ray',
   },
   {
     id: 'the_board',
@@ -184,7 +188,7 @@ export const STORY_CHAPTERS: StoryChapter[] = [
       stakes: 'Five rounds against a man who has a boardroom named after him. 1ton asked for this fight. That is the first time he has asked for anything.',
       hook: '1TON  vs  THE CHAIRMAN',
     },
-    talk: 'boardroom',
+    talk: 'contract',
   },
   {
     id: 'rematch',
@@ -327,6 +331,160 @@ export const STORY_CHAPTERS: StoryChapter[] = [
 /** The length a story shows: the secret eleventh chapter only counts once you are in it. */
 export const MAIN_CHAPTERS = 10;
 
+// ---------------------------------------------------------------- the clock
+
+/** A day is an action: seven a week. */
+export const DAYS_PER_WEEK = 7;
+/** Weeks the story skips between chapters ("THREE MONTHS LATER"): the whole thing runs a few years. */
+export const CHAPTER_GAP_WEEKS = 9;
+
+/** How long each chapter lives, in weeks: a couple of months each. */
+const CHAPTER_WEEKS: Record<string, number> = {
+  back_row: 3, mexican_math: 6, brick_by_brick: 6, sparring_partner: 6, audit: 6, the_board: 8,
+  rematch: 6, brother: 6, street_justice: 10, buyback: 6, legacy: 6,
+};
+/** Fights that are not on the chapter's last week (chapter nine: one name every few weeks). */
+const FIGHT_WEEKS: Record<string, number> = { crew_duke: 3, crew_rico: 6, crew_cesar: 10 };
+for (const ch of STORY_CHAPTERS) {
+  ch.weeks ??= CHAPTER_WEEKS[ch.id] ?? 6;
+  for (const f of chapterFights(ch)) f.week ??= FIGHT_WEEKS[f.id] ?? ch.weeks;
+}
+
+export const chapterWeeks = (ch: StoryChapter): number => ch.weeks ?? 6;
+export const storyWeek = (save: StorySave): number => save.week ?? 1;
+
+/** Is this fight's night here yet? */
+export function fightDue(save: StorySave, def: StoryFightDef): boolean {
+  return storyWeek(save) >= (def.week ?? chapterWeeks(storyChapter(save)));
+}
+
+/** The fight that has to happen before the week can end (it is fight week), or null. */
+export function fightThisWeek(save: StorySave): StoryFightDef | null {
+  const f = nextChapterFight(save);
+  return f && fightDue(save, f) ? f : null;
+}
+
+/** "YEAR 2  /  MONTH 5": where the story is on the calendar. */
+export function storyDate(save: StorySave): string {
+  const w = save.totalWeeks ?? 0;
+  return `YEAR ${Math.floor(w / 52) + 1}  /  MONTH ${Math.floor((w % 52) / 4.34) + 1}`;
+}
+
+/** End the week: the days left are rest. Fight week can't end until the fight has happened. */
+export function endStoryWeek(save: StorySave): { ok: boolean; msg: string } {
+  const ch = storyChapter(save);
+  const due = fightThisWeek(save);
+  if (due) return { ok: false, msg: `It is fight week. ${due.hook} has to happen before the week can end.` };
+  if (storyWeek(save) >= chapterWeeks(ch)) return { ok: false, msg: 'This is the last week of the chapter. Finish what is left and move the story on.' };
+  const rested = save.actionsLeft;
+  save.week = storyWeek(save) + 1;
+  save.totalWeeks = (save.totalWeeks ?? 0) + 1;
+  save.actionsLeft = DAYS_PER_WEEK;
+  save.fatigue = clamp(save.fatigue - 10 - rested * 3);
+  addLog(save, `Week ${save.week - 1} done.${rested ? ` ${rested} day${rested === 1 ? '' : 's'} of rest.` : ''}`);
+  return { ok: true, msg: `WEEK ${save.week} OF ${chapterWeeks(ch)}` };
+}
+
+// ---------------------------------------------------------------- training: tiers and grades
+
+export type TrainTier = 'light' | 'full' | 'camp';
+export const TRAIN_TIERS: Record<TrainTier, { days: number; xp: number; fatigue: number; label: string; blurb: string }> = {
+  light: { days: 1, xp: 4, fatigue: 2, label: 'LIGHT', blurb: '1 day. Technique, shadowboxing, a lot of Ray talking.' },
+  full: { days: 2, xp: 10, fatigue: 5, label: 'FULL', blurb: '2 days. Pads, drills, rounds. The real work.' },
+  camp: { days: 3, xp: 17, fatigue: 9, label: 'CAMP', blurb: '3 days. Two-a-days. Ray makes extra soup.' },
+};
+
+/** Letter grades, from a drill you played or simmed. A sim scores 65%, a C. */
+export type Grade = 'S' | 'A' | 'B' | 'C' | 'D' | 'F';
+export const SIM_SCORE = 65;
+export const GRADE_MULT: Record<Grade, number> = { S: 1.7, A: 1.4, B: 1.18, C: 1, D: 0.7, F: 0.4 };
+export function gradeFor(pct: number): Grade {
+  return pct >= 95 ? 'S' : pct >= 85 ? 'A' : pct >= 75 ? 'B' : pct >= 60 ? 'C' : pct >= 45 ? 'D' : 'F';
+}
+/** 30 xp a level, 10 levels a track: a few chapters of honest work to max one out. */
+export const XP_PER_LEVEL = 30;
+
+const xpKey = (who: 'oneton' | 'corner', track: string): string => `${who}.${track}`;
+
+/** Bank xp on a track and bring the level (what the fighter builders read) up to date. */
+function addXp(save: StorySave, who: 'oneton' | 'corner', track: OneTonTrack, xp: number): { before: number; after: number } {
+  save.xp ??= {};
+  const key = xpKey(who, track);
+  const tr = (who === 'oneton' ? save.training : save.daneTraining) as unknown as Record<string, number>;
+  const before = tr[track] ?? 0;
+  // old saves: their levels count as banked xp
+  save.xp[key] = Math.max(save.xp[key] ?? 0, before * XP_PER_LEVEL) + xp;
+  const after = Math.min(10, Math.floor(save.xp[key] / XP_PER_LEVEL));
+  if (track in tr) tr[track] = after;
+  return { before, after };
+}
+
+/** One training session: a tier (days), a track and the grade the drill came out at. */
+export function trainSession(save: StorySave, who: 'oneton' | 'corner', track: OneTonTrack, tier: TrainTier, grade: Grade): string {
+  const t = TRAIN_TIERS[tier];
+  if (!canAct(save, t.days)) return `Not enough days left this week: a ${t.label} session takes ${t.days}.`;
+  if (who === 'corner' && track === 'media') track = 'cardio';
+  const xp = Math.round(t.xp * GRADE_MULT[grade]);
+  const { before, after } = addXp(save, who, track, xp);
+  save.actionsLeft -= t.days;
+  save.fatigue = clamp(save.fatigue + t.fatigue);
+  const name = who === 'oneton' ? '1TON' : cornerName(save);
+  if (who === 'oneton') {
+    save.ego = clamp(save.ego + (track === 'media' ? 3 : 1));
+    save.trust = clamp(save.trust + (grade === 'S' || grade === 'A' ? 2 : 1));
+  } else save.trust = clamp(save.trust + 1);
+  addLog(save, `${name} ${t.label.toLowerCase()} ${track}: grade ${grade}, +${xp} xp.${after > before ? ` Level ${after}.` : ''}`);
+  return `${name} ${track.toUpperCase()}  /  GRADE ${grade}  /  +${xp} XP${after > before ? `  /  LV ${before} > ${after}` : ''}`;
+}
+
+/** A sparring session (2 days): every physical track gets the work, graded on how the spar went. */
+export function sparSession(save: StorySave, who: 'oneton' | 'corner', grade: Grade): string {
+  if (!canAct(save, 2)) return 'Sparring takes 2 days. Not enough left this week.';
+  const xp = Math.round(7 * GRADE_MULT[grade]);
+  const ups: string[] = [];
+  for (const track of ['striking', 'grappling', 'cardio'] as const) {
+    const { before, after } = addXp(save, who, track, xp);
+    if (after > before) ups.push(`${track.toUpperCase()} ${after}`);
+  }
+  save.actionsLeft -= 2;
+  save.fatigue = clamp(save.fatigue + 7);
+  save.trust = clamp(save.trust + 2);
+  const name = who === 'oneton' ? '1TON' : cornerName(save);
+  addLog(save, `${name} sparred at Ray's. Grade ${grade}. Ray reffed and made everyone shake hands after.`);
+  return `${name} SPAR  /  GRADE ${grade}  /  +${xp} XP x3${ups.length ? `  /  ${ups.join(', ')}` : ''}`;
+}
+
+/** A day off: the body heals, and Ray feeds you. */
+export function restDay(save: StorySave): string {
+  if (!canAct(save, 1)) return 'No days left this week.';
+  save.actionsLeft--;
+  save.fatigue = clamp(save.fatigue - 14);
+  addLog(save, 'A day off. Ray made the soup Marie\'s way and made everybody eat two bowls.');
+  return 'REST  /  FATIGUE -14';
+}
+
+/**
+ * The story between the fights: scenes that play when their week of the chapter comes round.
+ * Each chapter is a couple of months, so things happen in the middle of it.
+ */
+export const STORY_BEATS: { id: string; chapter: string; week: number }[] = [
+  { id: 'first_day', chapter: 'mexican_math', week: 2 },
+  { id: 'soup_lesson', chapter: 'brick_by_brick', week: 3 },
+  { id: 'mop_years', chapter: 'sparring_partner', week: 3 },
+  { id: 'tower_photo', chapter: 'the_board', week: 4 },
+  { id: 'last_dinner', chapter: 'brother', week: 3 },
+  { id: 'tuesday_class', chapter: 'street_justice', week: 5 },
+];
+
+/** The beat waiting to play this week, if any. */
+export function dueBeat(save: StorySave): string | null {
+  const ch = storyChapter(save);
+  return STORY_BEATS.find((b) => b.chapter === ch.id && b.week <= storyWeek(save) && !save.flags[`beat_${b.id}`])?.id ?? null;
+}
+
+/** Has this chapter's talk happened (the story will not move on without it)? */
+export const talkedThisChapter = (save: StorySave): boolean => !!save.flags[`talk_${storyChapter(save).id}`];
+
 export function storyChapter(save: StorySave): StoryChapter {
   return STORY_CHAPTERS[Math.max(0, Math.min(STORY_CHAPTERS.length - 1, save.chapter))];
 }
@@ -340,7 +498,10 @@ export function newStorySave(seed: number): StorySave {
     version: STORY_VERSION,
     seed: s,
     chapter: 0,
-    actionsLeft: STORY_CHAPTERS[0].actions,
+    actionsLeft: DAYS_PER_WEEK,
+    week: 1,
+    totalWeeks: 0,
+    xp: {},
     trust: 44,
     brand: 26,
     heat: 6,
@@ -369,6 +530,13 @@ export function newStorySave(seed: number): StorySave {
 /** Older saves (before side shows and contract reviews) still load. */
 export function migrateStorySave(save: StorySave): StorySave {
   save.fatigue ??= 0;
+  // saves from before the weekly clock: they start the current chapter's first week
+  if (save.week === undefined) {
+    save.week = 1;
+    save.actionsLeft = DAYS_PER_WEEK;
+  }
+  save.totalWeeks ??= save.chapter * 14;
+  save.xp ??= {};
   save.stats ??= {
     sideFights: 0, sideWins: 0, sideLosses: 0, kos: 0, subs: 0, decisions: 0,
     catches: 0, missed: 0, wrongFlags: 0, goodDeals: 0, badDeals: 0, walked: 0,
@@ -593,8 +761,9 @@ export function buildHan(save: StorySave, boss = false): Fighter {
     },
     styles: ['Counter Striker', 'Pressure Striker'],
     traits: ['Hungry', 'Loyal', 'Mentor'],
-    record: { w: 34, l: 1, d: 0, nc: 0 },
-    look: { ...HAN.look, beard: 2, scar: 1 },
+    record: { w: 30, l: 1, d: 0, nc: 0 },
+    // years on: the long waves are a bun now, the sides faded down, the koi and the chain still there
+    look: { ...HAN.look, hair: 7, fade: 1, beard: 2, scar: 1 },
   });
   f.coach = 'Uncle Ray';
   f.starPower = 94;
@@ -1120,7 +1289,7 @@ function makeSideOpponent(save: StorySave, index: number): StorySideOpponent {
   const id = `side_${save.seed % 100000}_${save.stats.sideFights}_${index}`;
   const tier = save.chapter < 3 ? 'prospect' : save.chapter < 6 ? 'journeyman' : 'gatekeeper';
   const age = rng.int(21, 38);
-  const height = seed.division.startsWith('heavy') ? rng.int(190, 205) : seed.division === 'lightheavy' ? rng.int(185, 196) : seed.division.startsWith('w') ? rng.int(155, 172) : rng.int(170, 188);
+  const height = seed.division.startsWith('heavy') ? rng.int(190, 205) : seed.division === 'lightheavy' ? rng.int(185, 196) : isWomensDivision(seed.division) ? rng.int(155, 172) : rng.int(170, 188);
   const f = authored(id, seed.division, tier, {
     first: seed.first,
     last: seed.last,
@@ -1580,32 +1749,16 @@ export function finishPressDay(save: StorySave): void {
 export type OneTonTrack = keyof StoryTraining;
 export type DaneTrack = keyof StoryDaneTraining;
 
-export function canAct(save: StorySave): boolean {
-  return save.status === 'hub' && save.actionsLeft > 0;
+export function canAct(save: StorySave, days = 1): boolean {
+  return save.status === 'hub' && save.actionsLeft >= days;
 }
 
 export function trainOneTon(save: StorySave, track: OneTonTrack): string {
-  if (!canAct(save)) return 'No sessions left. The body needs to rest, and the plot needs to move.';
-  const before = save.training[track];
-  save.training[track] = Math.min(10, before + 1);
-  save.ego = clamp(save.ego + (track === 'media' ? 5 : 2));
-  save.trust = clamp(save.trust + (track === 'media' ? 1 : 3));
-  save.actionsLeft--;
-  const label = track === 'striking' ? 'striking' : track === 'grappling' ? 'grappling' : track === 'cardio' ? 'cardio' : 'media';
-  save.fatigue = clamp(save.fatigue - 5);
-  addLog(save, `1ton worked on his ${label}. ${before >= 8 ? 'Diminishing returns, but he liked the noise.' : 'The beard absorbed most of the sweat.'}`);
-  return `1ton ${label.toUpperCase()} ${before} → ${save.training[track]}`;
+  return trainSession(save, 'oneton', track, 'light', 'C');
 }
 
 export function trainDane(save: StorySave, track: DaneTrack): string {
-  if (!canAct(save)) return 'No sessions left. You are not as young as the paperwork says.';
-  const before = save.daneTraining[track];
-  save.daneTraining[track] = Math.min(10, before + 1);
-  save.trust = clamp(save.trust + 1);
-  save.actionsLeft--;
-  save.fatigue = clamp(save.fatigue - 4);
-  addLog(save, `${cornerKey(save) === 'han' ? 'Han' : 'Mateo'} worked on his ${track}. You held the pads. It hurt in a way that felt like evidence.`);
-  return `${cornerName(save)} ${track.toUpperCase()} ${before} > ${save.daneTraining[track]}`;
+  return trainSession(save, 'corner', track, 'light', 'C');
 }
 
 export function mediaDay(save: StorySave): string {
@@ -1828,7 +1981,9 @@ export function fightWon(save: StorySave, def: StoryFightDef): boolean {
 
 export function chapterReady(save: StorySave): boolean {
   const ch = storyChapter(save);
-  if (save.actionsLeft > 0) return false;
+  if (storyWeek(save) < chapterWeeks(ch)) return false;
+  // nobody misses the story: the chapter's talk has to happen
+  if (!talkedThisChapter(save)) return false;
   // the new champion has to say what he wants before the story can move
   if (ch.id === 'buyback' && save.flags.finalWinner === 'player' && !save.choices.ch_buyback) return false;
   const fights = chapterFights(ch, save);
@@ -1956,7 +2111,9 @@ export function advanceStoryChapter(save: StorySave): boolean {
     if (!save.ending) save.ending = storyEnding(save).id;
     return true;
   }
-  save.actionsLeft = storyChapter(save).actions;
+  save.actionsLeft = DAYS_PER_WEEK;
+  save.week = 1;
+  save.totalWeeks = (save.totalWeeks ?? 0) + CHAPTER_GAP_WEEKS;
   // Between chapters the body gets a week it did not ask for. The plot does not.
   save.fatigue = clamp(save.fatigue - (save.chapter < 4 ? 26 : 18));
   addLog(save, `CHAPTER ${storyChapter(save).no}: ${storyChapter(save).title}`);
@@ -2123,7 +2280,9 @@ export function storyProgress(save: StorySave): string {
 }
 
 export function storyNextLabel(save: StorySave): string {
-  if (save.actionsLeft > 0) return `${save.actionsLeft} SESSION${save.actionsLeft === 1 ? '' : 'S'} LEFT`;
+  const ch0 = storyChapter(save);
+  if (storyWeek(save) < chapterWeeks(ch0) && !fightThisWeek(save)) return `WEEK ${storyWeek(save)}/${chapterWeeks(ch0)}  /  ${save.actionsLeft} DAY${save.actionsLeft === 1 ? '' : 'S'} LEFT`;
+  if (!talkedThisChapter(save) && !fightThisWeek(save)) return 'TALK BEFORE YOU MOVE ON';
   const fights = chapterFights(storyChapter(save), save);
   const next = fights.find((f) => !fightDone(save, f));
   if (next) return fights.length > 1 ? `FIGHT ${fights.indexOf(next) + 1}/${fights.length}: ${next.name}` : `FIGHT: ${next.hook}`;

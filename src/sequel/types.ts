@@ -354,6 +354,12 @@ export interface StorySave {
   cash: number;
   /** How much the last few weeks have taken out of the two of you (0..100). */
   fatigue: number;
+  /** The week within the chapter (1..chapter weeks). actionsLeft is the days left in it (7 a week). */
+  week?: number;
+  /** Every week the story has lived through, chapter gaps included (the timeline: year, month). */
+  totalWeeks?: number;
+  /** Training experience per track ("oneton.striking", "corner.cardio"); the levels are xp / XP_PER_LEVEL. */
+  xp?: Record<string, number>;
   training: StoryTraining;
   daneTraining: StoryDaneTraining;
   fights: StoryFightRecord[];

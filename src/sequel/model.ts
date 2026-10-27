@@ -7,7 +7,7 @@ import type { Fighter } from '../core/types';
 import { content } from '../core/content';
 import { Rng } from '../core/rng';
 import { clamp } from '../core/format';
-import { overall, presentedGender } from '../sim/fighters';
+import { overall, presentedGender, isWomensDivision } from '../sim/fighters';
 import { generateFighter } from '../sim/generate';
 import { createNewGame } from '../sim/newgame';
 import { simulateFight } from '../sim/fight';
@@ -509,7 +509,7 @@ export function spawnFreeAgents(run: SeqRun, n: number, rng?: Rng): void {
   const c = content();
   for (let i = 0; i < n; i++) {
     const division = r.pick(DIVS);
-    const gender = division.startsWith('w') ? 'W' : 'M';
+    const gender = isWomensDivision(division) ? 'W' : 'M';
     // The longer the season runs, the better the names on the free-agent list.
     const roll = r.next();
     const tier: 'prospect' | 'journeyman' | 'gatekeeper' | 'contender' | 'elite' =

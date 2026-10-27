@@ -14,7 +14,7 @@ import { TRAITS, STYLES, generateFighter } from '../../sim/generate';
 import { content } from '../../core/content';
 import { Rng } from '../../core/rng';
 import { DIVISION_ORDER, divisionName } from '../../sim/divisions';
-import { computeStarPower, presentedGender } from '../../sim/fighters';
+import { computeStarPower, presentedGender, isWomensDivision } from '../../sim/fighters';
 
 const LOOK_PARTS: [keyof Look, string, number][] = [
   ['head', 'Head', 4], ['skin', 'Skin', 6], ['hair', 'Hair', 8], ['hairColor', 'Hair col', 8], ['beard', 'Beard', 5], ['brows', 'Brows', 3],
@@ -53,7 +53,7 @@ export function openFighterEditor(g: Game, id: string | null, onDone: () => void
     inputs.push(domInput(g, 100, 3, 120, 13, f.first, { maxLength: 20, onChange: (v) => (f.first = v), in: win.body }));
     inputs.push(domInput(g, 100, 19, 120, 13, f.nick, { maxLength: 30, onChange: (v) => (f.nick = v), in: win.body }));
     inputs.push(domInput(g, 100, 35, 120, 13, f.last, { maxLength: 20, onChange: (v) => (f.last = v), in: win.body }));
-    b.addChild(selector(230, 4, 150, DIVISION_ORDER.map((d) => ({ value: d, label: divisionName(d) })), f.division, (v) => { f.division = v; f.gender = v.startsWith('w') ? 'W' : 'M'; }));
+    b.addChild(selector(230, 4, 150, DIVISION_ORDER.map((d) => ({ value: d, label: divisionName(d) })), f.division, (v) => { f.division = v; f.gender = isWomensDivision(v) ? 'W' : 'M'; }));
     b.addChild(text('Age', 230, 22, { small: true, color: PAL.ash }));
     b.addChild(stepper(256, 19, 124, f.age, 18, 50, 1, String, (v) => (f.age = v)));
     b.addChild(text('Hometown: ' + f.hometown + ', ' + f.country, 230, 38, { small: true, color: PAL.ash, width: 220 }));

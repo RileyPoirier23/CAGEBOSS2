@@ -54,11 +54,14 @@ export interface Shot {
   tv?: 'beast' | 'zac' | 'tape' | TvShow;
   /** what's on the little TV on the wall of the gym, the bingo hall and the hotel (default: one of the two shows) */
   onTv?: TvShow | 'off';
+  /** a memory: CAGE BOSS II plays it sepia, grainy and soft at the edges */
+  flashback?: boolean;
 }
 export interface Cutscene {
   title?: string;
   shots: Shot[];
-  choices?: { id: string; label: string }[];
+  /** `reply`: what happens after you pick it, played on the spot (CAGE BOSS II's player; the first game's ignores it) */
+  choices?: { id: string; label: string; reply?: Line[] }[];
   /** film grain, scanlines and a vignette (the sequel's story scenes) */
   film?: boolean;
 }

@@ -18,6 +18,8 @@ import { Rig, Pose, POSES, GUARD, JOINTS, type Joint, drawRig, lerpRig, mirrorRi
 import { Rng, hashString } from '../core/rng';
 import { presentedGender } from '../sim/fighters';
 
+const shadeColor = (c: number, f: number): number => lerpColor(c, f < 0 ? 0x000000 : 0xffffff, Math.abs(f));
+
 export const AW = 480;
 export const AH = 150;
 const FLOOR = 136;
@@ -319,6 +321,8 @@ export interface CanvasInfo {
   accent?: number;
   /** a special venue's room (rooms.ts); otherwise the league's own */
   room?: Room;
+  /** what the fight happens inside: the cage (default), a boxing ring (posts and ropes), or nothing (a street fight) */
+  enclosure?: 'cage' | 'ring' | 'none';
 }
 const CANVAS: Record<CanvasStyle, { mat: number; edge: number; wear: number; ring: number; rail: number; deco: number }> = {
   cbfc: { mat: 0xcfc8b9, edge: 0x8a8274, wear: 0xbdb5a5, ring: 0xa83232, rail: 0x8a1e1e, deco: 0x2a4a86 },
@@ -726,6 +730,9 @@ export class ArenaView extends Container {
       // duct tape over the rips
       g.rect(cx - 96, cy - 6, 18, 2).fill({ color: 0x8a8a90, alpha: 0.8 }).rect(cx + 60, cy + 9, 14, 2).fill({ color: 0x8a8a90, alpha: 0.8 }).rect(cx + 128, cy - 3, 10, 2).fill({ color: 0x8a8a90, alpha: 0.8 });
     }
+    const encl = this.info.canvas?.enclosure ?? 'cage';
+    if (encl === 'ring') this.drawRingBack(g, cx, cy);
+    if (encl === 'cage') {
     // fence: the back five panels, each rising from the floor edge
     const H = 86;
     const back = [3, 4, 5, 6, 7, 0].map((k) => floor[k]); // left-front .. back .. right-front, round the far side
@@ -757,6 +764,7 @@ export class ArenaView extends Container {
       g.rect(x - 2, y - H - 3, 5, H - 6).fill(0x0e0e11);
       g.rect(x - 3, y - H - 5, 7, 4).fill(0x3a3a42);
     }
+    }
     // promotions without logo art get their name painted in the middle
     const logo = this.info.canvas?.logo;
     if (this.canvasStyle !== 'cbfc' && logo && !this.matName) {
@@ -770,6 +778,25 @@ export class ArenaView extends Container {
   }
   private matName: PixelText | null = null;
   private roomSign: PixelText | null = null;
+
+  /** A boxing ring (a gym's): four padded posts, three ropes along the back and down the sides. */
+  private drawRingBack(g: Graphics, cx: number, cy: number): void {
+    const ropes = [0xc8202a, 0xf0ece0, 0x2a4aa8];
+    const bl: [number, number] = [cx - 196, cy - 15];
+    const br: [number, number] = [cx + 196, cy - 15];
+    const fl: [number, number] = [cx - 232, cy + 17];
+    const frt: [number, number] = [cx + 232, cy + 17];
+    ropes.forEach((c, k) => {
+      const h = 22 + k * 16;
+      g.moveTo(bl[0], bl[1] - h).lineTo(br[0], br[1] - h).stroke({ color: c, width: 2 });
+      g.moveTo(bl[0], bl[1] - h).lineTo(fl[0], fl[1] - h).stroke({ color: shadeColor(c, -0.25), width: 2 });
+      g.moveTo(br[0], br[1] - h).lineTo(frt[0], frt[1] - h).stroke({ color: shadeColor(c, -0.25), width: 2 });
+    });
+    for (const [x, y] of [bl, br]) {
+      g.rect(x - 2, y - 62, 5, 62).fill(0x1a1a20);
+      for (let k = 0; k < 3; k++) g.rect(x - 3, y - 25 - k * 16, 7, 5).fill(k === 1 ? 0xe8e4d8 : 0xa01818);
+    }
+  }
 
   /** Where the fight is: every league has its own room behind the cage. */
   private drawVenue(g: Graphics): void {
@@ -3167,6 +3194,20 @@ export class ArenaView extends Container {
     // front fence posts
     const fr = this.front;
     fr.clear();
+    const enclF = this.info.canvas?.enclosure ?? 'cage';
+    if (enclF === 'ring') {
+      // the near ropes and the two front posts, over the fighters
+      const ropes = [0xc8202a, 0xf0ece0, 0x2a4aa8];
+      const xl = AW / 2 - 232;
+      const xr = AW / 2 + 232;
+      const y = FLOOR + 18;
+      ropes.forEach((c, k) => fr.moveTo(xl, y - 22 - k * 16).lineTo(xr, y - 22 - k * 16).stroke({ color: c, width: 1, alpha: 0.8 }));
+      for (const x of [xl, xr]) {
+        fr.rect(x - 3, y - 66, 6, 66).fill(0x16161c);
+        for (let k = 0; k < 3; k++) fr.rect(x - 4, y - 25 - k * 16, 8, 5).fill(k === 1 ? 0xe8e4d8 : 0xa01818);
+      }
+    }
+    if (enclF === 'cage') {
     // the near side of the octagon: corner posts, a faint mesh and the bottom pad, in front of everyone
     const ox = AW / 2;
     const fl = (k: number): [number, number] => {
@@ -3183,6 +3224,7 @@ export class ArenaView extends Container {
     for (const [x, y] of [near[0], near[3]]) {
       fr.rect(x - 3, y - 92, 6, 92).fill({ color: 0x0c0c0e, alpha: 0.92 });
       fr.rect(x - 4, y - 95, 8, 4).fill(0x3a3a42);
+    }
     }
   }
 

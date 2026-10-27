@@ -5,7 +5,7 @@ import type { GameState, Fighter, Difficulty, SandboxOptions, GameMode, Contract
 import { content } from '../core/content';
 import { Rng } from '../core/rng';
 import { hydrateFighter, generateFighter } from './generate';
-import { overall, computeStarPower, marketPurse } from './fighters';
+import { overall, computeStarPower, marketPurse, isWomensDivision } from './fighters';
 import { applyRealRankings } from './realrank';
 import { computeRankings, ensureDivisionBelts, awardBelt, undisputed, rankScore } from './rankings';
 import { scheduleEvents } from './events';
@@ -254,7 +254,7 @@ export function spawnProspects(s: GameState, rng: Rng, n: number): Fighter[] {
   for (let i = 0; i < n; i++) {
     const divs = s.divisionsOpen.length ? s.divisionsOpen : DIVISION_ORDER.slice(0, 8);
     const division = rng.pick(divs);
-    const gender = division.startsWith('w') ? 'W' : 'M';
+    const gender = isWomensDivision(division) ? 'W' : 'M';
     const f = generateFighter(rng, c.names, {
       division,
       gender,

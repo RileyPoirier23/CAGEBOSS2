@@ -20,7 +20,7 @@ import { SequelHubScene } from './sequelhub';
 import { SequelShowScene } from './sequelshow';
 import { SequelEndScene } from './sequelend';
 import { openSequelAchievements } from './sequelachievements';
-import { isSequelStandalone } from '../../sequel/standalone';
+import { isSequelStandalone, isSequelDemo } from '../../sequel/standalone';
 import { desktop } from '../../desktop';
 import { openSettings } from './settings';
 
@@ -121,6 +121,7 @@ export class SequelTitleScene extends Scene {
     r.addChild(text('BOSS', 14, 40, { scale: 4, color: PAL.blood, shadow: PAL.ink }));
     r.addChild(text('II', 126, 22, { scale: 4, color: PAL.gold, shadow: PAL.ink }));
     r.addChild(text('THE BUYBACK', 16, 72, { scale: 2, color: PAL.gold, shadow: PAL.ink }));
+    if (isSequelDemo()) r.addChild(new Graphics().rect(150, 72, 44, 12).fill(PAL.blood).rect(150, 72, 44, 12).stroke({ color: PAL.gold, width: 1 }), text('DEMO', 150, 75, { small: true, width: 44, align: 'center', color: PAL.bone }));
     r.addChild(text(SEQUEL_TAGLINE, 16, 92, { small: true, color: PAL.ash }));
     r.addChild(text(SEQUEL_STORY, 16, 106, { small: true, width: 178, color: PAL.fog, maxLines: 8, lineGap: 0 }));
     r.addChild(text('FICTIONAL. EVERYONE. EVEN THE TIGER.', 16, H - 10, { small: true, color: PAL.grey }));
@@ -198,7 +199,8 @@ export class SequelTitleScene extends Scene {
       if (desktop) confirm(this.g, 'Close CAGE BOSS II? The run and the story are saved.', () => desktop?.quit(), 'QUIT', 'STAY');
       return;
     }
-    void import('./title').then((m) => this.g.goto(new m.TitleScene(this.g)));
+    // the demo inside the first game: back to its street, in its own clothes
+    void import('../sequel/demo').then((m) => m.exitSequelDemo(this.g));
   }
 
   onKey(e: KeyboardEvent): boolean {

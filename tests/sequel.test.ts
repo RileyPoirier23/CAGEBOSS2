@@ -16,7 +16,7 @@ import {
   ensureDesk, flagKey, pendingCount, resolveDoc, takeBribe,
 } from '../src/sequel/desk';
 import {
-  advanceStoryChapter, applyChapterChoice, applyPressAnswer, buildHan, buildMateoGrown, buildOneTon, chapterFights, chapterReady, STORY_CHAPTERS, finishPressDay, newStorySave,
+  advanceStoryChapter, applyChapterChoice, applyPressAnswer, buildHan, chapterWeeks, endStoryWeek, fightDue, storyWeek, talkedThisChapter, trainSession, sparSession, gradeFor, storyDate, DAYS_PER_WEEK, buildMateoGrown, buildOneTon, chapterFights, chapterReady, STORY_CHAPTERS, finishPressDay, newStorySave,
   pressQuestions, recordSideFight, recordStoryFight, resolveStoryDoc, sideOffers, storyChapter,
   storyCorner, storyDoc, storyEnding, trainOneTon,
 } from '../src/sequel/story';
@@ -379,14 +379,25 @@ describe('sequel story mode', () => {
         for (const q of pressQuestions(save)) applyPressAnswer(save, q.options[0]);
         finishPressDay(save);
       }
-      while (save.actionsLeft > 0) trainOneTon(save, 'striking');
-      for (const def of chapterFights(ch, save)) {
-        if (save.flags[`fight_${def.id}`]) continue;
-        const corner = storyCorner(save, def);
-        const last = def.id === 'han_legacy' || def.id === 'defense';
-        const winner = last && !mateoWinsLast ? corner.opponent.id : corner.player.id;
-        recordStoryFight(save, def, { winner, method: 'KO', round: 2, time: '1:11', detail: 'head kick' }, corner.player.id, corner.opponent.id);
+      // the TALK has to happen before the chapter can move
+      expect(talkedThisChapter(save)).toBe(false);
+      save.flags[`talk_${ch.id}`] = true;
+      const fightDueOnes = () => {
+        for (const def of chapterFights(ch, save)) {
+          if (save.flags[`fight_${def.id}`] || !fightDue(save, def)) continue;
+          const corner = storyCorner(save, def);
+          const last = def.id === 'han_legacy' || def.id === 'defense';
+          const winner = last && !mateoWinsLast ? corner.opponent.id : corner.player.id;
+          recordStoryFight(save, def, { winner, method: 'KO', round: 2, time: '1:11', detail: 'head kick' }, corner.player.id, corner.opponent.id);
+        }
+      };
+      // live the chapter week by week: train the days, fight on fight week
+      for (let w = 0; w < 20 && storyWeek(save) < chapterWeeks(ch); w++) {
+        while (save.actionsLeft > 0) trainOneTon(save, 'striking');
+        fightDueOnes();
+        expect(endStoryWeek(save).ok).toBe(true);
       }
+      fightDueOnes();
       // the new champion has to pick a road before the story moves
       if (ch.id === 'buyback') {
         expect(chapterReady(save)).toBe(false);
@@ -422,7 +433,8 @@ describe('sequel story mode', () => {
   it('ends at the title fight when Mateo loses to 1ton', () => {
     const save = newStorySave(13);
     save.chapter = STORY_CHAPTERS.findIndex((c) => c.id === 'buyback');
-    save.actionsLeft = 0;
+    save.week = chapterWeeks(storyChapter(save));
+    save.flags.talk_buyback = true;
     const def = storyChapter(save).fight!;
     const corner = storyCorner(save, def);
     recordStoryFight(save, def, { winner: corner.opponent.id, method: 'KO', round: 4, time: '2:02', detail: 'overhand' }, corner.player.id, corner.opponent.id);
@@ -431,6 +443,39 @@ describe('sequel story mode', () => {
     expect(save.status).toBe('ended');
     expect(storyChapter(save).id).toBe('buyback');
     expect(['house', 'role', 'zenith']).toContain(save.ending);
+  });
+
+  it('gives seven days a week; tiers cost days, grades decide the xp, a sim is a C', () => {
+    const save = newStorySave(21);
+    expect(save.actionsLeft).toBe(DAYS_PER_WEEK);
+    expect(gradeFor(65)).toBe('C');
+    expect(gradeFor(96)).toBe('S');
+    expect(gradeFor(30)).toBe('F');
+    trainSession(save, 'oneton', 'striking', 'camp', 'S');
+    expect(save.actionsLeft).toBe(4);
+    const sXp = save.xp!['oneton.striking'];
+    trainSession(save, 'oneton', 'grappling', 'camp', 'C');
+    expect(save.xp!['oneton.grappling']).toBeLessThan(sXp);
+    expect(save.actionsLeft).toBe(1);
+    // not enough days left for a full session
+    expect(trainSession(save, 'oneton', 'cardio', 'full', 'A')).toMatch(/Not enough days/);
+    expect(save.actionsLeft).toBe(1);
+    // fight week can't be skipped; other weeks end and refill the days
+    expect(endStoryWeek(save).ok).toBe(true);
+    expect(save.actionsLeft).toBe(DAYS_PER_WEEK);
+    expect(storyWeek(save)).toBe(2);
+  });
+
+  it('sparring works every physical track and costs two days', () => {
+    const save = newStorySave(22);
+    sparSession(save, 'corner', 'A');
+    expect(save.actionsLeft).toBe(DAYS_PER_WEEK - 2);
+    for (const t of ['striking', 'grappling', 'cardio']) expect(save.xp![`corner.${t}`]).toBeGreaterThan(0);
+  });
+
+  it('runs the story over a few years of calendar', () => {
+    const save = playThrough(23, 'callout_han');
+    expect(storyDate(save)).toMatch(/^YEAR [3-9]/);
   });
 
   it('brings Han back at 95 overall, a middleweight; Dane never fights', () => {

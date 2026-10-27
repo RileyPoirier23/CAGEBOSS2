@@ -47,6 +47,8 @@ export const ROOMS: Record<Room, RoomInfo> = {
   cruise: { fill: 0.55, rows: 2, beams: false, screens: null, led: false, day: true, shirts: [0xf0f0f0, 0xe86aa0, 0x3ac0d8, 0xf0d040, 0x8ad86a], top: 0x8a6a4a },
   lawn: { fill: 0.6, rows: 2, beams: false, screens: null, led: false, day: true, shirts: [0x1a1a22, 0x22222a, 0x2a2a34, 0xe8e8e8], top: 0x3a7a3a },
   hangar: { fill: 0.7, rows: 2, beams: true, screens: null, led: false, shirts: [0x4a5a3a, 0x5a6a44, 0x3e4e32], top: 0x3a3e3a, sign: { text: 'HANGAR 9', x: 240, y: 25, color: 0xe8d040 } },
+  // Ray's Boxing & Soup: a handful of regulars on the benches, the soup on, the ring in the middle
+  rays: { fill: 0.18, rows: 2, beams: false, screens: null, led: false, shirts: [0x6a5a48, 0xb8733a, 0x2a3a5a, 0x3a3632], top: 0x6a4a2a, sign: { text: "RAY'S BOXING & SOUP", x: 240, y: 12, color: 0xe8c060 } },
 };
 
 /** The rooms the leagues fight in (by canvas style). */
@@ -207,6 +209,24 @@ export function paintRoom(g: Graphics, room: Room, lerp: (a: number, b: number, 
       g.rect(432, 22, 4, 38).fill(0x4a4a4e).rect(444, 22, 4, 38).fill(0x4a4a4e);
       g.rect(140, 24, 200, 13).fill(0x2a4a8a); // the banner (the sign goes on it)
       ground(58, 0x6a6a66);
+      return;
+    }
+    case 'rays': {
+      // red brick, a tin roof's worth of shadow, the soup counter, heavy bags, the TV on Marie's shows
+      g.rect(0, 0, W, 60).fill(0x5a2a20);
+      for (let y = 0; y < 60; y += 5) for (let xx = (y / 5) % 2 ? 0 : 6; xx < W; xx += 12) g.rect(xx, y, 11, 4).fill(0x6e3426);
+      g.rect(0, 0, W, 6).fill(0x1a1412);
+      g.rect(170, 8, 140, 12).fill(0x1a1412).rect(170, 8, 140, 12).stroke({ color: 0xe8c060, width: 1 });
+      for (const x of [40, 82, 398, 440]) {
+        g.rect(x, 6, 1, 14).fill(0x2a2a2a);
+        g.roundRect(x - 6, 20, 13, 30, 4).fill(x < 240 ? 0x7a1a1a : 0x1a2a4a).stroke({ color: 0x0a0a0a, width: 1 });
+      }
+      // the soup counter and the pot (steam is roomFx's job)
+      g.rect(300, 34, 70, 18).fill(0x8a6a44).rect(300, 34, 70, 2).fill(0xb89a6a);
+      g.ellipse(335, 32, 10, 3).fill(0x3a3a40).rect(325, 26, 20, 6).fill(0x4a4a52);
+      g.rect(120, 22, 34, 22).fill(0x111114).rect(122, 24, 30, 16).fill(0x3a5a6a);
+      ground(58, 0x3a2a1e);
+      if (bottom > 58) for (let xx = 0; xx < W; xx += 20) g.rect(xx, 58, 1, bottom - 58).fill(0x2e2218);
       return;
     }
     case 'gym': {

@@ -17,7 +17,13 @@ export const shortName = (f: Fighter) => f.last;
  */
 export function presentedGender(f: Pick<Fighter, 'gender' | 'division'>): 'M' | 'W' {
   if (!f.division) return f.gender;
-  return f.division.toLowerCase().startsWith('w') ? 'W' : 'M';
+  return isWomensDivision(f.division) ? 'W' : 'M';
+}
+
+/** The women's divisions are the men's names with a w in front (wstraw, wfly...). Welterweight is not one of them. */
+export function isWomensDivision(division: string): boolean {
+  const d = division.toLowerCase();
+  return d.startsWith('w') && d !== 'welter';
 }
 
 export function pronouns(f: { gender: 'M' | 'W' }): { he: string; his: string; him: string; He: string; His: string; man: string } {

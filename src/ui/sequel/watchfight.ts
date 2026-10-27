@@ -6,7 +6,9 @@
  */
 import { Container, Graphics, type Ticker } from 'pixi.js';
 import type { Game } from '../app';
-import type { Fighter, TickerLine } from '../../core/types';
+import type { Bout, Fighter, FightEvent, GameState, TickerLine } from '../../core/types';
+import { content } from '../../core/content';
+import { commentate } from '../../sim/commentary';
 import { W, H, SW, OX, text, button } from '../kit';
 import { ArenaView, AH, AW } from '../arena';
 import { fighterPortrait } from '../sprites';
@@ -30,6 +32,22 @@ export interface WatchOpts {
 }
 
 const SPEEDS = [1, 2, 4];
+
+/**
+ * The first game's booth on the tape: the play-by-play plus whoever is calling it (Blow Hogan,
+ * Sandwich Cormier, the rest). The booth only needs the two fighters, the bout and a card to sit on.
+ */
+function withBooth(o: WatchOpts): TickerLine[] {
+  try {
+    // the booth calls Dane the president (he isn't, any more; the booth didn't get the memo)
+    const s = { fighters: { [o.A.id]: o.A, [o.B.id]: o.B }, flags: {}, week: 0, belts: {}, president: { name: 'Dane Whyte' } } as unknown as GameState;
+    const ev = { id: `watch_${o.A.id}`, name: o.venue, number: null, venue: 'warehouse', week: 0, bouts: [] } as unknown as FightEvent;
+    const bout = { id: `watch_${o.A.id}_${o.B.id}`, a: o.A.id, b: o.B.id, division: o.A.division, title: null, rounds: o.rounds, position: o.slot === 'MAIN EVENT' ? 0 : 2 } as unknown as Bout;
+    return commentate(s, ev, bout, o.ticker, o.ticker.length * 7919 + o.A.id.length);
+  } catch {
+    return o.ticker;
+  }
+}
 const AY = 16;
 
 export function watchFight(g: Game, o: WatchOpts): void {
@@ -71,6 +89,25 @@ export function watchFight(g: Game, o: WatchOpts): void {
   const banner = new Container();
   root.addChild(banner);
 
+  // the tape, with the booth talking over it
+  const tape = withBooth(o);
+  const speakers = content().commentary?.speakers ?? {};
+  const boothBox = new Container();
+  root.addChild(boothBox);
+  let boothT = 0;
+  const say = (l: TickerLine) => {
+    boothBox.removeChildren().forEach((c) => c.destroy());
+    const who = speakers[l.speaker!];
+    const name = (who?.short ?? l.speaker ?? '').toUpperCase();
+    const t = text(l.text, 0, 0, { width: 300, small: true, color: II.bone, maxLines: 3 });
+    const h = t.textHeight + 14;
+    boothBox.addChild(new Graphics().rect(0, 0, 312, h).fill({ color: 0x000000, alpha: 0.78 }).rect(0, 0, 2, h).fill(who?.color ? parseInt(String(who.color), 16) : II.sodium));
+    boothBox.addChild(text(name, 6, 3, { small: true, color: who?.color ? parseInt(String(who.color), 16) : II.gold }));
+    t.position.set(6, 11);
+    boothBox.addChild(t);
+    boothBox.position.set(Math.round((W - 312) / 2), AY + AH - h - 4);
+    boothT = 1.4 + l.text.length * 0.035;
+  };
   let idx = 0;
   let wait = 1.2;
   let speed = 0;
@@ -120,12 +157,14 @@ export function watchFight(g: Game, o: WatchOpts): void {
   };
   const skip = () => {
     if (finished) return close();
-    while (idx < o.ticker.length) {
-      const l = o.ticker[idx++];
+    while (idx < tape.length) {
+      const l = tape[idx++];
+      if (l.speaker) continue;
       arena.cue(l, true);
       apply(l);
       pushLog(l);
     }
+    boothBox.removeChildren().forEach((c) => c.destroy());
     arena.settle();
     endBanner();
   };
@@ -171,19 +210,25 @@ export function watchFight(g: Game, o: WatchOpts): void {
     if (!finished) {
       wait -= dt;
       if (wait <= 0 && !arena.busy()) {
-        if (idx >= o.ticker.length) endBanner();
-        else {
-          const l = o.ticker[idx++];
+        if (idx >= tape.length) endBanner();
+        else if (tape[idx].speaker) {
+          // the booth gets its moment, then the fight carries on
+          say(tape[idx++]);
+          wait = Math.min(2.2, boothT * 0.6);
+        } else {
+          const l = tape[idx++];
           arena.cue(l);
           apply(l);
           pushLog(l);
-          const nx = o.ticker[idx];
+          const nx = tape[idx];
           // the tape's own rhythm, squeezed: a gap of ten sim-seconds plays in about one
           const gap = nx && nx.round === l.round ? Math.max(0, nx.t - l.t) : 3;
           wait = Math.max(0.35, Math.min(1.6, 0.3 + gap * 0.09));
         }
       }
     }
+    boothT -= dt;
+    boothBox.alpha = Math.max(0, Math.min(1, boothT * 2));
     const m = Math.floor(roundT / 60);
     const s = Math.floor(roundT % 60);
     (clock as PixelText).setText(`ROUND ${round}/${o.rounds}   ${m}:${String(s).padStart(2, '0')}`);

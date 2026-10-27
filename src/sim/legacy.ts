@@ -4,6 +4,7 @@
  *  - open your own gym (costs money, makes money, makes your training better)
  *  - retire and become a promoter (a new promoter career, with your name on the door)
  */
+import { isWomensDivision } from './fighters';
 import type { GameState } from '../core/types';
 import { money } from '../core/format';
 import { DIVISION_LIMITS, DIVISION_ORDER, divisionName } from './divisions';
@@ -18,7 +19,7 @@ const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 /** Neighbouring divisions you can move to (same gender). */
 export function divisionMoves(s: GameState): string[] {
   const d = me(s).division;
-  const pool = DIVISION_ORDER.filter((x) => x.startsWith('w') === d.startsWith('w'));
+  const pool = DIVISION_ORDER.filter((x) => isWomensDivision(x) === isWomensDivision(d));
   const i = pool.indexOf(d);
   return [pool[i - 1], pool[i + 1]].filter(Boolean) as string[];
 }

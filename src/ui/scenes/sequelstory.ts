@@ -16,17 +16,24 @@ import { sfx } from '../../audio/sfx';
 import { fighterPortrait } from '../sprites';
 import { seqVenueArt } from '../sequelart';
 import { playCine as playCutscene } from '../sequel/cine';
+import { storyVenue } from '../sequel/venues';
+import { openDrill, type DrillKind } from '../sequel/drills';
+import { openSpar } from '../sequel/spar';
+import { II } from '../theme';
+import { isSequelDemo, DEMO_STORY_CHAPTERS } from '../../sequel/standalone';
 import { openLiveFight } from '../livefight';
 import type { Bout, FightResult } from '../../core/types';
 import { overall } from '../../sim/fighters';
 import {
   STORY_CHAPTERS, buildOneTon, cornerFighter, cornerName, cornerKey, chapterFights, nextChapterFight, storyProgress, storyCorner, storyOverall, storyChapter, storyNextLabel,
   storyRecord, storyDoc, resolveStoryDoc, pressQuestions, applyPressAnswer, finishPressDay,
-  canAct, trainOneTon, trainDane, mediaDay, dinnerWithOneTon, applyTalkChoice, applyChapterChoice, talkTo,
+  canAct, mediaDay, dinnerWithOneTon, applyTalkChoice, applyChapterChoice, talkTo,
+  dueBeat, storyDate, storyWeek, chapterWeeks, fightDue, fightThisWeek, endStoryWeek, restDay, talkedThisChapter, chapterReady,
+  trainSession, gradeFor, TRAIN_TIERS, DAYS_PER_WEEK, type TrainTier, type OneTonTrack,
   fightDone, recordStoryFight, advanceStoryChapter, sideOffers, sideFightReady,
   recordSideFight, type StoryFightDef, type StorySideOpponent, type StoryDocMode,
 } from '../../sequel/story';
-import { chapterIntro, chapterOutro, fightIntro, storyEndingScene, talkScene } from './storycuts';
+import { beatScene, chapterIntro, chapterOutro, fightIntro, storyEndingScene, talkScene } from './storycuts';
 import { newStorySave } from '../../sequel/story';
 import { readStory, writeStory, addStoryTrophy } from '../../sequel/storysession';
 import type { StorySave } from '../../sequel/types';
@@ -91,10 +98,11 @@ export class SequelStoryHubScene extends Scene {
     r.addChild(new Graphics().rect(0, 0, SW, 28).fill({ color: 0x0a080e, alpha: 0.95 }).rect(0, 27, SW, 1).fill({ color: PAL.gold, alpha: 0.55 }));
     r.addChild(text('CAGE BOSS II  /  STORY MODE', 6, 4, { small: true, color: PAL.gold }));
     r.addChild(text(`CHAPTER ${storyProgress(save)}`, 170, 4, { small: true, color: PAL.bone }));
-    r.addChild(text(`SESSIONS ${save.actionsLeft}`, 278, 4, { small: true, color: save.actionsLeft ? PAL.bone : PAL.ember }));
+    r.addChild(text(`WEEK ${storyWeek(save)}/${chapterWeeks(ch)}  DAY ${Math.min(DAYS_PER_WEEK, DAYS_PER_WEEK + 1 - save.actionsLeft)}/${DAYS_PER_WEEK}`, 262, 4, { small: true, color: save.actionsLeft ? PAL.bone : PAL.ember }));
+    r.addChild(text(storyDate(save), 262, 14, { small: true, color: PAL.ash }));
     r.addChild(text(`CASH ${money(save.cash)}`, 366, 4, { small: true, color: save.cash < 0 ? PAL.blood : PAL.bone }));
-    r.addChild(text(`"${ch.title}"`, 6, 14, { small: true, color: PAL.ember, width: 300, maxLines: 1 }));
-    r.addChild(text(storyNextLabel(save), 330, 14, { small: true, color: PAL.ash, width: 122, align: 'right', maxLines: 1 }));
+    r.addChild(text(`"${ch.title}"`, 6, 14, { small: true, color: PAL.ember, width: 250, maxLines: 1 }));
+    r.addChild(text(storyNextLabel(save), 352, 14, { small: true, color: talkedThisChapter(save) ? PAL.ash : PAL.gold, width: 122, align: 'right', maxLines: 1 }));
   }
 
   private chapterPanel(save: StorySave, ch: ReturnType<typeof storyChapter>): void {
@@ -117,7 +125,8 @@ export class SequelStoryHubScene extends Scene {
       c.addChild(text(`THE FIGHT${n}`, 6, 80, { small: true, color: PAL.blood }));
       c.addChild(text(fight.hook, 6, 90, { small: true, color: PAL.bone, width: 288, maxLines: 1 }));
       c.addChild(text(fight.stakes, 6, 100, { small: true, color: PAL.slate, width: 288, maxLines: 2, lineGap: 0 }));
-      c.addChild(text(done ? (won ? 'WON. THE STORY REMEMBERS.' : 'LOST. THE STORY REMEMBERS THAT TOO.') : 'NOT YET. HE IS STILL WALKING TO THE CAGE.', 6, 117, { small: true, color: done ? (won ? PAL.moss : PAL.blood) : PAL.ash }));
+      const when = fightDue(save, fight) ? 'FIGHT WEEK. HE IS WALKING TO THE CAGE.' : `BOOKED FOR WEEK ${fight.week}.`;
+      c.addChild(text(done ? (won ? 'WON. THE STORY REMEMBERS.' : 'LOST. THE STORY REMEMBERS THAT TOO.') : when, 6, 117, { small: true, color: done ? (won ? PAL.moss : PAL.blood) : fightDue(save, fight) ? PAL.gold : PAL.ash }));
     } else if (ch.id === 'legacy') {
       c.addChild(text('THE CHAMPION HAS NOT SAID WHAT HE WANTS YET.', 6, 84, { small: true, color: PAL.ash }));
     } else {
@@ -195,23 +204,28 @@ export class SequelStoryHubScene extends Scene {
     const y = touch ? 243 : 246;
     const h = touch ? 19 : 16;
     const gap = 4;
-    const defs: [string, number, number, () => void][] = [
-      ['TRAIN', 6, 50, () => openStoryTraining(this.g, save, 'oneton', () => this.refresh())],
-      [cornerName(save), 60, 44, () => openStoryTraining(this.g, save, 'corner', () => this.refresh())],
-      ['MEDIA', 108, 46, () => this.doMedia(save)],
-      ['DINNER', 158, 50, () => this.doDinner(save)],
-      ['TALK', 212, 44, () => this.doTalk(save)],
-      ['PAPER', 260, 48, () => openStoryDoc(this.g, save, () => this.refresh())],
-      ['PRESS', 312, 48, () => openStoryPress(this.g, save, () => this.refresh())],
-      ['UNDERCARD', 364, 60, () => openStoryUndercard(this.g, save, () => this.refresh())],
+    const talked = talkedThisChapter(save);
+    const defs: [string, number, () => void, number?][] = [
+      ['TRAIN', 40, () => openStoryTraining(this.g, save, () => this.refresh())],
+      ['SPAR', 36, () => this.doSpar(save)],
+      ['MEDIA', 40, () => this.doMedia(save)],
+      ['DINNER', 44, () => this.doDinner(save)],
+      // the story will not move until you have talked: it glows until you do
+      ['TALK', 36, () => this.doTalk(save), talked ? undefined : II.blood],
+      ['PAPER', 40, () => openStoryDoc(this.g, save, () => this.refresh())],
+      ['PRESS', 40, () => openStoryPress(this.g, save, () => this.refresh())],
+      ['UNDERCARD', 54, () => openStoryUndercard(this.g, save, () => this.refresh())],
+      ['END WEEK', 48, () => this.doEndWeek(save)],
     ];
-    for (const [label, x, w, fn] of defs) {
-      r.addChild(button(label, x, y, w, h, fn, { small: true, fill: PAL.shadow }));
+    let x = 6;
+    for (const [label, w, fn, fill] of defs) {
+      r.addChild(button(label, x, y, w, h, fn, { small: true, fill: fill ?? PAL.shadow, border: fill ? II.sodium : undefined }));
+      x += w + gap;
     }
-    const canMove = save.actionsLeft <= 0;
-    const ready = canMove && !nextChapterFight(save);
-    r.addChild(button(ready ? (save.flags[`outro_${ch.id}`] ? 'ADVANCE' : 'CONTINUE') : 'NEXT', 428, y, 46, h, () => this.doNext(save), {
-      small: true, fill: ready ? PAL.blood : PAL.rust, border: PAL.gold,
+    const due = fightThisWeek(save);
+    const ready = !due && chapterReady(save);
+    r.addChild(button(due ? 'FIGHT' : ready ? (save.flags[`outro_${ch.id}`] ? 'ADVANCE' : 'CONTINUE') : 'NEXT', x, y, 474 - x, h, () => this.doNext(save), {
+      small: true, fill: due || ready ? PAL.blood : PAL.rust, border: PAL.gold,
     }));
     // the tiny title door sits on the ticker line, where it is hard to press by accident
     r.addChild(button('MENU', 6, 232, 34, 10, () => {
@@ -223,13 +237,25 @@ export class SequelStoryHubScene extends Scene {
   private maybeIntro(save: StorySave): void {
     if (save.status === 'ended' || this.g.modals.length) return;
     const ch = storyChapter(save);
-    if (save.flags[`intro_${ch.id}`]) return;
-    playCutscene(this.g, chapterIntro(save), (choice) => {
-      if (choice) applyChapterChoice(save, choice);
-      save.flags[`intro_${ch.id}`] = true;
-      writeStory(save);
-      if (storyDoc(save)) this.g.toast('A CONTRACT IS ON THE DESK. READ IT BEFORE YOU SIGN IT.', PAL.gold);
-      this.refresh();
+    if (save.flags[`intro_${ch.id}`]) {
+      // the story between the fights: a scene when its week comes round
+      const beat = dueBeat(save);
+      const scene = beat ? beatScene(save, beat) : null;
+      if (beat) save.flags[`beat_${beat}`] = true;
+      if (scene) playCutscene(this.g, scene, () => { writeStory(save); this.refresh(); });
+      return;
+    }
+    const intro = chapterIntro(save);
+    playCutscene(this.g, intro, (choice) => {
+      const after = () => {
+        save.flags[`intro_${ch.id}`] = true;
+        writeStory(save);
+        if (storyDoc(save)) this.g.toast('A CONTRACT IS ON THE DESK. READ IT BEFORE YOU SIGN IT.', PAL.gold);
+        this.refresh();
+      };
+      if (!choice) return after();
+      const msg = applyChapterChoice(save, choice);
+      this.playChoiceBeat(save, intro, choice, msg, after);
     });
   }
 
@@ -263,13 +289,12 @@ export class SequelStoryHubScene extends Scene {
       return;
     }
     playCutscene(this.g, scene, (choice) => {
-      if (choice) {
-        const msg = applyTalkChoice(save, choice);
-        save.actionsLeft = Math.max(0, save.actionsLeft - 1);
-        save.flags[`talk_${storyChapter(save).id}`] = true;
-        writeStory(save);
-        this.g.toast(msg, PAL.moss);
-      }
+      // the reply already played inside the scene; the talk counts once it's had
+      const msg = choice ? applyTalkChoice(save, choice) : 'You listened.';
+      save.actionsLeft = Math.max(0, save.actionsLeft - 1);
+      save.flags[`talk_${storyChapter(save).id}`] = true;
+      writeStory(save);
+      this.g.toast(msg, PAL.moss);
       this.refresh();
     });
   }
@@ -277,15 +302,51 @@ export class SequelStoryHubScene extends Scene {
   private doNext(save: StorySave): void {
     sfx('click');
     const ch = storyChapter(save);
-    if (save.actionsLeft > 0) {
-      alertBox(this.g, 'Sessions left', `${save.actionsLeft} session${save.actionsLeft === 1 ? '' : 's'} still on the clock. Train somebody, answer a question, or take a fight that is not in the script.`);
+    const due = fightThisWeek(save);
+    if (due) {
+      this.startStoryFight(save, due);
       return;
     }
-    if (ch.fight && !fightDone(save, ch.fight)) {
-      this.startStoryFight(save, ch.fight);
+    if (chapterReady(save)) {
+      this.playOutroAndAdvance(save);
       return;
     }
-    this.playOutroAndAdvance(save);
+    if (!talkedThisChapter(save)) {
+      alertBox(this.g, 'Talk first', 'Somebody needs a word before the story moves on. Press TALK.');
+      return;
+    }
+    if (ch.id === 'buyback' && save.flags.finalWinner === 'player' && !save.choices.ch_buyback) {
+      this.playOutroAndAdvance(save);
+      return;
+    }
+    const next = nextChapterFight(save);
+    alertBox(this.g, `Week ${storyWeek(save)} of ${chapterWeeks(ch)}`, next
+      ? `${next.hook} is booked for week ${next.week}. Train, spar, take a meeting, then END WEEK to move time on.`
+      : `The chapter runs ${chapterWeeks(ch)} weeks. Use the days, then END WEEK.`);
+  }
+
+  private doEndWeek(save: StorySave): void {
+    const res = endStoryWeek(save);
+    if (!res.ok) {
+      alertBox(this.g, 'Not yet', res.msg);
+      return;
+    }
+    writeStory(save);
+    sfx('bell');
+    this.g.toast(res.msg, PAL.gold);
+    this.refresh();
+    setTimeout(() => this.maybeIntro(save), 280);
+  }
+
+  private doSpar(save: StorySave): void {
+    if (!canAct(save, 2)) return alertBox(this.g, 'Not enough days', 'Sparring takes two days. End the week and start fresh.');
+    openSpar(this.g, save, 'corner', (msg) => {
+      if (msg) {
+        writeStory(save);
+        this.g.toast(msg, PAL.moss);
+      }
+      this.refresh();
+    });
   }
 
   private startStoryFight(save: StorySave, def: StoryFightDef): void {
@@ -296,10 +357,13 @@ export class SequelStoryHubScene extends Scene {
       const opponent = corner.opponent;
       const bout = storyBout(def.id, player, opponent, def.rounds);
       const seed = (save.seed + save.chapter * 977 + save.fights.length * 131) >>> 0;
+      // the fight happens where the story says it does: Ray's ring, an alley, the warehouse, the Old Dome
+      const where = storyVenue(def.venue);
       openLiveFight(this.g, {
         bout, A: player, B: opponent, skills: [player.skills, opponent.skills], player: 0,
         plan: 'balanced', oppPlan: 'balanced', cutTier: 3, seed,
-        event: def.venue, judges: ['Lenny Pratt', 'Marla Cross', 'Dexter Bell'], referee: 'Dirty Daniel Stinkovich',
+        event: def.venue, judges: ['Lenny Pratt', 'Marla Cross', 'Dexter Bell'], referee: where.referee,
+        canvas: where.canvas, refLook: where.refLook, bare: where.bare,
         done: (r) => this.afterStoryFight(save, def, player.id, opponent.id, r),
       });
     });
@@ -332,15 +396,43 @@ export class SequelStoryHubScene extends Scene {
       this.advance(save);
       return;
     }
-    playCutscene(this.g, chapterOutro(save), (choice) => {
-      if (choice) applyChapterChoice(save, choice);
-      save.flags[`outro_${ch.id}`] = true;
-      writeStory(save);
-      this.advance(save);
+    const outro = chapterOutro(save);
+    playCutscene(this.g, outro, (choice) => {
+      const after = () => {
+        save.flags[`outro_${ch.id}`] = true;
+        writeStory(save);
+        this.advance(save);
+      };
+      if (!choice) return after();
+      const msg = applyChapterChoice(save, choice);
+      this.playChoiceBeat(save, outro, choice, msg, after);
     });
   }
 
+  /**
+   * What your choice did, on screen: the same room and the same people, what happened next (the
+   * story log's line) and what it moved. Skipped when the choice had its own reply in the scene.
+   */
+  private playChoiceBeat(save: StorySave, from: ReturnType<typeof chapterIntro>, id: string, msg: string, then: () => void): void {
+    const c = from.choices?.find((x) => x.id === id);
+    const last = from.shots[from.shots.length - 1];
+    if (!c || c.reply?.length || !last) {
+      if (msg) this.g.toast(msg, PAL.moss);
+      return then();
+    }
+    playCutscene(this.g, {
+      film: true,
+      shots: [{ bg: last.bg, cast: last.cast, caption: c.label, lines: [{ who: null, text: save.log[0] ?? c.label }, ...(msg ? [{ who: null, text: msg }] : [])] }],
+    }, () => then());
+  }
+
   private advance(save: StorySave): void {
+    if (isSequelDemo() && save.chapter + 1 >= DEMO_STORY_CHAPTERS && chapterReady(save)) {
+      void import('../sequel/demo').then((m) => m.demoOver(this.g, `That was chapter ${DEMO_STORY_CHAPTERS}. Han Tibular walks in next.`, () => {
+        void import('./sequel').then((t) => this.g.goto(new t.SequelTitleScene(this.g)));
+      }));
+      return;
+    }
     if (!advanceStoryChapter(save)) {
       this.refresh();
       return;
@@ -379,14 +471,15 @@ export class SequelStoryHubScene extends Scene {
 
 // ---------------------------------------------------------------- shared fight glue
 
-function storyBout(id: string, a: { id: string; division: string }, b: { id: string }, rounds: 3 | 5): Bout {
+function storyBout(id: string, a: { id: string; division: string }, b: { id: string }, rounds: number): Bout {
   return {
     id: `story_${id}_${Date.now()}`,
     a: a.id,
     b: b.id,
     division: a.division,
     title: null,
-    rounds,
+    // a spar is one round: the live engine just counts rounds, the type only knows title-fight lengths
+    rounds: rounds as Bout['rounds'],
     position: 0,
     catchweight: false,
     shortNotice: false,
@@ -403,58 +496,63 @@ function fightSummary(r: FightResult): string {
 
 // ---------------------------------------------------------------- training
 
-function openStoryTraining(g: Game, save: StorySave, who: 'oneton' | 'corner', after: () => void): void {
+function openStoryTraining(g: Game, save: StorySave, after: () => void): void {
   if (!canAct(save)) {
-    alertBox(g, 'No sessions', 'The body needs to rest, and the plot needs to move.');
+    alertBox(g, 'No days left', 'The week is spent. END WEEK and start again on Monday.');
     return;
   }
-  const isOne = who === 'oneton';
-  const han = cornerKey(save) === 'han';
-  const win = openWindow(g, isOne ? 'TRAIN 1TON' : `TRAIN ${cornerName(save)}`, 388, 222, { paper: 'cream' });
+  let who: 'oneton' | 'corner' = 'oneton';
+  let tier: TrainTier = 'full';
+  const win = openWindow(g, 'THE CAMP', 400, 232);
   const b = win.body;
-  b.addChild(text(isOne ? 'THE TRAINEE' : han ? 'THE CHAMPION' : 'THE KID, GROWN', 6, 2, { small: true, color: PAL.blood }));
-  b.addChild(text(
-    isOne
-      ? 'Every session costs one action. 1ton gets permanently better, and a little more certain of himself.'
-      : han
-        ? 'Every session costs one action. Han is already 95 overall; you are polishing a diamond with a dish rag. You hold the pads.'
-        : 'Every session costs one action. Mateo gets permanently better. Han watches from a stool with his knee in ice and yells about the jab.',
-    6, 12, { width: 376, small: true, color: PAL.ink, maxLines: 2 },
-  ));
-  b.addChild(text(`SESSIONS LEFT: ${save.actionsLeft}`, 6, 30, { small: true, color: PAL.ember }));
-  const tracks = isOne
-    ? [
-        ['striking', 'STRIKING', `Level ${save.training.striking}/10 — hands, feet and the noise they make.`],
-        ['grappling', 'GRAPPLING', `Level ${save.training.grappling}/10 — takedowns, rides, and the floor as a weapon.`],
-        ['cardio', 'CARDIO', `Level ${save.training.cardio}/10 — the fifth round is a place. He has not been there.`],
-        ['media', 'MEDIA', `Level ${save.training.media}/10 — the notebook, the camera, the question he keeps asking.`],
-      ] as const
-    : [
-        ['striking', 'STRIKING', `Level ${save.daneTraining.striking}/10 — ${han ? 'the counter that beat Spadam Biggs, sharper.' : 'the jab Han taught him, heavier.'}`],
-        ['grappling', 'GRAPPLING', `Level ${save.daneTraining.grappling}/10 — ${han ? 'Zac\'s single legs, still drilled every Tuesday.' : 'top pressure, a light heavyweight\'s weight on a chest.'}`],
-        ['cardio', 'CARDIO', `Level ${save.daneTraining.cardio}/10 — ${han ? 'the fifth round is where he lives.' : 'stairs, soup, and a heart-rate monitor.'}`],
-      ] as const;
-  tracks.forEach(([id, label, blurb], i) => {
-    const y = 45 + i * 43;
-    const bg = box(376, 39, 0xdad0b2, 0xb3a685);
-    bg.position.set(0, y);
-    b.addChild(bg);
-    b.addChild(text(label, 6, y + 3, { small: true, color: PAL.ink }));
-    b.addChild(text(blurb, 6, y + 12, { small: true, width: 300, color: PAL.slate, maxLines: 2, lineGap: 0 }));
-    b.addChild(button('TRAIN', 308, y + 10, 62, 16, () => {
-      const msg = isOne
-        ? trainOneTon(save, id as 'striking' | 'grappling' | 'cardio' | 'media')
-        : trainDane(save, id as 'striking' | 'grappling' | 'cardio');
-      if (!canAct(save) && !msg.includes('→') && !msg.includes('>')) {
-        alertBox(g, 'No sessions', msg);
-        return;
-      }
-      writeStory(save);
-      win.close();
-      g.toast(msg, PAL.moss);
-      after();
-    }, { small: true, fill: PAL.moss, border: PAL.ink }));
-  });
+  const draw = () => {
+    b.removeChildren().forEach((c) => c.destroy({ children: true }));
+    const f = who === 'oneton' ? buildOneTon(save) : cornerFighter(save);
+    const tr = (who === 'oneton' ? save.training : save.daneTraining) as unknown as Record<string, number>;
+    b.addChild(text(`${save.actionsLeft} DAY${save.actionsLeft === 1 ? '' : 'S'} LEFT THIS WEEK  /  FATIGUE ${Math.round(save.fatigue)}`, 6, 2, { small: true, color: II.sodium }));
+    // who: 1ton, or the corner's man (Han, then Mateo)
+    (['oneton', 'corner'] as const).forEach((w, i) => {
+      b.addChild(button(w === 'oneton' ? '1TON' : cornerName(save), 6 + i * 64, 12, 60, 14, () => { who = w; draw(); }, { small: true, fill: who === w ? II.blood : II.steel, border: who === w ? II.sodium : undefined }));
+    });
+    // how hard: light (1 day), full (2), camp (3)
+    (Object.keys(TRAIN_TIERS) as TrainTier[]).forEach((t, i) => {
+      const def = TRAIN_TIERS[t];
+      b.addChild(button(`${def.label} ${def.days}D`, 150 + i * 82, 12, 78, 14, () => { tier = t; draw(); }, {
+        small: true, fill: tier === t ? II.blood : II.steel, border: tier === t ? II.sodium : undefined, disabled: !canAct(save, def.days),
+      }));
+    });
+    b.addChild(text(TRAIN_TIERS[tier].blurb + ' Play the drill for your own grade, or sim it for a C.', 6, 30, { width: 386, small: true, color: II.ash, maxLines: 2 }));
+    const tracks: [OneTonTrack, string, DrillKind][] = [
+      ['striking', 'STRIKING', 'striking'],
+      ['grappling', 'GRAPPLING', 'grappling'],
+      ['cardio', 'CARDIO', 'cardio'],
+      ...(who === 'oneton' ? [['media', 'MEDIA', 'media'] as [OneTonTrack, string, DrillKind]] : []),
+    ];
+    tracks.forEach(([track, label, kind], i) => {
+      const y = 48 + i * 38;
+      const lv = tr[track] ?? 0;
+      const xp = (save.xp ?? {})[`${who}.${track}`] ?? lv * 30;
+      b.addChild(box(388, 34, II.panelHi, II.edge, { bevel: true })).position.set(0, y);
+      b.addChild(text(label, 8, y + 4, { small: true, color: II.gold }));
+      b.addChild(text(`LEVEL ${lv}/10`, 8, y + 13, { small: true, color: II.bone }));
+      const bar = new Graphics().rect(8, y + 23, 120, 4).fill(0x221e28).rect(8, y + 23, Math.round(120 * Math.min(1, (xp % 30) / 30)), 4).fill(lv >= 10 ? II.gold : II.sodium);
+      b.addChild(bar);
+      b.addChild(text(lv >= 10 ? 'MAXED' : `${xp % 30}/30 XP TO LEVEL ${lv + 1}`, 134, y + 21, { small: true, color: II.ash }));
+      b.addChild(button('TRAIN', 316, y + 9, 64, 16, () => {
+        const days = TRAIN_TIERS[tier].days;
+        if (!canAct(save, days)) return alertBox(g, 'Not enough days', `A ${TRAIN_TIERS[tier].label} session takes ${days} day${days === 1 ? '' : 's'}.`);
+        win.close();
+        openDrill(g, { kind, tier, fighter: f, title: `${f.first.toUpperCase()}  /  ${label}  /  ${TRAIN_TIERS[tier].label}` }, (pct) => {
+          if (pct === null) return openStoryTraining(g, save, after);
+          const msg = trainSession(save, who, track, tier, gradeFor(pct));
+          writeStory(save);
+          g.toast(msg, PAL.moss);
+          after();
+        });
+      }, { small: true, fill: II.blood, border: II.sodium }));
+    });
+  };
+  draw();
 }
 
 // ---------------------------------------------------------------- contract review
@@ -631,7 +729,8 @@ function startSideFight(g: Game, save: StorySave, opp: StorySideOpponent, after:
   openLiveFight(g, {
     bout, A: player, B: opp.fighter, skills: [player.skills, opp.fighter.skills], player: 0,
     plan: 'balanced', oppPlan: 'balanced', cutTier: 2, seed,
-    event: 'THE WAREHOUSE UNDERCARD', judges: ['Marla Cross', 'Dexter Bell', 'Lenny Pratt'], referee: 'Dirty Daniel Stinkovich',
+    event: 'THE WAREHOUSE UNDERCARD', judges: ['Marla Cross', 'Dexter Bell', 'Lenny Pratt'], referee: storyVenue('THE WAREHOUSE').referee,
+    canvas: storyVenue('THE WAREHOUSE').canvas,
     done: (r) => {
       const rec = recordSideFight(save, opp, {
         winner: r.winner, method: r.method, round: r.round, time: r.time, detail: r.detail,

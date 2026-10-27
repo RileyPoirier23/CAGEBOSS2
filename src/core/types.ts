@@ -51,6 +51,7 @@ export interface Look {
   chain?: number; // 1 = thin gold chain, always on
   inkArt?: number; // 1 = koi on the shoulder (black and red)
   mask?: number; // luchador eye mask colour (0/undefined = none)
+  fade?: number; // 1 = skin fade on the sides and back (with the bun: a bun with a fade)
 }
 
 export interface Contract {

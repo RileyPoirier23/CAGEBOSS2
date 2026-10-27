@@ -527,6 +527,17 @@ export function drawPortrait(inp: PortraitInput): PixelBuf {
     case 7: // man bun / ponytail
       capRows(6, 0, 2);
       for (let y = top - 7; y < top - 1; y++) for (let x = CX - 3; x < CX + 4; x++) if (Math.hypot(x - CX, y - (top - 4)) < 3.6) b.set(x, y, ramp(HR, 0.6 - (x - CX) / 8, x, y));
+      if (look.fade) {
+        // a fade: the sides go from short hair to skin toward the ears
+        const hair = new Set(HR);
+        for (let y = top + 1; y < browY + 1; y++) {
+          const k = (y - top) / Math.max(1, browY - top);
+          for (const side of [-1, 1]) for (let d = 0; d < 4; d++) {
+            const x = side < 0 ? CX - hwAt(y) - 1 + d : CX + hwAt(y) - d;
+            if (hair.has(b.get(x, y))) b.set(x, y, lerpColor(HR[1], SK[2], Math.min(1, 0.35 + k * 0.6)));
+          }
+        }
+      }
       break;
   }
   // grey temples on older men

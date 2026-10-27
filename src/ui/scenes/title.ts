@@ -21,6 +21,7 @@ import { buildStreet, STREET_W, type Street } from '../menuworld';
 import { openCredits } from './credits';
 import { openSupport, supportAvailable } from '../support';
 import { desktop } from '../../desktop';
+import { sequelBillboard } from '../sequelart';
 
 interface Drop {
   x: number;
@@ -111,6 +112,10 @@ export class TitleScene extends Scene {
     r.addChild(text(`V${__APP_VERSION__}${isTouchDevice() ? '' : hint('  •  M = MUTE', '')}  •  FICTIONAL, EXCEPT THE FRIENDS IN THE CREDITS.`, 14, H - 10, { small: true, color: PAL.grey }));
     // a solo dev: the support screen (desktop and web builds only)
     if (supportAvailable()) r.addChild(button('SUPPORT THE DEV', W - 96, H - 20, 90, 13, () => openSupport(this.g), { small: true, fill: PAL.blood, border: PAL.gold }));
+    // CAGE BOSS II: its own game now; the billboard on the street plays the demo
+    const billboard = sequelBillboard(() => void import('../sequel/demo').then((m) => m.enterSequelDemo(this.g)), 'PLAY THE DEMO');
+    billboard.position.set(W - 194, 84);
+    r.addChild(billboard);
     setTimeout(() => maybeWhatsNew(this.g), 400);
     setTimeout(() => maybeComingSoon(this.g, () => this.g.scene === this), 900);
   }

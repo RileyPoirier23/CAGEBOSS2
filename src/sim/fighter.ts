@@ -16,7 +16,7 @@ import { content } from '../core/content';
 import { createNewGame } from './newgame';
 import { generateFighter } from './generate';
 import { DIVISION_LIMITS, DIVISION_ORDER, divisionName } from './divisions';
-import { fullName, overall, computeStarPower, healWeek } from './fighters';
+import { fullName, overall, computeStarPower, healWeek, isWomensDivision } from './fighters';
 import { computeRankings, rankOf, undisputed } from './rankings';
 import { makeBout, runBout, applyBout } from './events';
 import { heatUp, feudKey } from './feuds';
@@ -437,7 +437,7 @@ export const PFL_ORDER: Record<string, string[]> = {
 function localFighter(s: GameState, rng: Rng, promo: string, target: number, idx: number, division?: string): Fighter {
   const f0 = me(s);
   const div = division ?? f0.division;
-  const x = generateFighter(rng, content().names, { division: div, gender: div.startsWith('w') ? 'W' : 'M', tier: 'prospect', id: `${promo}_${div}_${s.week}_${idx}_${rng.int(0, 1e6)}` });
+  const x = generateFighter(rng, content().names, { division: div, gender: isWomensDivision(div) ? 'W' : 'M', tier: 'prospect', id: `${promo}_${div}_${s.week}_${idx}_${rng.int(0, 1e6)}` });
   const shift = target - overall(x.skills);
   for (const k of Object.keys(x.skills) as (keyof Skills)[]) x.skills[k] = clamp(Math.round(x.skills[k] + shift), 15, 95);
   x.promotion = promo;

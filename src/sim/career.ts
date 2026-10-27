@@ -21,7 +21,7 @@ import { money, clamp } from '../core/format';
 import { fmtFightDate } from '../core/time';
 import { scale, adjustMeter, adjustHidden, spend, earn } from './econ';
 import { addNews } from './news';
-import { fullName, overall, computeStarPower, marketPurse, addCareerLog, isOurs } from './fighters';
+import { fullName, overall, computeStarPower, marketPurse, addCareerLog, isOurs, isWomensDivision } from './fighters';
 import { generateFighter } from './generate';
 import { sign } from './newgame';
 import { divisionName } from './divisions';
@@ -493,7 +493,7 @@ export function ownerFill(s: GameState, t: string, extra: Record<string, string>
 }
 
 function makeGiftFighter(s: GameState, rng: Rng, kind: 'prospect' | 'nephew' | 'vet'): Fighter | null {
-  const divs = s.divisionsOpen.filter((d) => !d.startsWith('w'));
+  const divs = s.divisionsOpen.filter((d) => !isWomensDivision(d));
   if (!divs.length) return null;
   const division = rng.pick(divs);
   const f = generateFighter(rng, content().names, {
@@ -604,7 +604,7 @@ function planContender(s: GameState, rng: Rng): void {
   for (let i = 0; i < bouts; i++) {
     const back = comeback.length && rng.chance(0.35) ? comeback.splice(rng.int(0, comeback.length - 1), 1)[0] : null;
     const division = back?.division ?? rng.pick(divs);
-    const gender = division.startsWith('w') ? 'W' : 'M';
+    const gender = isWomensDivision(division) ? 'W' : 'M';
     const gen = (): Fighter => {
       const f = generateFighter(rng, content().names, {
         division, gender, tier: 'prospect', culture: mexican ? 'mexico' : undefined,

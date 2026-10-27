@@ -9,7 +9,7 @@ import { content } from '../core/content';
 import { Rng } from '../core/rng';
 import { money, clamp } from '../core/format';
 import { evaluate, parseStatement, type Env } from './expr';
-import { isChamp, fullName, pronouns, isBooked, addTrait, removeTrait, retire as retireFighter, addCareerLog, computeStarPower, isInjured } from '../sim/fighters';
+import { isChamp, fullName, pronouns, isBooked, addTrait, removeTrait, retire as retireFighter, addCareerLog, computeStarPower, isInjured, isWomensDivision } from '../sim/fighters';
 import { rankOf, beltsOf, vacateBelt, newBelt } from '../sim/rankings';
 import { adjustMeter, adjustHidden, earn, spend, personal, scale } from '../sim/econ';
 import { addNews, fillTemplate } from '../sim/news';
@@ -131,7 +131,7 @@ export function globalEnv(s: GameState, rng: Rng): Env {
     eventThisWeek: s.events.some((e) => e.status === 'scheduled' && e.week === s.week),
     rivalsAlive: Object.values(s.rivals).filter((r) => r.alive).length,
     openCases: s.legal.cases.filter((c) => c.status !== 'closed').length,
-    womenOpen: s.divisionsOpen.some((d) => d.startsWith('w')),
+    womenOpen: s.divisionsOpen.some((d) => isWomensDivision(d)),
     flag: (k: string) => s.flags[k] ?? 0,
     rand: (a: number, b: number) => rng.int(Math.round(a), Math.round(b)),
     chance: (p: number) => rng.chance(p),

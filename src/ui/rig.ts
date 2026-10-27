@@ -319,6 +319,8 @@ export interface Look2 {
   inkArt?: number;
   /** luchador eye mask colour */
   mask?: number;
+  /** skin fade on the sides and back */
+  fade?: boolean;
   /** the middle finger is up (the flip-off taunt) */
   bird?: boolean;
   /** the mouthpiece has been knocked out (it's lying on the canvas) */
@@ -432,6 +434,7 @@ export function lookFor(f: Fighter, corner: 0 | 1, champ = false): Look2 {
     chain: !!f.look.chain,
     inkArt: f.look.inkArt,
     mask: f.look.mask,
+    fade: !!f.look.fade,
     glasses: f.look.glasses === 2 ? 2 : undefined,
     beanie: !!f.look.beanie,
     freckles: !!f.look.freckles,
@@ -1135,7 +1138,12 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
       break;
     case 7:
       // man bun / ponytail: pulled back tight over the sides, knot at the back of the crown
-      mass(-44, -200, 1.2, hc);
+      if (L.fade) {
+        // with a fade: the sides and back taken down to the skin, the top combed back into the knot
+        mass(-44, -205, 0.3, lerpColor(hc, skin, 0.62), { strands: false, sideburn: false });
+        mass(-40, -150, 1.3, hc, { sideburn: false });
+        for (let a = -150; a > -200; a -= 9) hl(onR(a, R + 0.1), onR(a - 5, R - 0.5), lerpColor(hc, skin, 0.4), 0.35);
+      } else mass(-44, -200, 1.2, hc);
       g.circle(...hpt(-6 - sw * 0.3, -5.5), 3 * s).fill(OUT);
       g.circle(...hpt(-6 - sw * 0.3, -5.5), 2.3 * s).fill(hc);
       g.circle(...hpt(-6.6 - sw * 0.3, -6.2), 0.8 * s).fill(hcL);

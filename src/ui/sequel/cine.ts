@@ -44,6 +44,8 @@ const LIGHT: Partial<Record<Bg, Light>> = {
   landlord: { top: 0x9a90a0, bottom: 0xd0c0a8, key: 0xffe8c0, keyA: 0.1, dir: -1, shafts: false, rim: 0xffe8c0 },
 };
 const DEFAULT_LIGHT: Light = { top: 0x9a90a8, bottom: 0xd0c0b0, key: 0xffe0b0, keyA: 0.1, dir: 1, shafts: false, rim: 0xffe0c0 };
+/** a memory: old film stock */
+const FLASHBACK: Light = { top: 0xa08868, bottom: 0xd8c098, key: 0xfff0d0, keyA: 0.14, dir: 1, shafts: true, rim: 0xfff0d0 };
 
 /** Everything turned to flat white (saturated), then a second pass paints it the rim colour. */
 function rimFilters(color: number): ColorMatrixFilter[] {
@@ -61,6 +63,9 @@ function shadowFilter(): ColorMatrixFilter {
 }
 
 type Live = Actor & { cx: number; look2: Look2; rig: Rig; phase: number; walkPh: number };
+
+/** People are drawn at 1.3 for a 180 cm man; a fighter stands at his own height (Mateo is not a kid any more). */
+const actorScale = (a: Actor): number => (a.fighter ? 1.3 * Math.max(0.86, Math.min(1.16, a.fighter.height / 180)) : a.scale ?? 1.3);
 
 const ease = (cur: number, to: number, dt: number, rate: number): number => cur + (to - cur) * (1 - Math.exp(-dt * rate));
 
@@ -84,7 +89,10 @@ function alive(r: Rig, t: number, ph: number, talking: boolean, standing: boolea
   return o;
 }
 
-export function playCine(g: Game, scene: Cutscene, done: (choice: string | null) => void): void {
+export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null) => void): void {
+  // a working copy: a choice with a reply appends its own shot
+  const scene: Cutscene = { ...scene0, shots: [...scene0.shots] };
+  let replied: string | null = null;
   const touch = isTouchDevice();
   const root = new Container();
   const wrap = g.modal(root, { dim: 1, fit: false });
@@ -134,6 +142,7 @@ export function playCine(g: Game, scene: Cutscene, done: (choice: string | null)
   let finished = false;
   let titleT = scene.title ? 2.8 : 0;
   let light: Light = DEFAULT_LIGHT;
+  let memory = false;
   let cast: Live[] = [];
   let screen: ReturnType<typeof tvScreen> = null;
   let show: TvShow | null = null;
@@ -150,7 +159,8 @@ export function playCine(g: Game, scene: Cutscene, done: (choice: string | null)
     shotIdx = i;
     lineIdx = -1;
     const s = scene.shots[i];
-    light = LIGHT[s.bg] ?? DEFAULT_LIGHT;
+    light = s.flashback ? FLASHBACK : LIGHT[s.bg] ?? DEFAULT_LIGHT;
+    memory = !!s.flashback;
     rimC.filters = rimFilters(light.rim);
     drawBg(bgG, fgG, s.bg, s.tv);
     dress.removeChildren().forEach((c) => c.destroy());
@@ -168,7 +178,7 @@ export function playCine(g: Game, scene: Cutscene, done: (choice: string | null)
     cast = s.cast.map((a, k) => {
       const x = clearOfProps(s.bg, a.x, a.scale ?? 1.3);
       const p = POSES[a.pose ?? 'stand'];
-      return { ...a, x, cx: instant ? x : a.enter === 'left' ? -40 : a.enter === 'right' ? W + 40 : x, look2: lookOf(a), rig: { ...p }, phase: k * 1.7, walkPh: 0 };
+      return { ...a, scale: actorScale(a), x, cx: instant ? x : a.enter === 'left' ? -40 : a.enter === 'right' ? W + 40 : x, look2: lookOf(a), rig: { ...p }, phase: k * 1.7, walkPh: 0 };
     });
     drawGrade();
     drawCaption(s.caption);
@@ -390,12 +400,26 @@ export function playCine(g: Game, scene: Cutscene, done: (choice: string | null)
     const c = scene.choices?.[i];
     if (!c) return;
     sfx('click');
+    if (c.reply?.length) {
+      // the answer plays out: same room, same people, where they stand now
+      const cur = scene.shots[shotIdx];
+      replied = c.id;
+      scene.choices = undefined;
+      scene.shots.push({ bg: cur.bg, cast: cast.map((a) => ({ ...a, x: a.x, enter: undefined })), lines: c.reply, caption: c.label });
+      choicesBox.removeChildren().forEach((ch) => ch.destroy({ children: true }));
+      finished = false;
+      setupShot(scene.shots.length - 1, true);
+      fade = 0.5;
+      nextLine();
+      return;
+    }
     close(c.id);
   };
   const end = () => {
     if (finished) return;
     finished = true;
     dialog.visible = false;
+    if (replied) return close(replied);
     if (!scene.choices?.length) return close(null);
     choiceSel = 0;
     drawChoices();
@@ -581,7 +605,12 @@ export function playCine(g: Game, scene: Cutscene, done: (choice: string | null)
     filmG.clear();
     if (scene.film !== false) {
       for (let i = 0; i < 70; i++) filmG.rect(Math.random() * SW - OX, Math.random() * H, 1, 1).fill({ color: Math.random() < 0.5 ? 0xffffff : 0x000000, alpha: 0.05 });
-      if (Math.random() < dt * 0.8) filmG.rect(Math.random() * W, 0, 1, H).fill({ color: 0xffffff, alpha: 0.06 });
+      if (Math.random() < dt * (memory ? 5 : 0.8)) filmG.rect(Math.random() * W, 0, 1, H).fill({ color: 0xffffff, alpha: memory ? 0.12 : 0.06 });
+      // a memory: washed out, burned at the edges
+      if (memory) {
+        filmG.rect(-OX, 0, SW, H).fill({ color: 0xc8a878, alpha: 0.12 });
+        for (let k = 0; k < 10; k++) filmG.rect(-OX + k * 4, 0, 4, H).fill({ color: 0x2a1a0a, alpha: 0.12 - k * 0.011 }).rect(SW - OX - (k + 1) * 4, 0, 4, H).fill({ color: 0x2a1a0a, alpha: 0.12 - k * 0.011 });
+      }
       cam.y += Math.round(Math.sin(t * 23) * 0.4);
     }
     fade = Math.max(0, fade - dt * 2.6);
