@@ -592,8 +592,8 @@ function introCrew(save: StorySave): Cutscene {
     film: true,
     shots: [
       shot('gym', [dane(110, 1), han(save, 210, 1), bigMateo(save, 310, -1), bradie(400, -1)], [
-        { who: null, text: 'The gym is closed. The soup pot is cold. Ray\'s cardigan is folded on the stool where he used to watch the door.' },
-        { who: 'bradie', text: 'The funeral is Thursday. The police want a statement.' },
+        { who: null, text: 'The gym is open again, but quieter. Ray\'s cardigan is folded on the stool where he used to watch the door.' },
+        { who: 'bradie', text: 'The police took our statements a week ago. Nobody has called back.' },
         { who: 'dane', text: 'I gave them one. I gave them three names.' },
         { who: 'mateo', text: 'They already had three names.' },
         { who: null, text: 'Duke Kessler. Rico Alvarez. Cesar Rios. Three men who work for Gordo "1ton" Fuente and have never had to hide.' },
@@ -656,7 +656,7 @@ function outroCrew(save: StorySave): Cutscene {
         { who: 'dane', text: 'Zenith just put their light heavyweight belt on him. The buyback rides on it. One night. Five rounds.' },
         { who: 'han', text: 'My knee says eight months.' },
         { who: 'mateo', text: 'Then it\'s me.' },
-        { who: null, text: 'The contract arrives the next morning. MATEO VARGA vs 1TON. Ray\'s bucket is in the corner. Nobody moves it.' },
+        { who: null, text: 'The contract arrives the next morning. MATEO VARGA vs 1TON. Ray\'s bucket is still in the corner where he left it.' },
       ], all ? 'THREE FOR THREE' : 'THE NAPKIN'),
     ],
   };
@@ -2105,6 +2105,7 @@ function chapterIntroRaw(save: StorySave, id: string): Cutscene {
     case 'homecoming': return introHomecoming(save);
     case 'the_signing': return introSigning(save);
     case 'the_wake': return introWake(save);
+    case 'street_justice': return introCrew(save);
     case 'the_camp': return introCamp(save);
     case 'back_row': return introBackRow(save);
     case 'mexican_math': return introMexicanMath(save);
@@ -2127,6 +2128,7 @@ export function chapterOutro(save: StorySave): Cutscene {
     case 'homecoming': return outroHomecoming(save);
     case 'the_signing': return outroSigning(save);
     case 'the_wake': return outroWake(save);
+    case 'street_justice': return outroCrew(save);
     case 'the_camp': return outroCamp(save);
     case 'back_row': return outroBackRow(save);
     case 'mexican_math': return outroMexicanMath(save);

@@ -19,7 +19,7 @@ export const LEGACY_FAS: LegacyFA[] = [
   { key: 'tyler', build: () => buildOpponent(fresh(), 'tyler'), who: 'TYLER VANCE', reply: 'Tell your father it isn\'t a tax thing.',
     says: ['My father wanted me to tell you this is a tax thing.', 'It isn\'t a tax thing. I just want to fight for someone who feeds people.'] },
   { key: 'spadam', build: () => buildOpponent(fresh(), 'spadam'), who: 'SPADAM BIGGS', reply: 'No referees on the payroll. That\'s the only rule.',
-    says: ['The bag doesn\'t care who you were. Ray told me that.', 'I\'d like to find out who I am now. No Daniel this time.'] },
+    says: ['The bag doesn\'t care who you were. Ray told me that, years ago.', 'I\'d like to find out who I am now. No Daniel this time.'] },
   { key: 'oneton', build: () => buildOneTon(fresh(), true), who: 'GORDO "1TON" FUENTE', reply: 'Second chances are in the back row. Sit.',
     says: ['I know what I did.', 'I am not asking you to forget it. I am asking for the question one more time.', 'When are you going to put a Mexican fighter in the main event?'] },
 ];

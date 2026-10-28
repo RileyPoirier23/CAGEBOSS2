@@ -99,3 +99,33 @@ describe('establishing shots', () => {
     expect(sceneryTags('1ton is on his stool.')).toEqual([]);
   });
 });
+
+describe('the story holds together', () => {
+  it('every chapter opens and closes on its own scenes, and Ray is only a memory after chapter 8', async () => {
+    content();
+    const C = await import('../src/ui/scenes/storycuts');
+    const first = (sc: { shots: { lines: { text: string }[] }[] }) => sc.shots[0]?.lines[0]?.text;
+    const save0 = newStorySave(5);
+    save0.chapter = 0;
+    const backRowIntro = first(C.chapterIntro(save0));
+    const backRowOutro = first(C.chapterOutro(save0));
+    const dead = STORY_CHAPTERS.findIndex((c) => c.id === 'brother');
+    STORY_CHAPTERS.forEach((ch, i) => {
+      const save = newStorySave(5);
+      save.chapter = i;
+      const intro = C.chapterIntro(save);
+      const outro = C.chapterOutro(save);
+      if (i > 0) {
+        expect(first(intro), `${ch.id} intro`).not.toBe(backRowIntro);
+        expect(first(outro), `${ch.id} outro`).not.toBe(backRowOutro);
+      }
+      if (i <= dead) return;
+      const scenes = [intro, outro, C.talkScene(save), ...[1, 2, 3, 4, 5].map((p) => C.partScene(save, p))];
+      for (const sc of scenes) for (const sh of sc?.shots ?? []) {
+        if (sh.flashback) continue;
+        expect(sh.cast.some((a) => a.id === 'ray'), `${ch.id}: Ray in a present-day cast`).toBe(false);
+        expect(sh.lines.some((l) => l.who === 'ray'), `${ch.id}: Ray speaking in the present`).toBe(false);
+      }
+    });
+  });
+});

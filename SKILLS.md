@@ -105,25 +105,34 @@ is **"Hands up. Chin down. Eat something."**
 - 1ton is the trainee you build into a fighter. He signs with Zenith, turns on you, and his crew kills Uncle Ray.
 - **Han Tibular comes back** in chapter 3: now the CBFC **middleweight** champion at his peak (**95 OVR**). He walks
   out on Zenith to fight for the warehouse. He fights Brick, El Cuchillo II, Duke and Rico.
-- Chapter 9: Ray is dead. Han moves up to **light heavyweight** for Cesar, and **tears his knee in camp halfway
-  through the chapter**. **Mateo**, now 21, a jacked and tattooed light heavyweight, takes the Cesar fight.
-- Chapter 10: **Mateo vs 1ton** for Zenith's light heavyweight belt, with the buyback riding on it.
+- **The chapter order** (15 + the secret 16th): 1 back_row, 2 mexican_math, 3 allstar, 4 brick_by_brick,
+  5 sparring_partner, 6 audit, 7 the_signing (1ton signs with Zenith), 8 brother (**Ray dies at the end**), 9 the_wake,
+  10 street_justice (the crew), 11 homecoming, 12 the_board, 13 rematch, 14 the_camp, 15 buyback, 16 legacy.
+- **After the gold pen (chapter 7 on) 1ton is out of the camp:** TRAIN and SPAR refuse him (`onetonTurned`), and his
+  overall follows `ONETON_TURNED_OVR` (80 at chapter 8 up to 90), whatever happened before.
+- **Ray is alive in chapters 1 to 8 only.** After that he's a memory: flashbacks, his notebook, his bucket, his
+  recipe. Never give him a present-day line or a place in a post-funeral cast. A notebook page that unlocks after
+  chapter 8 is either an old entry or in someone else's handwriting (Han's or Mateo's, like ALBERTO and THE BUYBACK).
+- Chapter 10: Han moves up to **light heavyweight** for Cesar and **tears his knee in camp halfway through the
+  chapter**. **Mateo**, now 21, a jacked and tattooed light heavyweight, takes the Cesar fight. From there Mateo
+  fights the Moncton tribute card (Lobster, Tyler), Spadam for the deed, and Cuchillo, with Han on crutches.
+- Chapter 15: **Mateo vs 1ton** for Zenith's light heavyweight belt, with the buyback riding on it.
 - If Mateo wins, he picks a road on the microphone:
-  - **call out Han** → secret chapter 11 boss fight **Mateo vs Han** → ending `torch` (Han hands down his
+  - **call out Han** → secret chapter 16 boss fight **Mateo vs Han** → ending `torch` (Han hands down his
     legacy and buckles the belt on Mateo) or `student` (Han wins and says "not yet, kid")
   - **defend the belt** → **Mateo vs Cesar II** → `champion` or `onenight`
 - If Mateo loses or draws with 1ton, the story ends on the older endings (`house`, `role`, `zenith`, `draw`).
 - Ray is **Uncle Ray** (Han's uncle). Never "Ray Whyte". He is the heart of the story: lovable, funny, a mentor to Han,
-  Mateo **and 1ton** (soup at six a.m., "Hands up. Chin down. Eat something."). Make players love him before chapter 8.
+  Mateo **and 1ton** (soup at six a.m., "Hands up. Chin down. Eat something."). Make players love him before he dies at the end of chapter 8.
 - **1ton's betrayal is foreshadowed from chapter 6 only** (the gold envelope talk, the Zenith-tower photo beat). Before
-  chapter 6 he is warm, funny and loyal (in chapter 5 he tears up Verity's black card himself). Don't add hints earlier.
+  chapter 6 he is warm, funny and loyal (even in chapter 6 he tears up Verity's black card himself). Don't add hints earlier.
 - **1ton's identity:** his press name is **Gordo "1ton" Fuente**. His real name is **Alberto Del Burrito**, once
   middleweight champion of Mexico (22-0). He lost the belt, got drunk, and lost a fistfight in a cantina to a fan's
   abuela; it went viral. He moved north, changed his name and became a sportswriter. His question ("When are you going
-  to put a Mexican fighter in the main event?") meant *himself*, every week for twelve years. Revealed in chapter 10
-  (beat `true_name`). Nobody knows before that.
+  to put a Mexican fighter in the main event?") meant *himself*, every week for twelve years. Revealed in chapter 14
+  (beat `true_name`, in the_camp). Nobody knows before that.
 - **The opening:** 1ton starts training at Ray's (chapter 1), signs with **Xavier's Allstar Fighting Championship**
-  (chapter 2, beat `xavier_league`), and Mateo signs too. 1ton only signs with Dane in chapter 5 (beat `dane_contract`).
+  (chapter 2, beat `xavier_league`), and Mateo signs too. 1ton only signs with Dane in chapter 6 (beat `dane_contract`, in the audit).
 - Han is **30-1**, hair in a **bun with a fade** (`look.hair = 7`, `look.fade = 1`).
 
 **Sequel-established canon:** Ray lost the **1987 Golden Gloves final** to **Butch** (the mullet). Han's father **Marc
