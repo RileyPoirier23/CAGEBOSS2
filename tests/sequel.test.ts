@@ -18,7 +18,7 @@ import {
 import {
   advanceStoryChapter, applyChapterChoice, applyPressAnswer, MAIN_CHAPTERS, buildHan, chapterWeeks, endStoryWeek, fightDue, storyWeek, talkedThisChapter, trainSession, sparSession, gradeFor, storyDate, DAYS_PER_WEEK, movesOf, buildMateoGrown, buildOneTon, chapterFights, chapterReady, STORY_CHAPTERS, finishPressDay, newStorySave,
   pressQuestions, recordSideFight, recordStoryFight, resolveStoryDoc, sideOffers, storyChapter,
-  storyCorner, storyDoc, storyEnding, trainOneTon,
+  storyCorner, storyDoc, storyEnding, trainOneTon, onetonTurned, storyOverall,
 } from '../src/sequel/story';
 
 function memoryKV(): KV {
@@ -393,7 +393,12 @@ describe('sequel story mode', () => {
       };
       // live the chapter week by week: train the days, fight on fight week
       for (let w = 0; w < 20 && storyWeek(save) < chapterWeeks(ch); w++) {
-        while (save.actionsLeft > 0) trainOneTon(save, 'striking');
+        while (save.actionsLeft > 0) {
+          const who = onetonTurned(save) ? 'corner' : 'oneton';
+          const before = save.actionsLeft;
+          trainSession(save, who, 'striking', 'light', 'C');
+          if (save.actionsLeft >= before) break;
+        }
         fightDueOnes();
         expect(endStoryWeek(save).ok).toBe(true);
       }
@@ -485,17 +490,82 @@ describe('sequel story mode', () => {
     expect(movesOf(save, 'corner')).toEqual([]);
   });
 
-  it('books at least two key fights in every chapter before Ray dies', () => {
-    for (const id of ['mexican_math', 'allstar', 'brick_by_brick', 'sparring_partner', 'audit', 'homecoming', 'the_board', 'rematch', 'the_signing', 'brother']) {
+  it('takes 1ton out of the camp after the gold pen and writes his card to 90', () => {
+    const signing = STORY_CHAPTERS.findIndex((c) => c.id === 'the_signing');
+    const save = newStorySave(4242);
+    save.chapter = signing;
+    expect(onetonTurned(save)).toBe(false);
+    trainSession(save, 'oneton', 'striking', 'light', 'A');
+    expect(save.xp!['oneton.striking']).toBeGreaterThan(0);
+
+    // the chapter after the signing: he is Zenith's, not yours
+    save.chapter = signing + 1;
+    save.actionsLeft = DAYS_PER_WEEK;
+    expect(onetonTurned(save)).toBe(true);
+    expect(trainSession(save, 'oneton', 'striking', 'light', 'S')).toMatch(/Zenith/);
+    expect(sparSession(save, 'oneton', 'S')).toMatch(/Zenith/);
+    expect(save.actionsLeft).toBe(DAYS_PER_WEEK);
+    expect(storyOverall(save, 'oneton')).toBe(80);
+
+    // by the title fight he is a 90 no matter what the player did with him, or how tired he is
+    save.chapter = STORY_CHAPTERS.findIndex((c) => c.id === 'buyback');
+    save.training = { striking: 10, grappling: 10, cardio: 10, media: 10 };
+    save.fatigue = 100;
+    expect(storyOverall(save, 'oneton')).toBe(90);
+    save.training = { striking: 0, grappling: 0, cardio: 0, media: 0 };
+    save.fatigue = 0;
+    expect(storyOverall(save, 'oneton')).toBe(90);
+  });
+
+  it('books at least two key fights in every chapter before the crew', () => {
+    for (const id of ['mexican_math', 'allstar', 'brick_by_brick', 'sparring_partner', 'audit', 'the_signing', 'brother']) {
       const ch = STORY_CHAPTERS.find((c) => c.id === id)!;
       expect(chapterFights(ch).length, id).toBeGreaterThanOrEqual(2);
     }
+    expect(chapterFights(STORY_CHAPTERS.find((c) => c.id === 'street_justice')!).length).toBe(3);
   });
 
   it('has fifteen chapters of five parts (and the secret one)', () => {
     expect(MAIN_CHAPTERS).toBe(15);
     expect(STORY_CHAPTERS.length).toBe(16);
     expect(STORY_CHAPTERS.map((c) => c.no)).toEqual(STORY_CHAPTERS.map((_, i) => i + 1));
+    expect(STORY_CHAPTERS.map((c) => c.id)).toEqual([
+      'back_row', 'mexican_math', 'allstar', 'brick_by_brick', 'sparring_partner', 'audit',
+      'the_signing', 'brother', 'the_wake', 'street_justice', 'homecoming', 'the_board',
+      'rematch', 'the_camp', 'buyback', 'legacy',
+    ]);
+  });
+
+  it('kills Ray at the end of chapter eight and puts the crew after the funeral', () => {
+    const ids = STORY_CHAPTERS.map((c) => c.id);
+    expect(ids.indexOf('brother')).toBe(7);
+    expect(STORY_CHAPTERS[7].no).toBe(8);
+    expect(ids.indexOf('the_wake')).toBe(8);
+    expect(ids.indexOf('street_justice')).toBe(9);
+    const save = newStorySave(31);
+    save.chapter = ids.indexOf('brother');
+    save.week = chapterWeeks(storyChapter(save));
+    save.flags.talk_brother = true;
+    for (const f of chapterFights(storyChapter(save))) save.flags[`fight_${f.id}`] = true;
+    expect(chapterReady(save)).toBe(true);
+    expect(save.flags.rayDead).toBeFalsy();
+    advanceStoryChapter(save);
+    expect(save.flags.rayDead).toBe(true);
+    expect(storyChapter(save).id).toBe('the_wake');
+  });
+
+  it('gives Mateo and 1ton the fights after Ray dies, never Dane', () => {
+    const find = (id: string) => STORY_CHAPTERS.find((c) => c.id === id)!;
+    for (const id of ['homecoming', 'the_board', 'rematch', 'the_camp', 'buyback', 'legacy']) {
+      const fights = chapterFights(find(id));
+      expect(fights.length, id).toBeGreaterThan(0);
+      for (const f of fights) expect(['mateo', 'oneton', 'han']).toContain(f.player);
+    }
+    expect(chapterFights(find('homecoming')).every((f) => f.player === 'mateo')).toBe(true);
+    expect(chapterFights(find('the_board')).find((f) => f.id === 'han_spadam')!.player).toBe('mateo');
+    expect(chapterFights(find('the_board')).find((f) => f.id === 'chairman')!.player).toBe('oneton');
+    expect(chapterFights(find('rematch')).find((f) => f.id === 'cuchillo_rematch')!.player).toBe('mateo');
+    expect(chapterFights(find('buyback'))[0].player).toBe('mateo');
   });
 
   it('runs the story over a few years of calendar', () => {
@@ -554,6 +624,23 @@ describe('sequel story mode', () => {
     const trophy = addStoryTrophy(save);
     expect(trophy.endings.length).toBe(1);
     expect(loadStoryTrophy().playthroughs).toBe(1);
+  });
+
+  it('remembers the secret chapter once it is reached', () => {
+    setStorage(memoryKV());
+    const save = newStorySave(16);
+    save.status = 'ended';
+    save.ending = 'torch';
+    save.chapter = MAIN_CHAPTERS;
+    expect(addStoryTrophy(save).secret).toBe(true);
+    expect(loadStoryTrophy().secret).toBe(true);
+
+    setStorage(memoryKV());
+    const early = newStorySave(17);
+    early.status = 'ended';
+    early.ending = 'buyback';
+    early.chapter = 8;
+    expect(addStoryTrophy(early).secret).toBe(false);
   });
 });
 

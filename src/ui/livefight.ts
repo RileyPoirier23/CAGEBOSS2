@@ -29,6 +29,7 @@ import { rankLabel } from '../sim/rankings';
 import { PAL } from '../art/palette';
 import { W, H, SW, OX, text, button, box } from './kit';
 import { col, type PixelText, type TextOpts } from './text';
+import { hudChunks } from './hud';
 import { ArenaView, AH, AW, type CanvasInfo } from './arena';
 import { input } from '../core/input';
 import { isTouchDevice } from '../core/platform';
@@ -45,7 +46,8 @@ import { liveTutorial } from './tutorial';
 import type { GamePlan } from '../sim/fight';
 import { openCorner } from './cutman';
 import { openFightLab } from './scenes/fightlab';
-import { isII } from './theme';
+import { isII, II } from './theme';
+import { marksFromLive } from './marks';
 
 export interface LiveFightOpts {
   bout: Bout;
@@ -74,6 +76,8 @@ export interface LiveFightOpts {
   refLook?: Look2;
   /** CAGE BOSS II's live crowd: who the building came to see, its signs and chants (false: an empty room) */
   crowd?: { home?: Side | -1; signs?: string[]; chants?: [string, string] } | false;
+  /** the broadcast package: 'ii' draws the sequel's top plates and segmented bars even outside a sequel boot */
+  theme?: 'ii';
   done: (r: FightResult) => void;
 }
 
@@ -427,6 +431,7 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
   // phones / tablets: the touch pad takes the panel's left and right thirds (the thumbs),
   // so both fighters' readouts squeeze into the middle (TX0..TX1) and PAUSE / CAM go on screen
   const touchUi = isTouchDevice() && !o.versus;
+  const iiHud = isII() || o.theme === 'ii';
   const TX0 = 124;
   const TX1 = FW - 154;
   let pad: TouchFightPad | null = null;
@@ -437,13 +442,21 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
     root.addChild(pad);
   }
 
-  // static HUD: portraits and names
+  // static HUD: portraits and names (CAGE BOSS II puts the names up over the cage instead)
   const y0 = AH + 2;
-  hud.addChild(box(FW, H - AH, PAL.ink, PAL.shadow));
+  hud.addChild(box(FW, H - AH, iiHud ? II.panel : PAL.ink, iiHud ? II.edge : PAL.shadow));
   hud.position.set(0, 0);
   hud.children[0].position.set(0, AH);
   const tag = (i: Side) => (o.versus ? (i === P ? 'P1: ' : 'P2: ') : i === P ? 'YOU: ' : '');
-  if (touchUi) {
+  if (iiHud) {
+    // a broadcast lower-third in the panel: the promotion, the network, the fact that this is live.
+    // phones: CAM and PAUSE own the panel's top corners, so the strap sits between them
+    const strapL = touchUi ? TX0 : 8;
+    const strapR = touchUi ? TX1 : FW - 8;
+    hud.addChild(text('CAGE BOSS II', strapL, y0 + 4, { small: true, color: II.sodium }));
+    hud.addChild(text('LIVE', strapR - 40, y0 + 4, { small: true, color: II.blood, width: 40, align: 'right' }));
+    hud.addChild(new Graphics().rect(0, y0, FW, 1).fill(II.blood).rect(0, y0 + 1, FW, 1).fill(0x241e2a));
+  } else if (touchUi) {
     const cw = (TX1 - TX0) / 2;
     hud.addChild(text(tag(0) + o.A.last.toUpperCase(), TX0, y0 + 3, { small: true, color: P === 0 ? PAL.gold : PAL.bone, width: cw - 4, maxLines: 1 }));
     hud.addChild(text(tag(1) + o.B.last.toUpperCase(), TX0 + cw + 4, y0 + 3, { small: true, color: P === 1 ? PAL.gold : PAL.bone, width: cw - 4, align: 'right', maxLines: 1 }));
@@ -510,21 +523,27 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
 
   const bodyOutline = (x: number, y: number, i: Side) => {
     const f = L.F[i];
-    const tint = (v: number) => (v > 70 ? PAL.moss : v > 40 ? PAL.gold : v > 20 ? PAL.ember : PAL.blood);
+    const tint = (v: number) => (v > 70 ? (iiHud ? II.neon : PAL.moss) : v > 40 ? (iiHud ? II.sodium : PAL.gold) : v > 20 ? (iiHud ? 0xd07040 : PAL.ember) : (iiHud ? II.blood : PAL.blood));
     // the part that just took a shot flashes white (orange when the guard took it)
     const fl = hitFlash[i];
     const hot = fl.t > 0 ? (fl.blocked ? PAL.ember : 0xffffff) : 0;
     const head = (f.hp / 100) * 100;
+    // in the sequel the damage by zone shows: the eyes, the ribs, the legs
+    const mk = iiHud ? arena.marks[i] : null;
+    const closed = mk ? Math.max(mk.eyeL ?? 0, mk.eyeR ?? 0, (mk.browL ?? 0) * 0.7, (mk.browR ?? 0) * 0.7) : 0;
+    const headTint = mk ? Math.min(head, (1 - closed) * 120) : head;
+    const bodyV = mk ? Math.min(f.body, (1 - Math.max(mk.ribs ?? 0, mk.liver ?? 0)) * 115 + 10) : f.body;
+    const legV = mk ? Math.min(f.legs, (1 - Math.max(mk.thighL ?? 0, mk.thighR ?? 0)) * 115 + 10) : f.legs;
     // head
-    hudG.rect(x + 5, y, 6, 6).fill(hot && fl.part === 'head' ? hot : tint(head));
-    hudG.rect(x + 7, y + 6, 2, 1).fill(PAL.ash);
+    hudG.rect(x + 5, y, 6, 6).fill(hot && fl.part === 'head' ? hot : tint(headTint));
+    hudG.rect(x + 7, y + 6, 2, 1).fill(iiHud ? II.ash : PAL.ash);
     // torso + arms
     const body = hot && fl.part === 'body' ? hot : 0;
-    hudG.rect(x + 3, y + 7, 10, 9).fill(body || tint(f.body));
-    hudG.rect(x, y + 7, 2, 8).fill(body || tint((f.body + f.gas) / 2)).rect(x + 14, y + 7, 2, 8).fill(body || tint((f.body + f.gas) / 2));
+    hudG.rect(x + 3, y + 7, 10, 9).fill(body || tint(bodyV));
+    hudG.rect(x, y + 7, 2, 8).fill(body || tint((bodyV + f.gas) / 2)).rect(x + 14, y + 7, 2, 8).fill(body || tint((bodyV + f.gas) / 2));
     // legs
     const legs = hot && fl.part === 'legs' ? hot : 0;
-    hudG.rect(x + 3, y + 17, 4, 9).fill(legs || tint(f.legs)).rect(x + 9, y + 17, 4, 9).fill(legs || tint(f.legs));
+    hudG.rect(x + 3, y + 17, 4, 9).fill(legs || tint(legV)).rect(x + 9, y + 17, 4, 9).fill(legs || tint(legV));
   };
   // The HUD is rebuilt every frame: a text is reused while its words, style and place stay the same.
   const hudPool = new Map<string, PixelText>();
@@ -643,15 +662,103 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
     }
   };
 
+  /**
+   * CAGE BOSS II's broadcast package: name plates over the top of the cage, a segmented health
+   * bar that empties in chunks, gas underneath, the body silhouette at the edge and a clock
+   * the back row can read. The panel below is for the state, the buttons and the booth.
+   */
+  const broadcastBase = () => {
+    const pw = 184;
+    const gap = 68;
+    const lx = 2;
+    const rx = FW - pw - 2;
+    // One opaque scoreboard band: the arena has its own names, HP bars and clock under this,
+    // and the crowd's signs sit behind it. Nothing from the old HUD ghosts through.
+    hudG.rect(0, 0, FW, 36).fill(II.night);
+    const plates: { x: number; side: Side; right: boolean }[] = [
+      { x: lx, side: 0, right: false },
+      { x: rx, side: 1, right: true },
+    ];
+    for (const { x, side, right } of plates) {
+      const f = L.F[side];
+      const who = side === 0 ? o.A : o.B;
+      const gold = !o.versus && side === P;
+      hudG.rect(x, 2, pw, 34).fill({ color: II.night, alpha: 0.9 });
+      hudG.rect(x, 2, pw, 1).fill(gold ? II.sodium : II.edge);
+      hudG.rect(x, 35, pw, 1).fill({ color: II.blood, alpha: 0.9 });
+      bodyOutline(x + 3, 5, side);
+      const nx = x + 23;
+      const nw = pw - 28;
+      dyn.addChild(hudText(o.versus ? `${side === 0 ? 'P1' : 'P2'} ${who.last.toUpperCase()}` : who.last.toUpperCase(), nx, 5, {
+        width: nw, align: right ? 'right' : 'left', color: gold ? II.sodium : II.bone, maxLines: 1, shadow: II.night,
+      }));
+      const rec = who.record;
+      dyn.addChild(hudText(`${rec.w}-${rec.l}${rec.d ? '-' + rec.d : ''}  ${tag(side).replace(': ', '')}`, nx, 15, {
+        width: nw, align: right ? 'right' : 'left', small: true, color: gold ? II.sodium : II.ash, maxLines: 1,
+      }));
+      // segmented health: twenty chunks, the damage just taken still lit behind them
+      const n = 20;
+      const segGap = 1;
+      const sw = Math.max(2, Math.floor((nw - (n - 1) * segGap) / n));
+      const lit = hudChunks(f.hp, n);
+      const chipLit = hudChunks(chip[side], n);
+      for (let k = 0; k < n; k++) {
+        const sx = right ? nx + nw - sw - k * (sw + segGap) : nx + k * (sw + segGap);
+        hudG.rect(sx, 24, sw, 5).fill(0x241e2a);
+        if (k < chipLit) hudG.rect(sx, 24, sw, 5).fill({ color: II.bone, alpha: 0.5 });
+        if (k < lit) hudG.rect(sx, 24, sw, 5).fill(f.hp > 40 ? II.sodium : II.blood);
+      }
+      // gas: one thin tank under it, with the 20% mark where every strike slows
+      const gas = f.gas / 100;
+      hudG.rect(nx, 31, nw, 2).fill(0x241e2a);
+      hudG.rect(right ? nx + nw - Math.round(nw * gas) : nx, 31, Math.round(nw * gas), 2).fill(f.gas < 20 ? II.blood : II.neon);
+      hudG.rect(nx + Math.round(nw * 0.2), 30, 1, 4).fill({ color: II.bone, alpha: 0.55 });
+    }
+    // centre: round and clock on their own plate, clear of both name bars
+    const cw = gap - 6;
+    hudG.rect(FW / 2 - cw / 2, 2, cw, 30).fill({ color: II.night, alpha: 0.95 });
+    hudG.rect(FW / 2 - cw / 2, 2, cw, 1).fill(II.gold);
+    dyn.addChild(hudText(`R${L.round}/${L.rounds}`, 0, 5, { width: FW, align: 'center', small: true, color: II.ash }));
+    dyn.addChild(hudText(L.clockText(), 0, 12, { width: FW, align: 'center', color: L.clock <= 30 ? II.blood : II.bone, scale: 2, shadow: II.night }));
+    // his corner: the damage word, so a promoter reading the bar knows what he is looking at
+    const hurt = (1 - Math.max(0, Math.min(100, L.F[0].hp))) > (1 - Math.max(0, Math.min(100, L.F[1].hp)));
+    dyn.addChild(hudText(hurt ? 'PRESSURE' : 'CHESS', 0, 30, { width: FW, align: 'center', small: true, color: II.ash }));
+  };
+
+  /**
+   * The live stats strap: strikes, takedowns and knockdowns, the three numbers a broadcast
+   * puts under the clock. A knockdown is recorded on the man who went down, so they swap.
+   */
+  const broadcastStats = () => {
+    const kd: [number, number] = [L.F[1].kds, L.F[0].kds];
+    const clockOf = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    const cell = (label: string, a: number | string, b: number | string) =>
+      `${col(PAL.ash, label)} ${col(II.sodium, String(a))}${col(PAL.grey, '-')}${col(II.bone, String(b))}`;
+    const cells = [
+      cell('STRIKES', L.F[0].landed, L.F[1].landed),
+      cell('TAKEDOWNS', L.F[0].tds, L.F[1].tds),
+      ...(touchUi ? [] : [cell('CONTROL', clockOf(L.F[0].ctrl), clockOf(L.F[1].ctrl))]),
+      cell('KDS', kd[0], kd[1]),
+    ];
+    hudG.rect(0, y0 + 11, FW, 1).fill({ color: II.edge, alpha: 0.7 });
+    hudG.rect(0, y0 + 21, FW, 1).fill({ color: II.edge, alpha: 0.4 });
+    dyn.addChild(hudText(cells.join('   '), touchUi ? TX0 : 0, y0 + 13, { width: touchUi ? TX1 - TX0 : FW, align: 'center', small: true }));
+  };
+
   const drawHud = () => {
     hudG.clear();
     dyn.removeChildren();
     hudUsed = new Set();
     const fighting = stage === 'fight' && L.phase === 'fight';
+    const iiPanel = iiHud && (stage === 'fight' || stage === 'ceremony');
     // left / right panels (touch: two columns in the middle, the arena's top bar has the clock)
     const cx0 = touchUi ? TX0 : 112; // the centre column the text below lives in
     const cx1 = touchUi ? TX1 : FW - 112;
-    for (const i of SIDES) {
+    if (iiPanel) {
+      // CAGE BOSS II: one broadcast package over the cage; the panel keeps the words and the numbers
+      broadcastBase();
+      broadcastStats();
+    } else if (!iiHud) for (const i of SIDES) {
       const left = i === 0;
       // your counter window (and his), under your bars; both players' in a two-player fight
       const tags = fighting && (o.versus || (i === P && !autopilot));
@@ -672,10 +779,12 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
       if (tags) windows(i, left ? x : x + 26, 50, y0 + 38, !left);
     }
     // centre: clock + where the fight is
-    if (!touchUi) dyn.addChild(hudText(`ROUND ${L.round}/${L.rounds}   ${L.clockText()}`, 0, y0 + 3, { width: FW, align: 'center', color: PAL.gold }));
-    // phones: a compact clock between the two names (the jumbotron's is hard to read over its lights)
-    else dyn.addChild(hudText(`R${L.round}/${L.rounds}  ${L.clockText()}`, TX0, y0 + 4, { width: TX1 - TX0, align: 'center', small: true, color: PAL.gold }));
-    const sy = touchUi ? y0 + 40 : y0 + 14;
+    if (!iiHud) {
+      if (!touchUi) dyn.addChild(hudText(`ROUND ${L.round}/${L.rounds}   ${L.clockText()}`, 0, y0 + 3, { width: FW, align: 'center', color: PAL.gold }));
+      // phones: a compact clock between the two names (the jumbotron's is hard to read over its lights)
+      else dyn.addChild(hudText(`R${L.round}/${L.rounds}  ${L.clockText()}`, TX0, y0 + 4, { width: TX1 - TX0, align: 'center', small: true, color: PAL.gold }));
+    }
+    const sy = iiPanel ? y0 + 26 : iiHud ? y0 + 18 : touchUi ? y0 + 40 : y0 + 14;
     if (autopilot) dyn.addChild(hudText(touchUi ? 'AUTOPILOT (PAUSE to take over)' : hint('AUTOPILOT (ESC to take over)', 'AUTOPILOT ({Menu} to take over)'), cx0, sy, { width: cx1 - cx0, align: 'center', small: true, color: PAL.ember }));
     const sit = situation();
     // the centre column fills top-down: the situation, what your buttons do, the progress bar
@@ -713,8 +822,19 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
       if (!touchUi) dyn.addChild(hudText(hint('ENTER / A: SKIP THE INTROS', '{A}: SKIP THE INTROS'), 0, H - 11, { small: true, color: PAL.grey, width: FW, align: 'center' }));
     }
     else {
-      const speakers = content().commentary.speakers;
-      const rows: { t: string; c: number }[] = booth.slice(-3).map((l) => ({ t: `{#${speakers[l.speaker!]?.color ?? 'c4a04a'}}${speakers[l.speaker!]?.short ?? l.speaker!.toUpperCase()}:{/} ${l.text}`, c: PAL.fog }));
+      // The booth's lines, or (story fights have no broadcast booth) the engine's own ticker.
+      // The newest engine line is already up in gold, so the strap shows the ones before it.
+      let rows: { t: string; c: number }[];
+      if (booth.length) {
+        const speakers = content().commentary.speakers;
+        rows = booth.slice(touchUi ? -2 : -3).map((l) => ({ t: `{#${speakers[l.speaker!]?.color ?? 'c4a04a'}}${speakers[l.speaker!]?.short ?? l.speaker!.toUpperCase()}:{/} ${l.text}`, c: PAL.fog }));
+      } else {
+        const end = lineT > 0 ? L.log.length - 1 : L.log.length;
+        rows = L.log.slice(Math.max(0, end - (touchUi ? 2 : 5)), end).map((l) => ({
+          t: l.text,
+          c: l.side === P ? PAL.bone : l.side === O ? PAL.ash : PAL.fog,
+        }));
+      }
       let yy = H - 12;
       if (lineT > 0) {
         const t = hudText(lastLine, cx0, 0, { small: true, color: PAL.gold, width: cx1 - cx0, align: 'center', maxLines: touchUi ? 2 : 1 });
@@ -724,7 +844,7 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
         yy -= 10;
       }
       const top = Math.max(y0 + (touchUi ? 52 : 44), cy + 2);
-      for (const r of (touchUi ? rows.slice(-2) : rows).reverse()) {
+      for (const r of rows.reverse()) {
         const t = hudText(r.t, cx0, 0, { small: true, color: r.c, width: cx1 - cx0, maxLines: 3 });
         yy -= t.textHeight - 6;
         t.y = yy;
@@ -736,7 +856,7 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
     // over the cage: SHORT / TOO FAR over your head (between the sponsor band and the arena's callout), the
     // string you're on under each HP bar. The big prompts (sprawl, JUMP ON HIM, the count) go under the callout
     // (y 46-62 as it pops in) so the two never print over each other.
-    const PROMPT_Y = 66;
+    const PROMPT_Y = iiHud ? 78 : 66;
     if (stage === 'fight') {
       if (rangeT > 0 && rangeTag && !autopilot) {
         const t = hudText(rangeTag, 0, 39, { small: true, color: PAL.ember, shadow: PAL.ink });
@@ -1482,6 +1602,7 @@ export function openLiveFight(g: Game, o: LiveFightOpts): void {
     arena.clinchTie = { dom: L.clinch.dom, tie: L.clinch.tie, fence: L.clinch.fence };
     arena.hp = [Math.max(0, L.F[0].hp), Math.max(0, L.F[1].hp)];
     arena.vitals = [{ gas: L.F[0].gas, cut: L.F[0].cut }, { gas: L.F[1].gas, cut: L.F[1].cut }];
+    if (isII()) arena.marks = [marksFromLive(L.face[0], L.F[0]), marksFromLive(L.face[1], L.F[1])];
     arena.round = L.round;
     arena.sec = 300 - (L.clock / 75) * 300;
     arena.reduceMotion = g.settings.reduceShake;

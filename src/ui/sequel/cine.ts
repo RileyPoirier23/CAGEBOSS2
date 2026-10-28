@@ -502,9 +502,14 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   };
 
   const lookOf = (a: Actor): Look2 => {
-    if (a.look) return { ...a.look };
-    const L = lookFor(a.fighter!, a.x < W / 2 ? 0 : 1);
-    return a.clothes ? { ...L, outfit: { top: a.clothes.top, bottom: a.clothes.bottom, bulk: 1, hands: L.skin } } : L;
+    const L = a.look ? { ...a.look } : (() => {
+      const base = lookFor(a.fighter!, a.x < W / 2 ? 0 : 1);
+      return a.clothes ? { ...base, outfit: { top: a.clothes.top, bottom: a.clothes.bottom, bulk: 1, hands: base.skin } } : base;
+    })();
+    if (a.marks) L.marks = a.marks;
+    // CINE II's framing gives every character a touch more head, so a close-up reads
+    L.headScale = a.headScale ?? (L.headScale ?? 1.06);
+    return L;
   };
 
   const setupShot = (i: number, instant = false) => {

@@ -12,7 +12,7 @@ import { storyEndingById } from '../../sequel/story';
 import { playStoryPress } from '../sequel/storypress';
 import { Container, Graphics } from 'pixi.js';
 import { Scene, type Game } from '../app';
-import { PAL } from '../../art/palette';
+import { PAL } from '../theme';
 import { W, H, SW, OX, text, button, box, meterBar, clearChildren } from '../kit';
 import { openWindow, alertBox } from '../widgets';
 import { isTouchDevice } from '../../core/platform';
@@ -37,7 +37,7 @@ import {
   storyRecord, storyDoc, resolveStoryDoc,
   canAct, mediaDay, dinnerWithOneTon, applyTalkChoice, applyChapterChoice, talkTo,
   dueBeat, movesOf, storyDate, storyPart, storyWeek, chapterWeeks, fightDue, fightThisWeek, endStoryWeek, restDay, talkedThisChapter, chapterReady,
-  trainSession, gradeFor, xpForLevel, TRAIN_TIERS, DAYS_PER_WEEK, type TrainTier, type OneTonTrack,
+  trainSession, gradeFor, xpForLevel, TRAIN_TIERS, trainTierBlurb, DAYS_PER_WEEK, onetonTurned, type TrainTier, type OneTonTrack,
   fightDone, recordStoryFight, advanceStoryChapter, sideOffers, sideFightReady,
   recordSideFight, type StoryFightDef, type StorySideOpponent, type StoryDocMode,
 } from '../../sequel/story';
@@ -404,7 +404,7 @@ export class SequelStoryHubScene extends Scene {
         plan: 'balanced', oppPlan: 'balanced', cutTier: 3, seed,
         event: def.venue, judges: ['Lenny Pratt', 'Marla Cross', 'Dexter Bell'], referee: where.referee,
         canvas: where.canvas, refLook: where.refLook, bare: where.bare,
-        rules: { moves: { 0: movesOf(save, def.player === 'oneton' ? 'oneton' : 'corner') } }, crowd: venueCrowd(where),
+        rules: { moves: { 0: movesOf(save, def.player === 'oneton' ? 'oneton' : 'corner') } }, crowd: venueCrowd(where), theme: 'ii',
         done: (r) => this.afterStoryFight(save, def, player.id, opponent.id, r),
       });
     });
@@ -424,14 +424,14 @@ export class SequelStoryHubScene extends Scene {
         : `${def.name}: LOST. ${r.method} R${r.round} ${r.time}. The building makes a different sound.`;
     sfx(won ? 'roar' : 'thud');
     // the moment, shot like a broadcast package, then the card
-    playCutscene(this.g, fightHighlight(save, def, won, r.method, r.round), () => {
+    playCutscene(this.g, fightHighlight(save, def, won, r.method, r.round, r.damage, r.cuts), () => {
       alertBox(this.g, won ? 'WON' : drawn ? 'DRAW' : 'LOST', line, () => this.playOutroAndAdvance(save));
     });
   }
 
   private playOutroAndAdvance(save: StorySave): void {
     const ch = storyChapter(save);
-    // chapter nine has three fights: the outro waits for the last of them
+    // chapter ten has three fights: the outro waits for the last of them
     if (nextChapterFight(save)) {
       this.refresh();
       return;
@@ -545,7 +545,7 @@ function openStoryTraining(g: Game, save: StorySave, after: () => void): void {
     alertBox(g, 'No days left', 'The week is spent. END WEEK and start again on Monday.');
     return;
   }
-  let who: 'oneton' | 'corner' = 'oneton';
+  let who: 'oneton' | 'corner' = onetonTurned(save) ? 'corner' : 'oneton';
   let tier: TrainTier = 'full';
   maybeLesson2(g, 'training');
   const win = openWindow(g, 'THE CAMP', 400, 232);
@@ -555,10 +555,15 @@ function openStoryTraining(g: Game, save: StorySave, after: () => void): void {
     const f = who === 'oneton' ? buildOneTon(save) : cornerFighter(save);
     const tr = (who === 'oneton' ? save.training : save.daneTraining) as unknown as Record<string, number>;
     b.addChild(text(`${save.actionsLeft} DAY${save.actionsLeft === 1 ? '' : 'S'} LEFT THIS WEEK  /  FATIGUE ${Math.round(save.fatigue)}`, 6, 2, { small: true, color: II.sodium }));
-    // who: 1ton, or the corner's man (Han, then Mateo)
-    (['oneton', 'corner'] as const).forEach((w, i) => {
-      b.addChild(button(w === 'oneton' ? '1TON' : cornerName(save), 6 + i * 64, 12, 60, 14, () => { who = w; draw(); }, { small: true, fill: who === w ? II.blood : II.steel, border: who === w ? II.sodium : undefined }));
-    });
+    // who: 1ton, or the corner's man (Han, then Mateo). After the gold pen, only the corner.
+    if (!onetonTurned(save)) {
+      (['oneton', 'corner'] as const).forEach((w, i) => {
+        b.addChild(button(w === 'oneton' ? '1TON' : cornerName(save), 6 + i * 64, 12, 60, 14, () => { who = w; draw(); }, { small: true, fill: who === w ? II.blood : II.steel, border: who === w ? II.sodium : undefined }));
+      });
+    } else {
+      b.addChild(button(cornerName(save), 6, 12, 60, 14, () => { who = 'corner'; draw(); }, { small: true, fill: II.blood, border: II.sodium }));
+      b.addChild(text('1TON IS WITH ZENITH NOW', 72, 16, { small: true, color: II.ash, width: 200, maxLines: 1 }));
+    }
     // how hard: light (1 day), full (2), camp (3)
     (Object.keys(TRAIN_TIERS) as TrainTier[]).forEach((t, i) => {
       const def = TRAIN_TIERS[t];
@@ -566,7 +571,7 @@ function openStoryTraining(g: Game, save: StorySave, after: () => void): void {
         small: true, fill: tier === t ? II.blood : II.steel, border: tier === t ? II.sodium : undefined, disabled: !canAct(save, def.days),
       }));
     });
-    b.addChild(text(TRAIN_TIERS[tier].blurb + ' Play the drill for your own grade, or sim it for a C.', 6, 30, { width: 386, small: true, color: II.ash, maxLines: 2 }));
+    b.addChild(text(trainTierBlurb(save, tier) + ' Play the drill for your own grade, or sim it for a C.', 6, 30, { width: 386, small: true, color: II.ash, maxLines: 2 }));
     const tracks: [OneTonTrack, string, DrillKind][] = [
       ['striking', 'STRIKING', 'striking'],
       ['grappling', 'GRAPPLING', 'grappling'],
@@ -734,7 +739,7 @@ function startSideFight(g: Game, save: StorySave, opp: StorySideOpponent, after:
     bout, A: player, B: opp.fighter, skills: [player.skills, opp.fighter.skills], player: 0,
     plan: 'balanced', oppPlan: 'balanced', cutTier: 2, seed,
     event: 'THE WAREHOUSE UNDERCARD', judges: ['Marla Cross', 'Dexter Bell', 'Lenny Pratt'], referee: storyVenue('THE WAREHOUSE').referee,
-    canvas: storyVenue('THE WAREHOUSE').canvas,
+    canvas: storyVenue('THE WAREHOUSE').canvas, theme: 'ii',
     done: (r) => {
       const rec = recordSideFight(save, opp, {
         winner: r.winner, method: r.method, round: r.round, time: r.time, detail: r.detail,

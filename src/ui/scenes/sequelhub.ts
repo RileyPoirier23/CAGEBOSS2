@@ -18,7 +18,7 @@ import { presserDone, presserFor } from '../../sequel/presser';
 import { playPresser, playWeighIn } from '../sequel/presser2';
 import { Container, Graphics } from 'pixi.js';
 import { Scene, type Game } from '../app';
-import { PAL } from '../../art/palette';
+import { PAL } from '../theme';
 import { W, H, SW, OX, text, button, box, meterBar, ScrollBox, clearChildren } from '../kit';
 import { selector, openWindow, confirm, alertBox } from '../widgets';
 import { isTouchDevice } from '../../core/platform';

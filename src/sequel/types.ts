@@ -317,8 +317,9 @@ export interface SeqEnding {
 // ---------------------------------------------------------------- story mode
 
 /**
- * STORY MODE is its own save: nine chapters, one trainee, one betrayal and a
- * final fight you can see coming from the back row. It never touches a run.
+ * STORY MODE is its own save: fifteen chapters and a secret one, one trainee,
+ * one betrayal and a final fight you can see coming from the back row. It never
+ * touches a run.
  */
 export const STORY_VERSION = 1;
 
@@ -420,4 +421,6 @@ export interface StoryTrophy {
   catches: number;
   sideWins: number;
   playthroughs: number;
+  /** the sixteenth chapter, the one that only opens after the buyback */
+  secret: boolean;
 }

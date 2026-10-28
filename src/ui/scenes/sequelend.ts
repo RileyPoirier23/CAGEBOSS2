@@ -3,7 +3,7 @@
  */
 import { Graphics } from 'pixi.js';
 import { Scene, fullBg } from '../app';
-import { PAL } from '../../art/palette';
+import { PAL } from '../theme';
 import { II } from '../theme';
 import { panel2 } from '../sequel/panel2';
 import { SW, OX, H, text, button, ScrollBox } from '../kit';

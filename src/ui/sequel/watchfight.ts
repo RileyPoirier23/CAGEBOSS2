@@ -15,6 +15,7 @@ import { fighterPortrait } from '../sprites';
 import { input } from '../../core/input';
 import { sfx } from '../../audio/sfx';
 import { II } from '../theme';
+import { marksFromResult } from '../marks';
 import type { PixelText } from '../text';
 
 export interface WatchOpts {
@@ -149,6 +150,11 @@ export function watchFight(g: Game, o: WatchOpts): void {
       sfx('bell');
     }
     roundT = l.t;
+    // the promoter's tape has no per-zone feed: rebuild the damage from the scorecards
+    arena.marks = [
+      marksFromResult(100 - hp[0], arena.vitals[0].cut, l.round),
+      marksFromResult(100 - hp[1], arena.vitals[1].cut, l.round),
+    ];
     if (l.act === 'ko' || l.act === 'kd') sfx('thud');
   };
   const endBanner = () => {

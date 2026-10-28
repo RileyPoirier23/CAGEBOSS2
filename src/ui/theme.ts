@@ -4,7 +4,7 @@
  * chamfered steel buttons with a coloured edge, glass panels, a striped title bar,
  * its own loading screen. Every button(), box({ bevel }) and openWindow() follows it.
  */
-import { lerpColor, shade } from '../art/palette';
+import { lerpColor, shade, PAL as BASE_PAL } from '../art/palette';
 
 export type UiTheme = 'classic' | 'ii';
 
@@ -33,6 +33,39 @@ export const II = {
   bone: 0xece2cc,
   ash: 0x9a92a2,
   neon: 0x4ad0e0,
+};
+
+/**
+ * The first game's palette, re-graded for CAGE BOSS II: the same names, so a screen can be
+ * moved over by changing one import, but the inks are the warehouse at night and the paper
+ * is still paper (the desk has to be readable). Sequel screens use this; game one keeps
+ * the original.
+ */
+export const PAL: typeof BASE_PAL = {
+  ...BASE_PAL,
+  ink: 0x120f16,
+  night: 0x1b1620,
+  shadow: 0x2b2533,
+  slate: 0x3d3646,
+  grey: 0x6f6678,
+  ash: 0x9a92a2,
+  fog: 0xc9c0cc,
+  bone: 0xece2cc,
+  paper: 0xd8ccb2,
+  paperDark: 0xb5a78c,
+  wood: 0x4a3328,
+  woodDark: 0x32231c,
+  woodLight: 0x6a4a37,
+  rust: 0xb04a34,
+  blood: 0xc4202c,
+  ember: 0xd07a34,
+  gold: 0xe8c060,
+  olive: 0x7a8248,
+  moss: 0x4e7a4a,
+  teal: 0x4ad0e0,
+  steel: 0x4a5a70,
+  sky: 0x86a6c0,
+  plum: 0x7a4c86,
 };
 
 /** A button's body under the II theme: dark steel, tinted toward its colour. */

@@ -4,7 +4,7 @@
  */
 import { Container, Graphics } from 'pixi.js';
 import type { Game } from '../app';
-import { PAL } from '../../art/palette';
+import { PAL } from '../theme';
 import { II } from '../theme';
 import { W, H, SW, OX, text, button, box, clearChildren } from '../kit';
 import { drawTrophy } from '../trophyart';

@@ -14,7 +14,7 @@ import { portrait } from './sprites';
 import { sfx, type Sfx } from '../audio/sfx';
 import { heightStr } from '../core/format';
 import { ROOMS, leagueRoom, paintRoom, roomFx, type Room } from './rooms';
-import { Rig, Pose, POSES, GUARD, JOINTS, type Joint, drawRig, lerpRig, mirrorRig, rotateRig, lookFor, stanceGuard, tauntRig, TAUNT_CALL, Look2, KO_POSES, koPoseFor, CELEB_ALIAS, mouthguardColor } from './rig';
+import { Rig, Pose, POSES, GUARD, JOINTS, type Joint, drawRig, lerpRig, mirrorRig, rotateRig, lookFor, stanceGuard, tauntRig, TAUNT_CALL, Look2, Marks, KO_POSES, koPoseFor, CELEB_ALIAS, mouthguardColor } from './rig';
 import { Rng, hashString } from '../core/rng';
 import { presentedGender } from '../sim/fighters';
 
@@ -501,6 +501,8 @@ export class ArenaView extends Container {
   sfxCount = 0;
   /** the fighters' tanks and cuts, from the engine (hands-on fights) or the lines (spectated): the models wear them */
   vitals: [{ gas: number; cut: number }, { gas: number; cut: number }] = [{ gas: 100, cut: 0 }, { gas: 100, cut: 0 }];
+  /** CAGE BOSS II: where the damage is, from the engine (hands-on) or the tape (spectated) */
+  marks: [Partial<Marks> | null, Partial<Marks> | null] = [null, null];
   round = 1;
   sec = 0;
   private lowerTop = false;
@@ -2446,7 +2448,7 @@ export class ArenaView extends Container {
       c.addChild(new Graphics().rect(Math.round(w / 2) - 1, 8, 2, 8).fill(0x6a5030).rect(0, 0, w, 9).fill(i % 3 === 1 ? 0xf0d040 : 0xe8e4d8).stroke({ color: 0x1a1410, width: 1 }));
       c.addChild(text(s, 3, 2, { small: true, color: i % 3 === 2 ? 0xc4202c : 0x14100c }));
       c.x = Math.round(Math.max(44, Math.min(AW - 44 - w, ((i + 0.5) / list.length) * AW - w / 2 + (i % 2 ? 16 : -16))));
-      this.signBase.push(27 + (i % 2) * 7);
+      this.signBase.push(38 + (i % 2) * 7);
       c.y = this.signBase[i];
       this.signs.addChild(c);
     });
@@ -2903,6 +2905,7 @@ export class ArenaView extends Container {
         L.sweat = Math.min(1, 0.1 + (this.round - 1) * 0.28 + hurt * 0.35);
         const cut = this.vitals[i].cut;
         L.wear = { cuts: cut, swell: hurt, blood: cut > 0 ? Math.min(1, 0.3 + cut * 0.22) : 0, body: hurt * 0.8 };
+        L.marks = this.marks[i] ?? undefined;
         L.gassed = Math.max(Math.max(0, Math.min(1, (45 - this.vitals[i].gas) / 35)), this.round >= 3 ? Math.min(0.5, (this.round - 2) * 0.2 + hurt * 0.3) : 0);
         // a cut drips onto the canvas
         if (cut > 0 && !this.resting && this.upright(f)) {

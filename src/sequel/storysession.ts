@@ -1,7 +1,7 @@
 /** Story mode's save file: one campaign, plus the endings you have found. */
 import { loadJSON, storeJSON } from '../core/save';
 import { STORY_VERSION, type StorySave, type StoryTrophy } from './types';
-import { STORY_ENDINGS, migrateStorySave, storyChapter } from './story';
+import { MAIN_CHAPTERS, STORY_ENDINGS, migrateStorySave, storyChapter } from './story';
 import { activeSlot, slotKey, touchSlot } from './slots';
 import { unlockPages } from './notebook';
 
@@ -68,6 +68,7 @@ export function loadStoryTrophy(): StoryTrophy {
     catches: t.catches ?? 0,
     sideWins: t.sideWins ?? 0,
     playthroughs: t.playthroughs ?? 0,
+    secret: t.secret ?? false,
   };
 }
 
@@ -89,6 +90,7 @@ export function addStoryTrophy(save: StorySave): StoryTrophy {
     catches: Math.max(prev.catches, save.stats.catches),
     sideWins: Math.max(prev.sideWins, save.stats.sideWins),
     playthroughs: prev.playthroughs + (save.status === 'ended' ? 1 : 0),
+    secret: prev.secret || save.chapter >= MAIN_CHAPTERS,
   };
   storeJSON(STORY_TROPHY_KEY, trophy);
   return trophy;

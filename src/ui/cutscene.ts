@@ -11,7 +11,7 @@ import type { Game } from './app';
 import type { Fighter } from '../core/types';
 import { PAL } from '../art/palette';
 import { W, H, SW, OX, text, button, box } from './kit';
-import { POSES, drawRig, lookFor, tauntRig, type Look2, type Pose } from './rig';
+import { POSES, drawRig, lookFor, tauntRig, type Look2, type Marks, type Pose } from './rig';
 import { input } from '../core/input';
 import { sfx } from '../audio/sfx';
 import { drawShow, showLabels, type TvShow } from './tvshows';
@@ -28,6 +28,10 @@ export interface Actor {
   look?: Look2;
   /** street clothes over a fighter's look */
   clothes?: { top: number; bottom: number };
+  /** CAGE BOSS II: the fight he just had, still on him */
+  marks?: Partial<Marks>;
+  /** CAGE BOSS II: a little more head in the close-ups (the fight rig is 1) */
+  headScale?: number;
   name: string;
   x: number;
   facing: 1 | -1;
@@ -660,9 +664,13 @@ export function playCutscene(g: Game, scene: Cutscene, done: (choice: string | n
   type Live = Actor & { cx: number; look2: Look2 };
   let cast: Live[] = [];
   const lookOf = (a: Actor): Look2 => {
-    if (a.look) return a.look;
-    const L = lookFor(a.fighter!, a.x < W / 2 ? 0 : 1);
-    return a.clothes ? { ...L, outfit: { top: a.clothes.top, bottom: a.clothes.bottom, bulk: 1, hands: L.skin } } : L;
+    const L = a.look ? { ...a.look } : (() => {
+      const base = lookFor(a.fighter!, a.x < W / 2 ? 0 : 1);
+      return a.clothes ? { ...base, outfit: { top: a.clothes.top, bottom: a.clothes.bottom, bulk: 1, hands: base.skin } } : base;
+    })();
+    if (a.marks) L.marks = a.marks;
+    if (a.headScale) L.headScale = a.headScale;
+    return L;
   };
   /** Set the stage for a shot. `instant`: nobody walks in (going back to it). */
   const setupShot = (i: number, instant = false) => {

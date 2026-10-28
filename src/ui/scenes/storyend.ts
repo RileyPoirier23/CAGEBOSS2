@@ -4,7 +4,7 @@
  */
 import { Container, Graphics } from 'pixi.js';
 import { Scene, fullBg, type Game } from '../app';
-import { PAL } from '../../art/palette';
+import { PAL } from '../theme';
 import { II } from '../theme';
 import { panel2 } from '../sequel/panel2';
 import { W, SW, OX, H, text, button, ScrollBox } from '../kit';
@@ -12,7 +12,7 @@ import { money } from '../../core/format';
 import { sfx } from '../../audio/sfx';
 import { seqTitleBackdrop } from '../sequelart';
 import { readStory, loadStoryTrophy, addStoryTrophy, writeStory } from '../../sequel/storysession';
-import { STORY_ENDINGS, storyEndingById, storyRecord } from '../../sequel/story';
+import { MAIN_CHAPTERS, STORY_ENDINGS, storyEndingById, storyProgress, storyRecord } from '../../sequel/story';
 
 export class StoryEndScene extends Scene {
   music = 'title' as const;
@@ -72,7 +72,7 @@ export class StoryEndScene extends Scene {
     stat('UNDERCARD', `${save.stats.sideWins}-${save.stats.sideLosses}`, 160, 154);
     stat('PRESS DAYS', String(save.stats.pressers), 266, 154);
     stat('EARNINGS', money(save.stats.earnings), 344, 154);
-    stat('CHAPTERS', `${Math.min(save.chapter + 1, 9)} / 9`, 10, 173);
+    stat('CHAPTERS', storyProgress(save), 10, 173);
     stat('WRONG FLAGS', String(save.stats.wrongFlags), 118, 173);
     stat('GOOD DEALS', String(save.stats.goodDeals), 226, 173);
     stat('WALKED', String(save.stats.walked), 334, 173);
@@ -82,7 +82,12 @@ export class StoryEndScene extends Scene {
       `ENDINGS FOUND ${trophy.endings.length} / ${STORY_ENDINGS.length}  /  BEST RANK ${trophy.bestRank}  /  PLAYTHROUGHS ${trophy.playthroughs}`,
       10, 194, { small: true, width: pw - 20, color: II.bone, maxLines: 1 },
     ));
-    p.addChild(text('Some cages have a door. Some have a receipt.', 10, 204, { small: true, color: II.ash }));
+    p.addChild(text(
+      trophy.secret
+        ? 'SECRET CHAPTER FOUND: THE TORCH.'
+        : `A SIXTEENTH CHAPTER IS STILL OUT THERE. WIN THE BUYBACK.`,
+      10, 204, { small: true, color: trophy.secret ? II.gold : II.ash },
+    ));
 
     const bw = 104;
     const gap = 6;
@@ -128,7 +133,10 @@ export function openStoryTrophies(g: Game): void {
   root.addChild(room);
   root.addChild(text('THE STORY TROPHY CASE', 12, 6, { scale: 2, color: II.gold, shadow: 0x000000 }));
   root.addChild(text(`ENDINGS ${trophy.endings.length} OF ${STORY_ENDINGS.length}  /  BEST RANK ${trophy.bestRank}  /  CONTRACTS ${trophy.catches} CAUGHT`, 12, 22, { small: true, color: PAL.ash }));
-  root.addChild(text(`FIFTEEN CHAPTERS. ${STORY_ENDINGS.length} WAYS OUT. ONE NOTEBOOK.`, 12, 32, { small: true, color: PAL.ember }));
+  root.addChild(text(
+    `SIXTEEN CHAPTERS (${trophy.secret ? 'SECRET FOUND' : `${MAIN_CHAPTERS} + ONE HIDDEN`}). ${STORY_ENDINGS.length} WAYS OUT. ONE NOTEBOOK.`,
+    12, 32, { small: true, color: trophy.secret ? PAL.moss : PAL.ember },
+  ));
   STORY_ENDINGS.forEach((e, i) => {
     const col = i % 2;
     const row = Math.floor(i / 2);

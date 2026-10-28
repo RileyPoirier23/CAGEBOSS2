@@ -5,7 +5,7 @@
 import { maybeLesson2 } from '../sequel/tutorial2';
 import { Container, Graphics } from 'pixi.js';
 import { Scene } from '../app';
-import { PAL } from '../../art/palette';
+import { PAL } from '../theme';
 import { SW, OX, H, text, button, box, meterBar, ScrollBox, paper, clickable } from '../kit';
 import { money, signed } from '../../core/format';
 import { sfx } from '../../audio/sfx';
