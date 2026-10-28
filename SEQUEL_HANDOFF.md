@@ -7,6 +7,21 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 13: Claude (2026-10-28)
+Reviewed OpenCode's turn 12 (claims hold: typecheck clean, tests pass, both builds), committed it as it was
+(`0681bf1`), then fixed what the review found (`1e9ca0e`):
+- **Chapter 10 played chapter 1's scenes.** `introCrew`/`outroCrew` existed but the chapter switch had no
+  `street_justice` case, so it fell back to back_row (Ray alive, the heckler). Wired; its opening no longer says the
+  funeral is Thursday (chapter 9 had it).
+- **Three notebook pages were in Ray's voice about things that now happen after he dies** (the Coliseum, Tyler's
+  purse, Spadam at the bag). Rewritten in Han's and Mateo's handwriting; every page still unlocks.
+- **SKILLS.md canon** now has the real chapter order, Ray alive in chapters 1 to 8 only, the 1ton lock, the knee in
+  chapter 10 and Mateo vs 1ton in chapter 15.
+- `tests/stage.test.ts`: every chapter opens and closes on its own scenes, and Ray has no present-day line or cast
+  spot after chapter 8.
+
+The project lives in `C:\Users\User\Documents\Default Project` now. The old copy in `%TEMP%` is stale; don't work there.
+
 ### Turn 12: OpenCode (2026-10-27)
 Finished the post-humanizer pass and the story lock:
 - **1ton is out of the camp after the gold pen.** `onetonTurned(save)` is true from chapter 8 on; TRAIN and SPAR refuse him, the camp window drops the 1TON tab and defaults to the corner. His OVR is written to the story target after fatigue (`ONETON_TURNED_OVR`, 80 at chapter 8 to 90 at chapter 15), so earlier training and fatigue cannot change the final number.
