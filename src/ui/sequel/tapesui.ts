@@ -12,7 +12,7 @@ import { II } from '../theme';
 import { CAST, type Actor } from '../cutscene';
 import { playCine } from './cine';
 import { openLiveFight } from '../livefight';
-import { storyVenue } from './venues';
+import { storyVenue, venueCrowd } from './venues';
 import { TAPES, setTapeStep, tapeFighter, tapeProgress, tapeUnlocked, type Tape, type TapeActor } from '../../sequel/tapes';
 import { loadStoryTrophy } from '../../sequel/storysession';
 import type { Bout } from '../../core/types';
@@ -26,22 +26,33 @@ export function openTapes(g: Game): void {
   root.addChild(new Graphics().rect(30, 26, W - 60, H - 52).fill({ color: 0x1a1210, alpha: 0.98 }).rect(30, 26, W - 60, H - 52).stroke({ color: II.edge, width: 1 }));
   root.addChild(text('LEGACY TAPES', 42, 34, { scale: 2, color: II.gold }));
   root.addChild(text('Side stories on VHS. Ray\'s notebook unlocks them.', 42, 52, { small: true, color: II.ash }));
-  TAPES.forEach((t, i) => {
-    const x = 42 + i * 102;
+  // NEW GAME+ isn't a tape on the shelf: it gets its own banner
+  const kid = TAPES.find((t) => t.id === 'kid');
+  if (kid && tapeUnlocked(kid, finished)) {
+    const at = prog[kid.id] ?? 0;
+    root.addChild(button(at >= kid.steps.length ? 'NEW GAME+: PLAY AGAIN' : at ? `NEW GAME+: RESUME ${at}/${kid.steps.length}` : 'NEW GAME+: THE KID AT THE DOOR', W - 200, 32, 160, 14, () => {
+      g.closeModal(wrap);
+      if (at >= kid.steps.length) setTapeStep(kid.id, 0);
+      runTape(g, kid);
+    }, { small: true, fill: II.blood, border: II.gold }));
+  }
+  TAPES.filter((t) => t.id !== 'kid').forEach((t, i) => {
+    // five boxes across the shelf
+    const x = 36 + i * 82;
     const y = 66;
     const open = tapeUnlocked(t, finished);
     const step = prog[t.id] ?? 0;
     const done = step >= t.steps.length;
     // the VHS box
     const box = new Graphics();
-    box.rect(x, y, 94, 140).fill(open ? 0x0c0a0e : 0x262028).stroke({ color: open ? II.sodium : II.edge, width: 1 });
-    box.rect(x + 6, y + 8, 82, 70).fill(open ? [0x8a1a1a, 0x5a3a1a, 0x2a3a6a, 0x1e5a3a][i % 4] : 0x1a161e);
-    box.rect(x + 6, y + 82, 82, 2).fill(open ? II.gold : II.edge);
+    box.rect(x, y, 78, 140).fill(open ? 0x0c0a0e : 0x262028).stroke({ color: open ? II.sodium : II.edge, width: 1 });
+    box.rect(x + 5, y + 8, 68, 70).fill(open ? [0x8a1a1a, 0x5a3a1a, 0x2a3a6a, 0x1e5a3a, 0x7a6a3a][i % 5] : 0x1a161e);
+    box.rect(x + 5, y + 82, 68, 2).fill(open ? II.gold : II.edge);
     root.addChild(box);
     root.addChild(text(t.label, x + 6, y + 12, { small: true, color: open ? II.bone : II.ash }));
-    root.addChild(text(open ? t.title : '???', x + 6, y + 24, { width: 82, color: open ? II.gold : II.ash, maxLines: 4 }));
-    root.addChild(text(open ? t.blurb : `LOCKED. ${t.unlock}`, x + 4, y + 88, { width: 86, small: true, color: II.ash, maxLines: 6 }));
-    if (open) root.addChild(button(done ? 'WATCH AGAIN' : step ? `RESUME ${step}/${t.steps.length}` : 'PLAY', x + 4, y + 146, 86, 14, () => {
+    root.addChild(text(open ? t.title : '???', x + 6, y + 24, { width: 66, color: open ? II.gold : II.ash, maxLines: 4 }));
+    root.addChild(text(open ? t.blurb : `LOCKED. ${t.unlock}`, x + 4, y + 88, { width: 72, small: true, color: II.ash, maxLines: 6 }));
+    if (open) root.addChild(button(done ? 'WATCH AGAIN' : step ? `RESUME ${step}/${t.steps.length}` : 'PLAY', x + 4, y + 146, 70, 14, () => {
       g.closeModal(wrap);
       if (done) setTapeStep(t.id, 0);
       runTape(g, t);
@@ -78,7 +89,9 @@ export function runTape(g: Game, t: Tape): void {
     const bout = { id: `tape_${t.id}_${i}`, a: A.id, b: B.id, division: A.division, title: null, rounds: s.rounds, position: 0, catchweight: false, shortNotice: false, status: 'scheduled', purse: [0, 0] } as unknown as Bout;
     openLiveFight(g, {
       bout, A, B, skills: [A.skills, B.skills], player: 0, plan: 'balanced', oppPlan: 'balanced', cutTier: 2, seed: (i * 7919 + t.id.length * 131) >>> 0,
-      event: s.venue, judges: ['Marla Cross', 'Dexter Bell', 'Lenny Pratt'], referee: where.referee, refLook: where.refLook, canvas: where.canvas, bare: where.bare,
+      event: s.venue, judges: ['Marla Cross', 'Dexter Bell', 'Lenny Pratt'], referee: s.referee ?? where.referee, refLook: s.referee ? undefined : where.refLook, canvas: where.canvas, bare: where.bare,
+      // Mexico came to see Alberto
+      crowd: s.player === 'alberto' ? { home: 0, chants: ['DEL BUR-RI-TO', B.last.toUpperCase()], signs: ['DEL BURRITO!', 'EL CAMPEON', 'PERDON ABUELA', 'BIENVENIDO', 'ALBERTO #1'] } : venueCrowd(where),
       done: (r) => {
         if (r.winner === A.id) {
           sfx('roar');

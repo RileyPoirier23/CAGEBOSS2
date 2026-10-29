@@ -6,7 +6,8 @@
  * you were proud of.
  */
 import { loadJSON, storeJSON } from '../core/save';
-import { BUYBACK_CASH, SEASON_WEEKS, type SeqRun } from './types';
+import { BUYBACK_CASH, SEASON_WEEKS, type SeqRun, type StorySave } from './types';
+import { MAIN_CHAPTERS, STORY_ENDINGS } from './story';
 
 export type SeqAchCategory = 'season' | 'fighting' | 'business' | 'story';
 
@@ -420,5 +421,108 @@ export function claimSeqAchievements(run: SeqRun): SeqAchievement[] {
 
 export function seqAchievementProgress(): { have: number; total: number } {
   const have = seqUnlocked();
-  return { have: SEQ_ACHIEVEMENTS.filter((a) => !!have[a.id]).length, total: SEQ_ACHIEVEMENTS.length };
+  const all = [...SEQ_ACHIEVEMENTS, ...TALE_ACHIEVEMENTS];
+  return { have: all.filter((a) => !!have[a.id]).length, total: all.length };
+}
+
+// ---------------------------------------------------------------- tales of legacy
+/** A story trophy: checked against a Tales of Legacy save instead of a promoter season. */
+export interface TaleAchievement {
+  id: string;
+  name: string;
+  desc: string;
+  art: string;
+  test: (save: StorySave) => boolean;
+}
+
+const won = (save: StorySave, fight: string): boolean => save.flags[`won_${fight}`] === true;
+const finished = (save: StorySave): boolean => save.status === 'ended';
+
+export const TALE_ACHIEVEMENTS: TaleAchievement[] = [
+  {
+    id: 'tale_first', name: 'THE BACK ROW', art: 'rtc_soup',
+    desc: 'Finish chapter one. You have a gym, a kid who mops it and a pot of Ray\'s soup.',
+    test: (s) => s.chapter >= 1,
+  },
+  {
+    id: 'tale_allstar', name: 'RODEO GOLD', art: 'fm_first_belt',
+    desc: 'Win Xavier\'s AllStar FC belt with 1ton. It came off a real rodeo and it still smells like one.',
+    test: (s) => won(s, 'allstar_title'),
+  },
+  {
+    id: 'tale_moncton', name: 'THE TRIBUTE', art: 'fm_show',
+    desc: 'Win the Moncton undercard with Mateo. Luc asked for the kid, and he got him.',
+    test: (s) => won(s, 'moncton_undercard'),
+  },
+  {
+    id: 'tale_crew', name: 'STREET JUSTICE', art: 'fm_bk',
+    desc: 'Beat Duke, Rico and Cesar in chapter ten. It doesn\'t fix Han\'s knee.',
+    test: (s) => won(s, 'crew_duke') && won(s, 'crew_rico') && won(s, 'crew_cesar'),
+  },
+  {
+    id: 'tale_alberto', name: 'ALBERTO', art: 'fm_reader',
+    desc: 'Learn 1ton\'s real name. He\'d like it if you kept calling him 1ton.',
+    test: (s) => !!s.flags.beat_true_name,
+  },
+  {
+    id: 'tale_champion', name: 'THE BUYBACK', art: 'fm_champ',
+    desc: 'Beat 1ton for the light heavyweight title with Mateo. Ray\'s bucket was in the corner.',
+    test: (s) => s.flags.finalWinner === 'player',
+  },
+  {
+    id: 'tale_secret', name: 'ONE MORE CHAPTER', art: 'leg_start',
+    desc: 'Open the hidden sixteenth chapter. It only shows up after the buyback.',
+    test: (s) => s.chapter >= MAIN_CHAPTERS,
+  },
+  {
+    id: 'tale_s_rank', name: 'S RANK', art: 'c_ending',
+    desc: 'Finish the story on an S-rank ending.',
+    test: (s) => finished(s) && STORY_ENDINGS.find((e) => e.id === s.ending)?.rank === 'S',
+  },
+  {
+    id: 'tale_red_pen', name: 'RED PEN', art: 'c_clean',
+    desc: 'Catch ten bad clauses in one story. Dane\'s lawyers switch to a smaller font.',
+    test: (s) => s.stats.catches >= 10,
+  },
+  {
+    id: 'tale_clean', name: 'NOTHING GOT PAST YOU', art: 'c_presented',
+    desc: 'Finish a story without missing a single bad clause (and catch at least three).',
+    test: (s) => finished(s) && s.stats.missed === 0 && s.stats.catches >= 3,
+  },
+  {
+    id: 'tale_walked', name: 'KEEP THE PEN', art: 'c_rich',
+    desc: 'Walk out of a contract meeting without signing.',
+    test: (s) => s.stats.walked >= 1,
+  },
+  {
+    id: 'tale_undercard', name: 'THE UNDERCARD', art: 'fm_first_w',
+    desc: 'Win ten undercard fights in one story.',
+    test: (s) => s.stats.sideWins >= 10,
+  },
+  {
+    id: 'tale_finishes', name: 'NO JUDGES', art: 'fm_ko',
+    desc: 'Finish six fights inside the distance in one story. The judges get paid either way.',
+    test: (s) => s.stats.kos + s.stats.subs >= 6,
+  },
+  {
+    id: 'tale_trust', name: 'HE PICKS UP', art: 'fm_lounge',
+    desc: 'Get 1ton\'s trust to 90. He answers on the first ring now.',
+    test: (s) => s.trust >= 90,
+  },
+  {
+    id: 'tale_press', name: 'PRESS ROW', art: 'fm_rich',
+    desc: 'Sit through eight press conferences in one story.',
+    test: (s) => s.stats.pressers >= 8,
+  },
+];
+
+/** Unlock the story trophies this save has earned (into the same cabinet). Returns only the new ones. */
+export function claimTaleAchievements(save: StorySave): TaleAchievement[] {
+  if (save.flags.sandbox || save.flags.demo) return [];
+  const have = seqUnlocked();
+  const fresh = TALE_ACHIEVEMENTS.filter((a) => !have[a.id] && a.test(save));
+  if (!fresh.length) return [];
+  for (const a of fresh) have[a.id] = Date.now();
+  storeJSON(KEY, have);
+  return fresh;
 }

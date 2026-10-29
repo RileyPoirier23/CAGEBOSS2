@@ -16,13 +16,13 @@ interface Lesson2 { key: string; title: string; pages: Page[] }
 
 const LESSONS: Lesson2[] = [
   { key: 'modes', title: 'WELCOME TO THE WAREHOUSE', pages: [
-    { title: 'THREE DOORS', pc: 'PROMOTER MODE: you are the promoter. Forty Saturdays to buy the company back. TALES OF LEGACY: fifteen chapters at Ray\'s Boxing & Soup, with hands-on fights. QUICK FIGHT: pick two fighters and go.' },
+    { title: 'THREE DOORS', pc: 'PROMOTER MODE: you\'re the promoter. Forty Saturdays to buy the company back. TALES OF LEGACY: fifteen chapters at Ray\'s Boxing & Soup, with hands-on fights. QUICK FIGHT: pick two fighters and go.' },
     { title: 'SAVES', pc: 'Every mode keeps as many named saves as you want. CONTINUE on the title plays the one you touched last. SANDBOX saves are marked in the list: no trophies, no pressure.' },
     { title: 'READ IT ALL', pc: 'Any text that ends in "..." can be clicked to read in full. Nobody misses anything here.', phone: 'Any text that ends in "..." can be tapped to read in full. Nobody misses anything here.' },
   ] },
   { key: 'promoter', title: 'PROMOTER MODE', pages: [
     { title: 'THE WEEK', pc: 'Every week: clear the DESK (the paperwork), book up to three fights, pick a room, a stunt and an ad spend, then RUN THE SHOW. The money, the buzz, the heat and the locker room all move.' },
-    { title: 'THE FOUR NUMBERS', pc: 'CASH pays for everything (below zero and it is over). BUZZ fills the seats and fades. HEAT brings the commission (at 100, the van). LOCKER is how your fighters feel about you.' },
+    { title: 'THE FOUR NUMBERS', pc: 'CASH pays for everything (below zero and it\'s over). BUZZ fills the seats and fades. HEAT brings the commission (at 100, the van). LOCKER is how your fighters feel about you.' },
     { title: 'THE PHONE', pc: 'PHONE (bottom right): one call a week, one post a week on Bleeter, and the plug in your DMs. The plug is cheap. The plug is never free.' },
     { title: 'THE BUYBACK', pc: 'Hit the buyback number in cash and buzz by week forty and the company is yours again. Every Zenith clause you sign makes it more expensive.' },
   ] },
@@ -35,9 +35,9 @@ const LESSONS: Lesson2[] = [
     { title: 'WATCH', pc: 'After the show, press WATCH on any bout to see it in the cage, with the booth calling it. 1X, 2X, 4X, or skip to the end.' },
   ] },
   { key: 'legacy', title: 'TALES OF LEGACY', pages: [
-    { title: 'THE WEEK', pc: 'Seven days a week. TRAIN (1, 2 or 3 days), SPAR (2 days), MEDIA, DINNER, PRESS, the UNDERCARD: each takes days. END WEEK when you are done. Fight week ends when the fight does.' },
+    { title: 'THE WEEK', pc: 'Seven days a week. TRAIN (1, 2 or 3 days), SPAR (2 days), MEDIA, DINNER, PRESS, the UNDERCARD: each takes days. END WEEK when you\'re done. Fight week ends when the fight does.' },
     { title: 'THE PARTS', pc: 'Every chapter is ten weeks in five parts. Each part opens with its own scene. The fights are booked on their weeks: NEXT tells you when.' },
-    { title: 'TALK', pc: 'TALK glows until you have used it. The story will not move on without it. Every answer has its own reply, so pick the one you mean.' },
+    { title: 'TALK', pc: 'TALK glows until you have used it. The story won\'t move on without it. Every answer has its own reply, so pick the one you mean.' },
   ] },
   { key: 'training', title: 'THE CAMP', pages: [
     { title: 'TIERS', pc: 'LIGHT is one day, FULL two, CAMP three. Bigger sessions, more xp, more fatigue. Thirty xp is a level; ten levels a track.' },

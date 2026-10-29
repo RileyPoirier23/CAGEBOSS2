@@ -6,7 +6,7 @@ import {
 } from '../src/sequel/model';
 import { availableVenues, currentVenue } from '../src/sequel/model';
 import { BUYBACK_BUZZ, BUYBACK_CASH, SEASON_WEEKS, type SeqDeskDoc, type SeqRun } from '../src/sequel/types';
-import { claimSeqAchievements, SEQ_ACHIEVEMENTS } from '../src/sequel/achievements';
+import { claimSeqAchievements, claimTaleAchievements, SEQ_ACHIEVEMENTS, TALE_ACHIEVEMENTS } from '../src/sequel/achievements';
 import { addStoryTrophy, loadStoryTrophy } from '../src/sequel/storysession';
 import { setStorage, type KV } from '../src/core/save';
 import { Rng } from '../src/core/rng';
@@ -18,7 +18,7 @@ import {
 import {
   advanceStoryChapter, applyChapterChoice, applyPressAnswer, MAIN_CHAPTERS, buildHan, chapterWeeks, endStoryWeek, fightDue, storyWeek, talkedThisChapter, trainSession, sparSession, gradeFor, storyDate, DAYS_PER_WEEK, movesOf, buildMateoGrown, buildOneTon, chapterFights, chapterReady, STORY_CHAPTERS, finishPressDay, newStorySave,
   pressQuestions, recordSideFight, recordStoryFight, resolveStoryDoc, sideOffers, storyChapter,
-  storyCorner, storyDoc, storyEnding, trainOneTon,
+  storyCorner, storyDoc, storyEnding, trainOneTon, onetonTurned, storyOverall,
 } from '../src/sequel/story';
 
 function memoryKV(): KV {
@@ -393,7 +393,12 @@ describe('sequel story mode', () => {
       };
       // live the chapter week by week: train the days, fight on fight week
       for (let w = 0; w < 20 && storyWeek(save) < chapterWeeks(ch); w++) {
-        while (save.actionsLeft > 0) trainOneTon(save, 'striking');
+        while (save.actionsLeft > 0) {
+          const who = onetonTurned(save) ? 'corner' : 'oneton';
+          const before = save.actionsLeft;
+          trainSession(save, who, 'striking', 'light', 'C');
+          if (save.actionsLeft >= before) break;
+        }
         fightDueOnes();
         expect(endStoryWeek(save).ok).toBe(true);
       }
@@ -485,17 +490,82 @@ describe('sequel story mode', () => {
     expect(movesOf(save, 'corner')).toEqual([]);
   });
 
-  it('books at least two key fights in every chapter before Ray dies', () => {
-    for (const id of ['mexican_math', 'allstar', 'brick_by_brick', 'sparring_partner', 'audit', 'homecoming', 'the_board', 'rematch', 'the_signing', 'brother']) {
+  it('takes 1ton out of the camp after the gold pen and writes his card to 90', () => {
+    const signing = STORY_CHAPTERS.findIndex((c) => c.id === 'the_signing');
+    const save = newStorySave(4242);
+    save.chapter = signing;
+    expect(onetonTurned(save)).toBe(false);
+    trainSession(save, 'oneton', 'striking', 'light', 'A');
+    expect(save.xp!['oneton.striking']).toBeGreaterThan(0);
+
+    // the chapter after the signing: he is Zenith's, not yours
+    save.chapter = signing + 1;
+    save.actionsLeft = DAYS_PER_WEEK;
+    expect(onetonTurned(save)).toBe(true);
+    expect(trainSession(save, 'oneton', 'striking', 'light', 'S')).toMatch(/Zenith/);
+    expect(sparSession(save, 'oneton', 'S')).toMatch(/Zenith/);
+    expect(save.actionsLeft).toBe(DAYS_PER_WEEK);
+    expect(storyOverall(save, 'oneton')).toBe(80);
+
+    // by the title fight he is a 90 no matter what the player did with him, or how tired he is
+    save.chapter = STORY_CHAPTERS.findIndex((c) => c.id === 'buyback');
+    save.training = { striking: 10, grappling: 10, cardio: 10, media: 10 };
+    save.fatigue = 100;
+    expect(storyOverall(save, 'oneton')).toBe(90);
+    save.training = { striking: 0, grappling: 0, cardio: 0, media: 0 };
+    save.fatigue = 0;
+    expect(storyOverall(save, 'oneton')).toBe(90);
+  });
+
+  it('books at least two key fights in every chapter before the crew', () => {
+    for (const id of ['mexican_math', 'allstar', 'brick_by_brick', 'sparring_partner', 'audit', 'the_signing', 'brother']) {
       const ch = STORY_CHAPTERS.find((c) => c.id === id)!;
       expect(chapterFights(ch).length, id).toBeGreaterThanOrEqual(2);
     }
+    expect(chapterFights(STORY_CHAPTERS.find((c) => c.id === 'street_justice')!).length).toBe(3);
   });
 
   it('has fifteen chapters of five parts (and the secret one)', () => {
     expect(MAIN_CHAPTERS).toBe(15);
     expect(STORY_CHAPTERS.length).toBe(16);
     expect(STORY_CHAPTERS.map((c) => c.no)).toEqual(STORY_CHAPTERS.map((_, i) => i + 1));
+    expect(STORY_CHAPTERS.map((c) => c.id)).toEqual([
+      'back_row', 'mexican_math', 'allstar', 'brick_by_brick', 'sparring_partner', 'audit',
+      'the_signing', 'brother', 'the_wake', 'street_justice', 'homecoming', 'the_board',
+      'rematch', 'the_camp', 'buyback', 'legacy',
+    ]);
+  });
+
+  it('kills Ray at the end of chapter eight and puts the crew after the funeral', () => {
+    const ids = STORY_CHAPTERS.map((c) => c.id);
+    expect(ids.indexOf('brother')).toBe(7);
+    expect(STORY_CHAPTERS[7].no).toBe(8);
+    expect(ids.indexOf('the_wake')).toBe(8);
+    expect(ids.indexOf('street_justice')).toBe(9);
+    const save = newStorySave(31);
+    save.chapter = ids.indexOf('brother');
+    save.week = chapterWeeks(storyChapter(save));
+    save.flags.talk_brother = true;
+    for (const f of chapterFights(storyChapter(save))) save.flags[`fight_${f.id}`] = true;
+    expect(chapterReady(save)).toBe(true);
+    expect(save.flags.rayDead).toBeFalsy();
+    advanceStoryChapter(save);
+    expect(save.flags.rayDead).toBe(true);
+    expect(storyChapter(save).id).toBe('the_wake');
+  });
+
+  it('gives Mateo and 1ton the fights after Ray dies, never Dane', () => {
+    const find = (id: string) => STORY_CHAPTERS.find((c) => c.id === id)!;
+    for (const id of ['homecoming', 'the_board', 'rematch', 'the_camp', 'buyback', 'legacy']) {
+      const fights = chapterFights(find(id));
+      expect(fights.length, id).toBeGreaterThan(0);
+      for (const f of fights) expect(['mateo', 'oneton', 'han']).toContain(f.player);
+    }
+    expect(chapterFights(find('homecoming')).every((f) => f.player === 'mateo')).toBe(true);
+    expect(chapterFights(find('the_board')).find((f) => f.id === 'han_spadam')!.player).toBe('mateo');
+    expect(chapterFights(find('the_board')).find((f) => f.id === 'chairman')!.player).toBe('oneton');
+    expect(chapterFights(find('rematch')).find((f) => f.id === 'cuchillo_rematch')!.player).toBe('mateo');
+    expect(chapterFights(find('buyback'))[0].player).toBe('mateo');
   });
 
   it('runs the story over a few years of calendar', () => {
@@ -554,6 +624,23 @@ describe('sequel story mode', () => {
     const trophy = addStoryTrophy(save);
     expect(trophy.endings.length).toBe(1);
     expect(loadStoryTrophy().playthroughs).toBe(1);
+  });
+
+  it('remembers the secret chapter once it is reached', () => {
+    setStorage(memoryKV());
+    const save = newStorySave(16);
+    save.status = 'ended';
+    save.ending = 'torch';
+    save.chapter = MAIN_CHAPTERS;
+    expect(addStoryTrophy(save).secret).toBe(true);
+    expect(loadStoryTrophy().secret).toBe(true);
+
+    setStorage(memoryKV());
+    const early = newStorySave(17);
+    early.status = 'ended';
+    early.ending = 'buyback';
+    early.chapter = 8;
+    expect(addStoryTrophy(early).secret).toBe(false);
   });
 });
 
@@ -645,5 +732,164 @@ describe("Ray's notebook and the Legacy Tapes", () => {
       if (s.kind === 'fight') for (const k of [s.player, s.opponent]) expect(tapeFighter(k).first, `${t.id} ${k}`).toBeTruthy();
       else for (const a of s.cast) if (a.fighter) expect(tapeFighter(a.fighter).id).toBeTruthy();
     }
+  });
+});
+
+describe('your creations in promoter mode', () => {
+  it('walk in as free agents once, and sign like anybody else', async () => {
+    const { offerCustomFighters, isCustom } = await import('../src/sequel/custom');
+    const { newSequelRun, signFreeAgent } = await import('../src/sequel/model');
+    const run = newSequelRun(12);
+    const mine = JSON.parse(JSON.stringify(run.freeAgents[run.freeAgents.length - 1]));
+    mine.id = 'cus_test';
+    mine.first = 'Testy';
+    expect(offerCustomFighters(run, [mine])).toBe(1);
+    expect(run.freeAgents[0].id).toBe('cus_test');
+    expect(isCustom(run, 'cus_test')).toBe(true);
+    expect(offerCustomFighters(run, [mine])).toBe(0);
+    run.cash = 1e7;
+    expect(signFreeAgent(run, 'cus_test')).toContain('Testy');
+    expect(run.roster.some((x) => x.f.id === 'cus_test')).toBe(true);
+    // released or signed, he doesn't come back as a free agent on his own
+    expect(offerCustomFighters(run, [mine])).toBe(0);
+  });
+});
+
+describe('the theatre and the album', () => {
+  it('remembers a scene as a recipe and rebuilds it the way it played', async () => {
+    setStorage(memoryKV());
+    const { remember, reels } = await import('../src/sequel/theatre');
+    const { reelScene } = await import('../src/ui/sequel/theatreui');
+    const { chapterOutro } = await import('../src/ui/scenes/storycuts');
+    const save = newStorySave(31);
+    save.chapter = STORY_CHAPTERS.findIndex((c) => c.id === 'brother');
+    remember(save, 'outro', 'THE BROTHER YOU MADE');
+    remember(save, 'outro', 'THE BROTHER YOU MADE');
+    expect(reels()).toHaveLength(1);
+    const again = reelScene(reels()[0])!;
+    expect(again.choices).toBeUndefined();
+    expect(again.shots.map((s) => s.lines.map((l) => l.text))).toEqual(chapterOutro(save).shots.map((s) => s.lines.map((l) => l.text)));
+    // the demo doesn't fill the shelf
+    save.flags.demo = true;
+    remember(save, 'intro', 'X');
+    expect(reels()).toHaveLength(1);
+  });
+
+  it('keeps the newest photo of a moment', async () => {
+    setStorage(memoryKV());
+    const { addPhoto, photos } = await import('../src/sequel/photos');
+    addPhoto({ id: 'last_sunday', title: 'THE LAST SUNDAY', data: 'data:a', taken: 1 });
+    addPhoto({ id: 'last_sunday', title: 'THE LAST SUNDAY', data: 'data:b', taken: 2 });
+    expect(photos()).toEqual([{ id: 'last_sunday', title: 'THE LAST SUNDAY', data: 'data:b', taken: 2 }]);
+  });
+});
+
+describe('the story in promoter mode', () => {
+  it('sends the story characters in as free agents after a finished story, once', async () => {
+    const { offerLegacyFighters, legacyFAOf, LEGACY_FAS } = await import('../src/sequel/legacyfa');
+    const { newSequelRun } = await import('../src/sequel/model');
+    const run = newSequelRun(14);
+    expect(offerLegacyFighters(run, false)).toBe(0);
+    expect(offerLegacyFighters(run, true)).toBe(LEGACY_FAS.length);
+    expect(offerLegacyFighters(run, true)).toBe(0);
+    const han = run.freeAgents.find((f) => legacyFAOf(run, f.id)?.key === 'han')!;
+    expect(han.last).toBe('Tibular');
+    // nobody's id clashes with anybody already in the promotion
+    const ids = [...run.roster.map((x) => x.f.id), ...run.freeAgents.map((f) => f.id)];
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+describe("Juiced Butler's week in review", () => {
+  it('talks about the week that actually happened', async () => {
+    const { radioPromoter, radioStory } = await import('../src/sequel/radio');
+    const { newSequelRun } = await import('../src/sequel/model');
+    const run = newSequelRun(5);
+    expect(radioPromoter(run, 'DANE').map((l) => l.text).join(' ')).toContain('No show last week');
+    run.lastShow = { week: 3, venue: 0, gimmick: '', ad: 0, results: [{ aName: 'Rico Ruiz', bName: 'Bo Kane', winner: 'a', method: 'KO', round: 2, finish: true } as never], gate: 9000, stream: 0, merch: 0, sponsor: 0, purses: 0, costs: 0, net: 0, fill: 1.03, buzzBefore: 10, buzzAfter: 20, heatBefore: 0, heatAfter: 10, lockerBefore: 0, lockerAfter: 0, headline: '', body: '', notes: [], raided: false };
+    const said = radioPromoter(run, 'DANE').map((l) => l.text).join(' ');
+    expect(said).toContain('Rico Ruiz, KO, round 2');
+    expect(said).toContain('Sold out');
+    const save = newStorySave(3);
+    const story = radioStory(save, ['1TON full striking: grade A, +14 xp.', 'PRESS DAY: three questions.']).map((l) => l.text).join(' ');
+    expect(story).toContain('an A in training');
+    expect(story).toContain('Press day');
+  });
+});
+
+describe('NEW GAME+: the kid at the door', () => {
+  it('opens only after the torch ending, and the kid gets better fight by fight', async () => {
+    setStorage(memoryKV());
+    const { TAPES, tapeUnlocked, tapeFighter } = await import('../src/sequel/tapes');
+    const { overall: ovr } = await import('../src/sim/fighters');
+    const kid = TAPES.find((t) => t.id === 'kid')!;
+    expect(tapeUnlocked(kid, true)).toBe(false);
+    const save = newStorySave(8);
+    save.ending = 'torch';
+    addStoryTrophy(save);
+    expect(tapeUnlocked(kid, true)).toBe(true);
+    const ovrs = [1, 2, 3, 4].map((n) => ovr(tapeFighter(`kid${n}`).skills));
+    expect([...ovrs].sort((a, b) => a - b)).toEqual(ovrs);
+    expect(ovrs[3]).toBeGreaterThan(ovrs[0] + 10);
+  });
+});
+
+describe('WATCH', () => {
+  it('walks the fighters out with the records they had before the bell', async () => {
+    const { runShow, ensureCard } = await import('../src/sequel/model');
+    const run = newSequelRun(63);
+    ensureCard(run);
+    run.desk.done = true;
+    const show = runShow(run);
+    const r = show.results.find((x) => x.replay)!;
+    expect(r).toBeTruthy();
+    const a = run.roster.find((x) => x.f.id === r.aId)!.f.record;
+    const tape = r.replay!.A.record;
+    const total = (x: { w: number; l: number; d: number }) => x.w + x.l + x.d;
+    expect(total(tape)).toBe(total(a) - 1);
+    if (r.winner === 'a') expect(tape.w).toBe(a.w - 1);
+    if (r.winner === 'b') expect(tape.l).toBe(a.l - 1);
+  });
+});
+
+describe('the WATCH broadcast', () => {
+  it('opens on Juiced Butler, carries the booth, and ends on his call of the result', async () => {
+    const { withBooth } = await import('../src/ui/sequel/watchfight');
+    const { runShow, ensureCard } = await import('../src/sequel/model');
+    const run = newSequelRun(64);
+    ensureCard(run);
+    run.desk.done = true;
+    const show = runShow(run);
+    const r = show.results.find((x) => x.replay)!;
+    const tape = r.replay!;
+    const lines = withBooth({
+      A: tape.A, B: tape.B, rounds: tape.rounds, ticker: tape.ticker, slot: 'MAIN EVENT', venue: 'THE WAREHOUSE', verdict: '', verdictColor: 0,
+      result: { winner: r.winner, method: r.method, round: r.round, time: r.time, detail: r.detail, referee: tape.referee },
+    });
+    expect(lines.length).toBeGreaterThan(tape.ticker.length);
+    expect(lines[0].speaker).toBe('__butler');
+    expect(lines[lines.length - 1].speaker).toBe('__butler');
+    const winner = r.winner === 'a' ? tape.A : r.winner === 'b' ? tape.B : null;
+    if (winner) expect(lines.slice(-3).map((l) => l.text).join(' ')).toContain(winner.last.toUpperCase());
+  });
+});
+
+describe('the story trophies', () => {
+  it('unlock off a Tales of Legacy save, once, and point at fights that exist', () => {
+    setStorage(memoryKV());
+    const save = newStorySave(77);
+    expect(claimTaleAchievements(save)).toEqual([]);
+    save.chapter = 1;
+    save.flags.won_allstar_title = true;
+    save.stats.catches = 10;
+    expect(claimTaleAchievements(save).map((a) => a.id)).toEqual(['tale_first', 'tale_allstar', 'tale_red_pen']);
+    expect(claimTaleAchievements(save)).toEqual([]);
+    save.flags.demo = true;
+    save.flags.finalWinner = 'player';
+    expect(claimTaleAchievements(save)).toEqual([]);
+    expect(new Set(TALE_ACHIEVEMENTS.map((a) => a.id)).size).toBe(TALE_ACHIEVEMENTS.length);
+    // every won_<fight> trophy names a real story fight
+    const fights = new Set(STORY_CHAPTERS.flatMap((c) => chapterFights(c).map((f) => f.id)));
+    for (const id of ['allstar_title', 'moncton_undercard', 'crew_duke', 'crew_rico', 'crew_cesar']) expect(fights.has(id)).toBe(true);
   });
 });

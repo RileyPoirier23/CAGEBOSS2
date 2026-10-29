@@ -65,6 +65,7 @@ export function openBroadcast(g: Game, run: SeqRun, save: () => void, after: () 
         A: tape.A, B: tape.B, rounds: tape.rounds, ticker: tape.ticker, slot: 'THE REPLAY', venue: currentVenue(run).name.toUpperCase(),
         verdict: `${r.winner === 'a' ? r.aName : r.winner === 'b' ? r.bName : 'NOBODY'}  /  ${r.method} R${r.round}`, verdictColor: II.gold,
         camera: plan.camera, done: () => { tell(); after(); },
+        result: { winner: r.winner, method: r.method, round: r.round, time: r.time, detail: r.detail, referee: tape.referee },
       });
     }, { fill: II.blood, border: II.sodium }));
   };

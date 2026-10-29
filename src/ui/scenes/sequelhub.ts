@@ -1,6 +1,12 @@
 /**
  * The weekly office: a leaking warehouse, two fights and four numbers.
  */
+import { playRadio } from '../sequel/radioui';
+import { radioPromoter } from '../../sequel/radio';
+import { legacyFAOf, offerLegacyFighters } from '../../sequel/legacyfa';
+import { CAST } from '../cutscene';
+import { loadStoryTrophy } from '../../sequel/storysession';
+import { isCustom, loadCustomFighters, offerCustomFighters } from '../../sequel/custom';
 import { isGrudge, mainGrudge, rivalryOf, zenithCounter } from '../../sequel/rivals';
 import { fairOpponent } from '../../sequel/model';
 import { maybeLesson2 } from '../sequel/tutorial2';
@@ -12,7 +18,7 @@ import { presserDone, presserFor } from '../../sequel/presser';
 import { playPresser, playWeighIn } from '../sequel/presser2';
 import { Container, Graphics } from 'pixi.js';
 import { Scene, type Game } from '../app';
-import { PAL } from '../../art/palette';
+import { PAL } from '../theme';
 import { W, H, SW, OX, text, button, box, meterBar, ScrollBox, clearChildren } from '../kit';
 import { selector, openWindow, confirm, alertBox } from '../widgets';
 import { isTouchDevice } from '../../core/platform';
@@ -61,7 +67,14 @@ export class SequelHubScene extends Scene {
     }
     // the season's own scenes: the board meeting, the first sellout, Verity's car, the last Saturday
     setTimeout(() => {
-      if (this.g.scene === this && !this.g.modals.length) maybePromoterCut(this.g, run, () => writeRun(run), () => this.refresh());
+      if (this.g.scene !== this || this.g.modals.length) return;
+      if (maybePromoterCut(this.g, run, () => writeRun(run), () => this.refresh())) return;
+      // Juiced Butler's week in review: once a week, after a show, when nothing else is on
+      if (run.lastShow && run.flags.radioWeek !== run.week && run.status !== 'ended' && !run.flags.demo) {
+        run.flags.radioWeek = run.week;
+        writeRun(run);
+        playRadio(this.g, radioPromoter(run, bossName(run)), `JUICED BUTLER'S WEEK IN REVIEW  /  WEEK ${run.week}`, () => this.refresh());
+      }
     }, 350);
     if (run.status === 'ended') {
       void import('./sequelend').then((m) => this.g.goto(new m.SequelEndScene(this.g)));
@@ -369,6 +382,10 @@ export function openSequelRoster(g: Game): void {
 export function openSequelSignings(g: Game): void {
   const run = readRun();
   if (!run) return;
+  // your creations walk in first
+  if (offerCustomFighters(run, loadCustomFighters())) writeRun(run);
+  // after the story, the people from it
+  if (offerLegacyFighters(run, loadStoryTrophy().playthroughs > 0)) writeRun(run);
   const win = openWindow(g, 'FREE AGENTS', 424, 238, { paper: 'cream' });
   const sb = new ScrollBox(404, 190);
   sb.position.set(6, 2);
@@ -387,12 +404,27 @@ export function openSequelSignings(g: Game): void {
     row.addChild(text(`${record(f.record)}  OVR ${overallOf(f)}  ST★${opponentStar(f)}  ${f.division.toUpperCase()}`, 40, 13, { small: true, color: PAL.shadow }));
     row.addChild(text(f.traits.slice(0, 3).join(', ') || f.styles.slice(0, 2).join(', '), 40, 23, { small: true, color: PAL.slate, width: 250, maxLines: 1 }));
     row.addChild(text(`ASKING ${money(signingCost(f))}`, 40, 32, { small: true, color: PAL.blood }));
+    if (isCustom(run, f.id)) row.addChild(text('YOUR CREATION', 230, 32, { small: true, color: PAL.moss }));
+    if (legacyFAOf(run, f.id)) row.addChild(text('FROM THE STORY', 230, 32, { small: true, color: PAL.blood }));
     row.addChild(button('SIGN', 326, 12, 64, 16, () => {
       const msg = signFreeAgent(run, f.id);
       writeRun(run);
       win.close();
-      g.toast(msg, msg.startsWith('You need') || msg.startsWith('The locker') ? PAL.blood : PAL.moss);
+      const failed = msg.startsWith('You need') || msg.startsWith('The locker') || msg.startsWith('He is gone');
+      g.toast(msg, failed ? PAL.blood : PAL.moss);
       g.scene?.refresh();
+      // somebody from the story: they remember
+      const fa = legacyFAOf(run, f.id);
+      if (fa && !failed) {
+        void import('../sequel/cine').then((m) => m.playCine(g, {
+          film: true,
+          shots: [{
+            bg: 'office', caption: 'THE OFFICE  /  A SIGNING',
+            cast: [{ id: 'boss', look: CAST.dane, name: bossName(run).toUpperCase(), x: 150, facing: 1 }, { id: 'fa', fighter: f, clothes: { top: 0x2a3a5a, bottom: 0x22222a }, name: fa.who, x: 300, facing: -1 }],
+            lines: [...fa.says.map((t) => ({ who: 'fa', text: t })), { who: 'boss', text: fa.reply }],
+          }],
+        }, () => {}));
+      }
     }, { small: true, fill: PAL.moss, border: PAL.ink }));
     sb.content.addChild(row);
   });

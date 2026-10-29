@@ -13,7 +13,8 @@
 import { maybeLesson2 } from '../sequel/tutorial2';
 import { Container, Graphics } from 'pixi.js';
 import { Scene, type Game } from '../app';
-import { PAL, shade } from '../../art/palette';
+import { PAL } from '../theme';
+import { shade } from '../../art/palette';
 import {
   W, H, SW, OX, text, button, box, paper, clickable, ScrollBox, hoverTip, meterBar,
 } from '../kit';
@@ -429,7 +430,8 @@ export class SequelDeskScene extends Scene {
       const title = text(rule.name.toUpperCase(), 4, y, { small: true, color: PAL.blood, width: 106, maxLines: 2 });
       rows.push(title);
       y += title.textHeight + 2;
-      const body = text(rule.text, 4, y, { small: true, color: PAL.ink, width: 106, maxLines: 5, lineGap: 0 });
+      // the card scrolls if it needs to: a clipped rule is worse than a scrollbar
+      const body = text(rule.text, 4, y, { small: true, color: PAL.ink, width: 106, maxLines: 12, lineGap: 0 });
       rows.push(body);
       y += body.textHeight + 4;
     }
@@ -463,7 +465,7 @@ export class SequelDeskScene extends Scene {
     const header = HEADER_INK[doc.type];
     const sub = text(`${doc.subject}  /  ${doc.subtitle}`, 6, 16, { small: true, color: PAL.slate, width: DOC_W - 12, maxLines: 2 });
     let y = 16 + sub.textHeight + 3;
-    const labelW = doc.type === 'memo' || doc.type === 'zenith' ? 36 : doc.type === 'expense' ? 44 : 52;
+    const labelW = doc.type === 'memo' || doc.type === 'zenith' ? 42 : doc.type === 'expense' ? 44 : 52;
     for (const f of doc.fields) {
       const { node, h } = fieldNode(f.key, f.label, f.value, DOC_W - 10, this.ins, {
         kind: f.kind, labelW, small: f.value.length > 44 || f.value.includes('\n') || doc.type === 'memo' || doc.type === 'zenith',

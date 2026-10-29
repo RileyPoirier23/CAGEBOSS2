@@ -2,7 +2,7 @@
   "name": "cage-boss",
   "private": true,
   "version": "2.2.0",
-  "sequelVersion": "0.1.0",
+  "sequelVersion": "0.9.0",
   "type": "module",
   "description": "CAGE BOSS - a satirical MMA-promoter management sim",
   "scripts": {
@@ -26,7 +26,8 @@
     "build:sequel": "tsc --noEmit && vite build --config vite.sequel.config.ts",
     "desktop:sequel": "vite build --config vite.sequel.config.ts && electron electron/sequel.cjs",
     "desktop:sequel:windowed": "vite build --config vite.sequel.config.ts && electron electron/sequel.cjs --windowed",
-    "dist:sequel:win": "tsc --noEmit && vite build --config vite.sequel.config.ts && electron-builder --config electron-builder.sequel.json --win portable --x64 -c.win.signAndEditExecutable=false --publish never",
+    "dist:sequel:win": "tsc --noEmit && vite build --config vite.sequel.config.ts && node tools/dist-sequel-win.mjs",
+    "icon:sequel": "node tools/make-sequel-icon.mjs",
     "dist:sequel:win:setup": "tsc --noEmit && vite build --config vite.sequel.config.ts && electron-builder --config electron-builder.sequel.json --win nsis --x64 --publish never",
     "dist:sequel:linux": "tsc --noEmit && vite build --config vite.sequel.config.ts && electron-builder --config electron-builder.sequel.json --linux AppImage --x64 --publish never"
   },

@@ -5,7 +5,7 @@
 import { maybeLesson2 } from '../sequel/tutorial2';
 import { Container, Graphics } from 'pixi.js';
 import { Scene } from '../app';
-import { PAL } from '../../art/palette';
+import { PAL } from '../theme';
 import { SW, OX, H, text, button, box, meterBar, ScrollBox, paper, clickable } from '../kit';
 import { money, signed } from '../../core/format';
 import { sfx } from '../../audio/sfx';
@@ -109,6 +109,7 @@ export class SequelShowScene extends Scene {
           row.addChild(button('> WATCH', 226, 15, 48, 11, () => watchFight(this.g, {
             A: tape.A, B: tape.B, rounds: tape.rounds, ticker: tape.ticker, slot: slotName, venue: currentVenue(run).name.toUpperCase(),
             verdict: `${verdict}  /  ${res.method} R${res.round}`, verdictColor: draw ? PAL.ash : win ? PAL.moss : PAL.blood,
+            result: { winner: res.winner, method: res.method, round: res.round, time: res.time, detail: res.detail, referee: tape.referee },
           }), { small: true, fill: PAL.blood, border: PAL.gold }));
         }
         left.addChild(row);

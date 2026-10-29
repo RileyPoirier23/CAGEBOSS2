@@ -11,6 +11,7 @@ import { H, SW, OX, text, button, ScrollBox } from '../kit';
 import { openWindow, alertBox, confirm, domInput } from '../widgets';
 import { sfx } from '../../audio/sfx';
 import { II } from '../theme';
+import { DUR, reducedMotion, tween } from '../motion';
 import { paintRoom } from '../rooms';
 import { lerpColor } from '../../art/palette';
 import { seqVenueArt } from '../sequelart';
@@ -27,6 +28,8 @@ const KIND_NAME: Record<SlotKind, string> = { run: 'PROMOTER MODE', story: 'TALE
 abstract class MenuScene extends Scene {
   music = 'title' as const;
   protected t = 0;
+  /** the options have made their entrance (refreshes draw them in place) */
+  private shown = false;
   protected fx = new Graphics();
   protected abstract backdrop(): Container;
   protected abstract title: string;
@@ -50,8 +53,19 @@ abstract class MenuScene extends Scene {
     r.addChild(text(this.kicker, 16, 58, { small: true, width: 176, color: II.ash, maxLines: 4 }));
     const touch = isTouchDevice();
     const opts = this.options();
+    const first = !this.shown;
+    this.shown = true;
     opts.forEach(([label, fn, fill], i) => {
-      r.addChild(button(label, 16, 96 + i * (touch ? 24 : 21), 172, touch ? 19 : 17, () => { sfx('click'); fn(); }, { fill: fill ?? II.steel, border: i === 0 ? II.sodium : undefined }));
+      const b = r.addChild(button(label, 16, 96 + i * (touch ? 24 : 21), 172, touch ? 19 : 17, () => { sfx('click'); fn(); }, { fill: fill ?? II.steel, border: i === 0 ? II.sodium : undefined }));
+      // the first time in: the options arrive one after another (a refresh doesn't replay it)
+      if (first) {
+        const slide = reducedMotion() ? 0 : 8;
+        b.alpha = 0;
+        tween(DUR.menu, (k) => {
+          b.alpha = k;
+          b.x = 16 - slide * (1 - k);
+        }, { delay: i * DUR.stagger });
+      }
     });
     r.addChild(button('< BACK', 16, H - 24, 60, 14, () => this.back(), { small: true, fill: II.steel }));
   }
@@ -176,7 +190,8 @@ export class LegacyMenuScene extends MenuScene {
       ['NEW SAVE', () => newSaveFlow(this.g, 'story', false), II.blood],
       ['LOAD SAVE', () => (has ? openSaves(this.g, 'story') : alertBox(this.g, 'No saves', 'No Tales of Legacy saves yet. Start one.'))],
       [`RAY'S NOTEBOOK (${notebookPages().length}/${PAGES.length})`, () => void import('../sequel/notebookui').then((m) => m.openNotebook(this.g))],
-      ['LEGACY TAPES', () => void import('../sequel/tapesui').then((m) => m.openTapes(this.g))],
+      [finished && loadStoryTrophy().endings.includes('torch') ? 'LEGACY TAPES + NEW GAME+' : 'LEGACY TAPES', () => void import('../sequel/tapesui').then((m) => m.openTapes(this.g))],
+      ['THE THEATRE', () => void import('../sequel/theatreui').then((m) => m.openTheatre(this.g))],
       [finished ? 'SANDBOX SAVE' : 'SANDBOX (FINISH THE STORY)', () => (finished ? sandboxStory(this.g) : alertBox(this.g, 'Locked', 'Finish the story once and the sandbox opens: start any chapter, replay any fight.')), finished ? undefined : 0x1a161e],
     ];
   }

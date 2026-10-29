@@ -214,7 +214,7 @@ function playDrill(g: Game, o: DrillOpts, done: (pct: number) => void): void {
     root.addChild(text(grade, 60, 86, { scale: 6, color: grade === 'S' || grade === 'A' ? II.gold : grade === 'F' || grade === 'D' ? II.blood : II.bone, shadow: 0x000000 }));
     root.addChild(text(`${p}%`, 140, 92, { scale: 2, color: II.bone }));
     root.addChild(text(`BEST COMBO ${best}   /   ${notes.filter((x) => x.hit).length} OF ${n} CLEAN`, 140, 116, { small: true, color: II.ash }));
-    root.addChild(text(p >= 85 ? 'Ray: "Now THAT is the family business."' : p >= 60 ? 'Ray: "Good. Again tomorrow."' : 'Ray: "Hands up. Chin down. Eat something. Then again."', 140, 130, { width: 290, small: true, color: II.bone, maxLines: 2 }));
+    root.addChild(text(p >= 85 ? 'Ray: "Now That\'s the family business."' : p >= 60 ? 'Ray: "Good. Again tomorrow."' : 'Ray: "Hands up. Chin down. Eat something. Then again."', 140, 130, { width: 290, small: true, color: II.bone, maxLines: 2 }));
     root.addChild(button('DONE', 190, 164, 100, 16, () => close(), { fill: II.blood, border: II.sodium }));
     sfx(p >= 75 ? 'roar' : 'bell');
   };

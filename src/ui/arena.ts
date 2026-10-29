@@ -14,7 +14,7 @@ import { portrait } from './sprites';
 import { sfx, type Sfx } from '../audio/sfx';
 import { heightStr } from '../core/format';
 import { ROOMS, leagueRoom, paintRoom, roomFx, type Room } from './rooms';
-import { Rig, Pose, POSES, GUARD, JOINTS, type Joint, drawRig, lerpRig, mirrorRig, rotateRig, lookFor, stanceGuard, tauntRig, TAUNT_CALL, Look2, KO_POSES, koPoseFor, CELEB_ALIAS, mouthguardColor } from './rig';
+import { Rig, Pose, POSES, GUARD, JOINTS, type Joint, drawRig, lerpRig, mirrorRig, rotateRig, lookFor, stanceGuard, tauntRig, TAUNT_CALL, Look2, Marks, KO_POSES, koPoseFor, CELEB_ALIAS, mouthguardColor } from './rig';
 import { Rng, hashString } from '../core/rng';
 import { presentedGender } from '../sim/fighters';
 
@@ -426,6 +426,11 @@ export class ArenaView extends Container {
   private worldInner = new Container(); // pixel-art render cache
   private bg = new Graphics();
   private crowd = new Graphics();
+  /** CAGE BOSS II: cardboard signs held up in the rows, and the chant going round the building */
+  private signs = new Container();
+  private signBase: number[] = [];
+  private chantText: PixelText | null = null;
+  private chantLife = 0;
   private lights = new Graphics();
   private fighters = new Graphics();
   private fx = new Graphics();
@@ -496,6 +501,8 @@ export class ArenaView extends Container {
   sfxCount = 0;
   /** the fighters' tanks and cuts, from the engine (hands-on fights) or the lines (spectated): the models wear them */
   vitals: [{ gas: number; cut: number }, { gas: number; cut: number }] = [{ gas: 100, cut: 0 }, { gas: 100, cut: 0 }];
+  /** CAGE BOSS II: where the damage is, from the engine (hands-on) or the tape (spectated) */
+  marks: [Partial<Marks> | null, Partial<Marks> | null] = [null, null];
   round = 1;
   sec = 0;
   private lowerTop = false;
@@ -625,7 +632,7 @@ export class ArenaView extends Container {
     this.sz = [sizeFor(A), sizeFor(B)];
     this.ref = { rig: { ...POSES.stand }, pose: 'stand', x: AW / 2 + 70, tx: AW / 2 + 70, facing: -1, look: info.refLook ?? REF_LOOK, visible: true, spin: 0 };
     this.butler = { rig: { ...POSES.mic }, pose: 'mic', x: AW / 2, tx: AW / 2, facing: 1, look: BUTLER_LOOK, visible: false, spin: 0 };
-    this.worldInner.addChild(this.bg, this.matLogo, this.stainG, this.crowd, this.ads, this.lights, this.fighters, this.fx, this.front);
+    this.worldInner.addChild(this.bg, this.matLogo, this.stainG, this.crowd, this.signs, this.ads, this.lights, this.fighters, this.fx, this.front);
     this.buildAds();
     // the promotion's logo painted on the canvas, squashed into the floor's perspective
     if (this.canvasStyle === 'cbfc') Assets.load(`${import.meta.env.BASE_URL}mat-logo.png`).then((tex: Texture) => {
@@ -2430,6 +2437,34 @@ export class ArenaView extends Container {
   /** the HUD names' widths, for the plates behind them */
   private nameW = [0, 0];
 
+  /** CAGE BOSS II: cardboard signs in the crowd. They bounce when the building is up. */
+  setSigns(list: string[]): void {
+    for (const c of this.signs.removeChildren()) c.destroy({ children: true });
+    this.chantText = null;
+    this.signBase = [];
+    list.forEach((s, i) => {
+      const c = new Container();
+      const w = measure(s, true) + 6;
+      c.addChild(new Graphics().rect(Math.round(w / 2) - 1, 8, 2, 8).fill(0x6a5030).rect(0, 0, w, 9).fill(i % 3 === 1 ? 0xf0d040 : 0xe8e4d8).stroke({ color: 0x1a1410, width: 1 }));
+      c.addChild(text(s, 3, 2, { small: true, color: i % 3 === 2 ? 0xc4202c : 0x14100c }));
+      c.x = Math.round(Math.max(44, Math.min(AW - 44 - w, ((i + 0.5) / list.length) * AW - w / 2 + (i % 2 ? 16 : -16))));
+      this.signBase.push(38 + (i % 2) * 7);
+      c.y = this.signBase[i];
+      this.signs.addChild(c);
+    });
+  }
+
+  /** CAGE BOSS II: what the building is chanting (over the rows, fading out). */
+  crowdChant(s: string, color: number = PAL.bone): void {
+    if (!this.chantText) {
+      this.chantText = text('', 0, 44, { color, width: AW, align: 'center', shadow: 0x0a0608 });
+      this.signs.addChild(this.chantText);
+    }
+    this.chantText.setText(s);
+    this.chantText.setColor(color);
+    this.chantLife = 2.6;
+  }
+
   showCallout(s: string, color: number = PAL.gold, prio = 1): void {
     if (prio < this.calloutPrio && this.calloutT > 0.6) return;
     this.callout.setText(s);
@@ -2571,6 +2606,18 @@ export class ArenaView extends Container {
     }
     this.kickT -= real;
     this.drawCrowd();
+    if (this.signBase.length) {
+      const up = this.effHype() >= 2;
+      this.signBase.forEach((b, i) => {
+        const c = this.signs.children[i];
+        if (c) c.y = b - (up ? Math.round(Math.abs(Math.sin(this.t * 8 + i * 1.3)) * 3) : 0);
+      });
+    }
+    if (this.chantText) {
+      this.chantLife -= real;
+      this.chantText.alpha = Math.max(0, Math.min(1, this.chantLife));
+      this.chantText.y = 44 - (this.chantLife > 0 ? Math.round(Math.abs(Math.sin(this.t * 6)) * 1) : 0);
+    }
     this.tickAds(dt);
     const ground = this.ground === 'atop' || this.ground === 'btop';
     if (this.scene === 'fight') {
@@ -2858,6 +2905,7 @@ export class ArenaView extends Container {
         L.sweat = Math.min(1, 0.1 + (this.round - 1) * 0.28 + hurt * 0.35);
         const cut = this.vitals[i].cut;
         L.wear = { cuts: cut, swell: hurt, blood: cut > 0 ? Math.min(1, 0.3 + cut * 0.22) : 0, body: hurt * 0.8 };
+        L.marks = this.marks[i] ?? undefined;
         L.gassed = Math.max(Math.max(0, Math.min(1, (45 - this.vitals[i].gas) / 35)), this.round >= 3 ? Math.min(0.5, (this.round - 2) * 0.2 + hurt * 0.3) : 0);
         // a cut drips onto the canvas
         if (cut > 0 && !this.resting && this.upright(f)) {

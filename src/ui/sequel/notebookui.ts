@@ -2,7 +2,8 @@
  * Ray's notebook, open on the table: two pages at a time on cream paper, his handwriting (the pixel
  * font, slightly crooked), a hint where a page is still blank. A full book: RAY, 1987.
  */
-import { Container, Graphics } from 'pixi.js';
+import { Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { photos } from '../../sequel/photos';
 import type { Game } from '../app';
 import { W, H, text, button } from '../kit';
 import { sfx } from '../../audio/sfx';
@@ -52,7 +53,51 @@ export function openNotebook(g: Game): void {
     if (spread > 0) root.addChild(button('<', x0 - 4, y0 + 230, 20, 14, () => { spread--; sfx('paper'); draw(); }, { small: true, fill: II.steel }));
     if (spread < spreads - 1) root.addChild(button('>', x0 + 410, y0 + 230, 20, 14, () => { spread++; sfx('paper'); draw(); }, { small: true, fill: II.steel }));
     root.addChild(button('CLOSE', x0 + 186, y0 + 230, 60, 14, () => g.closeModal(wrap), { small: true, fill: II.steel }));
+    const pics = photos().length;
+    root.addChild(button(`PHOTOS (${pics})`, x0 + 30, y0 + 230, 80, 14, () => openPhotoAlbum(g), { small: true, fill: pics ? II.blood : II.steel, border: pics ? II.gold : undefined }));
     if (notebookComplete()) root.addChild(button('PLAY: RAY, 1987', x0 + 260, y0 + 230, 130, 14, () => { g.closeModal(wrap); playRay1987(g); }, { small: true, fill: II.blood, border: II.sodium }));
+  };
+  draw();
+}
+
+/** The album taped in the back of the notebook: four photos to a page, a caption under each. */
+export function openPhotoAlbum(g: Game): void {
+  const root = new Container();
+  const wrap = g.modal(root, { dim: 0.85, closeOnDim: true });
+  const all = photos();
+  let page = 0;
+  const draw = () => {
+    root.removeChildren().forEach((c) => c.destroy({ children: true }));
+    const x0 = Math.round((W - 420) / 2);
+    const y0 = Math.round((H - 228) / 2);
+    root.addChild(new Graphics().rect(x0 - 6, y0 - 6, 432, 240).fill(0x3a2014).rect(x0, y0, 420, 228).fill(0x2a2420));
+    root.addChild(text(`THE BACK OF THE NOTEBOOK  /  ${all.length} PHOTO${all.length === 1 ? '' : 'S'}`, x0, y0 - 16, { small: true, color: II.gold }));
+    if (!all.length) root.addChild(text('Nothing taped in yet. Somebody always takes a photo at the big moments. Keep going.', x0 + 20, y0 + 100, { width: 380, small: true, color: II.ash, align: 'center' }));
+    all.slice(page * 4, page * 4 + 4).forEach((p, i) => {
+      const px = x0 + 14 + (i % 2) * 204;
+      const py = y0 + 8 + Math.floor(i / 2) * 110;
+      const tilt = (i % 2 ? 0.02 : -0.018) + (i > 1 ? 0.01 : 0);
+      const frame = new Container();
+      frame.position.set(px + 96, py + 48);
+      frame.rotation = tilt;
+      frame.addChild(new Graphics().rect(-96, -48, 192, 100).fill(0xf0ece0).rect(-30, -52, 24, 8).fill({ color: 0xe8dcb0, alpha: 0.8 }).rect(20, -52, 24, 8).fill({ color: 0xe8dcb0, alpha: 0.8 }));
+      root.addChild(frame);
+      const img = new Image();
+      img.onload = () => {
+        if (frame.destroyed) return;
+        const sp = new Sprite(Texture.from(img));
+        sp.width = 184;
+        sp.height = 82;
+        sp.position.set(-92, -44);
+        frame.addChildAt(sp, 1);
+      };
+      img.src = p.data;
+      frame.addChild(text(p.title, -92, 40, { small: true, color: 0x1a2a5a, width: 184, align: 'center' }));
+    });
+    const pages = Math.max(1, Math.ceil(all.length / 4));
+    if (page > 0) root.addChild(button('<', x0 - 4, y0 + 236, 20, 14, () => { page--; draw(); }, { small: true, fill: II.steel }));
+    if (page < pages - 1) root.addChild(button('>', x0 + 404, y0 + 236, 20, 14, () => { page++; draw(); }, { small: true, fill: II.steel }));
+    root.addChild(button('CLOSE', x0 + 180, y0 + 236, 60, 14, () => g.closeModal(wrap), { small: true, fill: II.steel }));
   };
   draw();
 }
@@ -79,6 +124,7 @@ export function playRay1987(g: Game): void {
       bout, A: ray, B: butch, skills: [ray.skills, butch.skills], player: 0, plan: 'pressure', oppPlan: 'counter', cutTier: 2, seed: 1987,
       event: 'GOLDEN GLOVES FINAL  /  1987', judges: ['A man called Lou', 'Mrs. Leblanc', 'A priest'], referee: 'Father Doucet',
       canvas: { ...where.canvas, room: 'hall', logo: 'GOLDEN GLOVES 1987' },
+      crowd: { home: 0, chants: ['RAY', 'BUTCH'], signs: ['RAY!', 'MONCTON', 'BUTCH!', 'GOLDEN GLOVES', 'GO RAY'] },
       done: (r) => {
         const won = r.winner === ray.id;
         alertBox(g, won ? 'RAY WINS' : 'BUTCH WINS', won

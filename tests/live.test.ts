@@ -216,7 +216,7 @@ describe('the final round: a fight that reads itself', () => {
   });
 });
 
-import { STRIKE_REACH, ARENA_L, subFor, groundGoal, CLINCH_MOVE_NAME, type LiveEvent } from '../src/sim/live';
+import { STRIKE_REACH, ARENA_L, subFor, groundGoal, CLINCH_MOVE_NAME, FACE_ZONES, type LiveEvent } from '../src/sim/live';
 import type { FightIntent } from '../src/core/fightinput';
 
 describe('a smarter CPU, and no one-button wins', () => {
@@ -247,6 +247,69 @@ describe('a smarter CPU, and no one-button wins', () => {
     other.rules = { moves: { 1: ['superman'] } };
     expect(named(other)).toBe('overhand');
     expect(STRIKE_REACH['superman punch']).toBeGreaterThan(STRIKE_REACH.overhand);
+  });
+
+  it('the live crowd gets up for big moments, carries its man and swings a close round (CAGE BOSS II)', () => {
+    const hear = (L: LiveFight, type: LiveEvent['type'], side: 0 | 1) => (L as unknown as { ev: (e: LiveEvent) => void }).ev({ type, side });
+    const loud = setup(4);
+    loud.rules = { crowd: { home: -1 } };
+    hear(loud, 'kd', 0);
+    hear(loud, 'rocked', 0);
+    expect(loud.crowd.energy).toBeGreaterThan(70);
+    expect(loud.crowdFor()).toBe(0);
+    // no crowd rule, no crowd
+    const quiet = setup(4);
+    hear(quiet, 'kd', 0);
+    expect(quiet.crowd.energy).toBe(30);
+    // on its feet, the crowd's man gets his wind back faster
+    loud.F[0].gas = 40;
+    quiet.F[0].gas = 40;
+    for (let k = 0; k < 10; k++) for (const L of [loud, quiet]) L.update(0.1, [[], []], [0, 0]);
+    expect(loud.F[0].gas).toBeGreaterThan(quiet.F[0].gas);
+    // a close round the building was behind side 0 for: the judges lean that way; a clear round doesn't move
+    const sum = (L: LiveFight) => L.cards().totals.reduce((t, [a, b]) => t + a - b, 0);
+    const judged = (crowd: boolean, pts: [number, number]) => {
+      const L = setup(4);
+      if (crowd) L.rules = { crowd: { home: -1 } };
+      L.rpts = [pts];
+      L.rcrowd = [-75];
+      return sum(L);
+    };
+    expect(judged(true, [10, 10.8])).toBeGreaterThan(judged(false, [10, 10.8]));
+    expect(judged(true, [6, 18])).toBe(judged(false, [6, 18]));
+  });
+
+  it('the face keeps score zone by zone, carries into the next round, and the corner can work it (CAGE BOSS II)', () => {
+    const faceHit = (L: LiveFight, name: string) => (L as unknown as { faceHit: (d: 0 | 1, a: 0 | 1, n: string, dmg: number) => number }).faceHit(1, 0, name, 12);
+    const L = setup(4);
+    L.rules = { face: true };
+    for (let k = 0; k < 6; k++) faceHit(L, 'jab');
+    const f = L.face[1];
+    const total = FACE_ZONES.reduce((a, z) => a + f[z].swell, 0);
+    expect(total).toBeGreaterThan(0.5);
+    // jabs find the nose, the eyes and the mouth; never the brows
+    expect(f.browL.swell + f.browR.swell).toBe(0);
+    // a swollen spot takes the next one harder
+    expect(faceHit(L, 'jab')).toBeGreaterThanOrEqual(0);
+    // the break: the CPU's corner brings it down some; a worked face is left as the corner left it
+    L.phase = 'break';
+    f.eyeL.swell = 0.8;
+    L.face[0].eyeR.swell = 0.8;
+    L.faceWorked[0] = true;
+    L.nextRound([0.5, 0.5]);
+    expect(L.face[1].eyeL.swell).toBeLessThan(0.8);
+    expect(L.face[1].eyeL.swell).toBeGreaterThan(0.2);
+    expect(L.face[0].eyeR.swell).toBe(0.8);
+    expect(L.faceWorked).toEqual([false, false]);
+    // a busted nose breathes worse: same fight, same gas, less back
+    const a = setup(4);
+    const b = setup(4);
+    a.rules = { face: true };
+    b.rules = { face: true };
+    b.face[0].nose.swell = 1;
+    a.F[0].gas = b.F[0].gas = 30;
+    for (let k = 0; k < 10; k++) for (const x of [a, b]) x.update(0.1, [[], []], [0, 0]);
+    expect(b.F[0].gas).toBeLessThan(a.F[0].gas);
   });
 
   it('the CPU throws what reaches', () => {

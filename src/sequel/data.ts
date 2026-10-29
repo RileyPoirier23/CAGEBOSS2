@@ -372,7 +372,6 @@ export const ENDINGS: Record<string, SeqEnding> = {
 /** The cover story shown on the back of the box. */
 export const SEQUEL_TAGLINE = 'MMA. MONEY. MAYHEM. FORECLOSURE.';
 export const SEQUEL_STORY =
-  'Eighteen months ago Zenith Holdings bought your company, your desk and your name. You kept the debts. ' +
-  'Now you have a warehouse, a cage, nine fighters who still take your calls, and forty weeks to make the papers forget ' +
-  'the part where you lost. Run the shows. Build a champion. Skip a week when the body says so. Feed the beast. ' +
-  'Buy your name back before Zenith changes the locks.';
+  'Eighteen months ago Zenith bought your company, your desk and your name. You kept the debts. ' +
+  'Now you have a warehouse, a cage, nine fighters and forty weeks to buy your name back ' +
+  'before they change the locks.';

@@ -7,6 +7,181 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 14: Claude (2026-10-29)
+Cleared the P2 to-do list:
+- **WATCH walks out on the right record.** `runShow` updated both records before saving the tape, so the replay
+  showed tonight's result before the bell. The tape now keeps the pre-fight copies (`beforeBell` in `model.ts`).
+- **WATCH has a booth.** `withBooth` in `watchfight.ts` opens with Juiced Butler (the bell, the corners and the names
+  only; heights and fun facts are cut for a replay), then two lines from game 1's booth, the play-by-play with
+  `commentate`, and Butler reading the result (`butlerDecision`/`butlerFinish`, three cards made up to match the
+  detail). Callers pass `result`. The booth box labels him JUICED BUTLER. If the booth throws, the bare tape plays
+  and a warning goes to the console.
+- **Story trophies.** `TALE_ACHIEVEMENTS` in `achievements.ts` (15: chapter one, Xavier's belt, Moncton, the crew,
+  ALBERTO, the buyback, the hidden chapter, S rank, contracts, walking out, undercard, finishes, trust, pressers).
+  They're checked on a Tales of Legacy save (`claimTaleAchievements`, toasted from the story hub and the ending), live
+  in the same cabinet key, and have their own drawer, THE STORY, in the Buyback trophy case. The cabinet now draws
+  each trophy's `art` (it was passing the id, so every one was a cup).
+- **Balance.** `tools/story-balance.ts` prints the corner against 1ton's curve and sims every late story fight at
+  three camp levels. Mateo is 84/87/91 (low/mid/full camp) by the final. Three fights were off the curve and are
+  fixed: Cuchillo's rematch was 65 (now `setOverall` 80), Spadam in chapter 12 was 88, above the final (guest boost
+  14 to 10, now 84), and Cesar's title defense was 70 (now 85). Sim win rates for Mateo: Cuchillo 72-85%, Spadam
+  43-62%, 1ton 28-54%, the defense 63-79%. The fights are played by hand, so those are a floor. Han's chapter 9-10
+  fights are still walkovers (96 against the low 60s); that's the story (the champion against a street crew).
+- **Cameos.** Xavier's league (`xavier_league`), Tyler mopping (`first_day`, the camp) and Zac's Tuesday class
+  (`tuesday_class`) were already in. Han now runs the clock in chapter 5's opening (Dane had a line there without being
+  in the shot) and has a scene in chapter 6, THE LATE CLASS: Verity gave him a black card too. Han is now in every
+  chapter.
+- Fixed a humanizer misfire: Han's "You'll in about four minutes" is "You will. In about four minutes." No others.
+- Tests: the WATCH walkout, the booth bookends and the story trophies. Typecheck clean, 187/187, both builds pass.
+  Checked in the browser: the cabinet's STORY drawer, the chapter 6 scene and the WATCH booth.
+
+### Turn 13: Claude (2026-10-28)
+Reviewed OpenCode's turn 12 (claims hold: typecheck clean, tests pass, both builds), committed it as it was
+(`0681bf1`), then fixed what the review found (`1e9ca0e`):
+- **Chapter 10 played chapter 1's scenes.** `introCrew`/`outroCrew` existed but the chapter switch had no
+  `street_justice` case, so it fell back to back_row (Ray alive, the heckler). Wired; its opening no longer says the
+  funeral is Thursday (chapter 9 had it).
+- **Three notebook pages were in Ray's voice about things that now happen after he dies** (the Coliseum, Tyler's
+  purse, Spadam at the bag). Rewritten in Han's and Mateo's handwriting; every page still unlocks.
+- **SKILLS.md canon** now has the real chapter order, Ray alive in chapters 1 to 8 only, the 1ton lock, the knee in
+  chapter 10 and Mateo vs 1ton in chapter 15.
+- `tests/stage.test.ts`: every chapter opens and closes on its own scenes, and Ray has no present-day line or cast
+  spot after chapter 8.
+
+The project lives in `C:\Users\User\Documents\Default Project` now. The old copy in `%TEMP%` is stale; don't work there.
+
+### Turn 12: OpenCode (2026-10-27)
+Finished the post-humanizer pass and the story lock:
+- **1ton is out of the camp after the gold pen.** `onetonTurned(save)` is true from chapter 8 on; TRAIN and SPAR refuse him, the camp window drops the 1TON tab and defaults to the corner. His OVR is written to the story target after fatigue (`ONETON_TURNED_OVR`, 80 at chapter 8 to 90 at chapter 15), so earlier training and fatigue cannot change the final number.
+- **Chapter order after Ray's death** is homecoming (Moncton tribute; Mateo vs Lobster and Mateo vs Tyler on one card), the_board (funeral debt and foreclosure; Mateo vs Spadam, 1ton vs Chairman), rematch (Cuchillo at light heavyweight; Mateo vs Cuchillo, Han on crutches). The intros, outros, part scenes and outro choices in `storycuts.ts` and `partlines.ts` were rewritten to match. The signing outro's duplicate choice ids are now `call_him` / `let_go`.
+- **The II fight HUD no longer collides with the arena.** An opaque full-width top scoreboard band covers the old names, HP bars and clock, the crowd signs moved below it, the lower stats strap and engine-ticker fallback sit in the panel, and the LIVE label is inside the frame.
+- **Desk and title text fit.** Memo and Zenith field labels got 42 px, the rulebook card can use 12 lines and scrolls, and the cover blurb was shortened. The title, story hub, desk rulebook, memo labels, fight HUD and post-betrayal camp window were checked by rendering the stage manually.
+- **Story polish:** Ray's death moved to the end of chapter 8, post-death press questions no longer have Ray switching off the interview, the living-Ray branch in `storyEndingScene` is gone, the secret sixteenth chapter is tracked in the trophy case, and the humanizer pass covered `story.ts`, `storycuts.ts` and `partlines.ts` (contractions for everyone but 1ton, no em dashes, no fragment rows or "not X, it's Y").
+- **Earlier in this pass:** men no longer wear women's tops (`presentedGender` is used by the rig, sprites, arena and editor), the marks system carries cuts, bruises, swelling and blood from live fights into WATCH and cutscenes, the creator has per-zone ink plus head, eye and iris controls, and the sequel screens use the II palette.
+- **Tests:** chapter order, Ray's death, post-death fight players, the 1ton lock and 90 OVR, secret trophy, marks, HUD chunks and creator ink/head/eyes/iris. `npm run typecheck` clean; `npm test -- --run` 183/183 in 20 files; `npm run build:sequel` and `npm run build` pass.
+- **Moved and rebuilt:** the project now lives at `C:\Users\User\Documents\Default Project` with the `sequel` branch and the uncommitted work intact. Typecheck, tests and both web builds were re-run there, and `npm run dist:sequel:win` rebuilt `release-sequel/CAGE-BOSS-II-0.9.0-portable.exe` from the final source. Nothing was committed or pushed.
+
+### Turn 11: Claude (2026-10-27)
+Humanizer pass over the sequel's text (Riley's humanizer skill; rules now in SKILLS.md section 5):
+- 606 strings contracted the way people talk (1ton keeps his formal English). The narration reader now treats
+  "doesn't"/"won't" as negatives (`NEG` in stage.ts).
+- About 50 lines rewritten by hand: one-line closers and sayings ("That's the point", "That's the whole job",
+  "Nobody says anything"), filler "for the first time", stock similes ("like it owes him money", twice), rows of
+  fragments in establishing narration, part scenes that repeated their own card, and the catchphrase where it was
+  a sign-off (radio, signings, a soup joke). It stays at Ray's big moments.
+- Em dashes in document titles and logs became the game's "  /  ".
+Not re-read in the game itself: the rewrite was checked by reading the diff and by the tests.
+
+### Turn 10: Claude (2026-10-27)
+Motion pass with Riley's new animation skills (Emil Kowalski's rules: strong ease-out for things arriving, never
+ease-in on UI, UI under 300 ms, nothing from scale 0, no animation on constant actions, interruptible, reduced motion).
+All sequel-only (`isII()`), shared kit in `src/ui/motion.ts` (`easeOut` = cubic-bezier(0.23, 1, 0.32, 1),
+`easeInOut` = (0.77, 0, 0.175, 1), `DUR`, `tween()`, `reducedMotion()`):
+- Toasts rise 6 px and fade in (180 ms), drop and fade out (200 ms), and the stack glides into the gap.
+- Windows: the dimmer fades up and the window grows from 96% (200 ms); closing fades in 140 ms. Full-screen
+  cutscenes only fade; phones (fit-to-screen) only fade.
+- Screen changes fade up from black (220 ms) after the switch, so input never waits.
+- Buttons go down a pixel while held (no tween; they're clicked constantly).
+- Mode menus stagger in (40 ms apart, 8 px) on first entry only; cutscene choices rise in the same way.
+- Fights: the HEAD bar leaves a pale damage chip that holds 0.4 s and drains.
+- Reduced motion: the OS setting or REDUCE SHAKE keeps the fades and drops the movement.
+Not judged on screen (pane hidden): step-checked frame by frame instead. Feel-check the window grow and the toast
+glide at normal speed; if the grow reads as a wobble, drop it to a fade.
+
+### Turn 9: Claude (2026-10-27)
+Riley's list, all done:
+- **Version**: the sequel is `sequelVersion` 0.9.0 in package.json (Vite's `__APP_VERSION__`, the build's
+  `extraMetadata.version`, and `stamp-exe.mjs` takes it as a third argument). Game 1 stays 2.2.0.
+- **Story press day is a cutscene** (`src/ui/sequel/storypress.ts`): the table, Dane and the chapter's fighter, the
+  Daily Clinch in the back row; each answer is Dane saying it and the room reacting; the last shot is what ran.
+- **Sequel look**: `panel2()` (`src/ui/sequel/panel2.ts`) replaces game 1's newsprint on the season end and story end;
+  the trophy case is steel, and its cabinet and detail box are positioned (they used to sit over the title).
+- **Establishing shots** (`src/ui/sequel/scenery.ts`): narration that sets a scene puts it on screen (rain, snow, a
+  storm, Commissioner Pete wandering through, the horse trailer, the skyline through Zenith's glass, the crowd, the
+  bleachers, soup steam, camera flashes, the sea and the MARIE-ANNE, neon, sirens).
+- **Voices**: every speaker blips while their line types (`VOICES` in cine.ts; `blip()` in sfx.ts).
+- **The album**: `Line.photo` snapshots the scene (no subtitles) into `cageboss2.photos`; PHOTOS in Ray's notebook.
+  Taken at the last Sunday, the torch, every secret-chapter outcome and the endings.
+- **THE THEATRE** (Tales of Legacy menu): `src/sequel/theatre.ts` stores a recipe per scene (seed, chapter, choices,
+  flags) for intros, outros, beats and endings; `theatreui.ts` rebuilds and replays them.
+- **The story in Promoter Mode** (`src/sequel/legacyfa.ts`): after a finished story, Han, Mateo, Tyler, Spadam and
+  1ton walk in as free agents (FROM THE STORY); signing one plays a short office scene with lines that remember.
+- **Commissioner Pete**: his own tape (TAPE 5), a Xavier phone call, POST THE GOAT on Bleeter and replies, and he
+  arrives at the Old Dome for the buyback. The tape shelf is re-spaced for five.
+- **Juiced Butler's week in review** (`src/sequel/radio.ts`, `radioui.ts`): a booth segment after every show in
+  Promoter Mode and every END WEEK in the story, about what actually happened.
+- **NEW GAME+: THE KID AT THE DOOR** (tape id `kid`, unlocked by the torch ending; a banner in the tapes window):
+  Mateo runs Ray's, Theo Arsenault (Luc's grandson) stands at the door for a week, takes the mop, and fights four
+  times (Ray's ring with Mateo refereeing, the barn, the warehouse, the Old Dome against Synergy III), better each time.
+
+Not checked on screen: the browser pane was hidden for most of this turn, so the new screens were smoke-run (they
+open and draw with no errors) rather than looked at. Worth a look: press day, the radio booth, the theatre list, the
+album, the season-end panel. The radio plays every week in the story; if it feels like too much, make it every
+other week in `doEndWeek`.
+
+### Turn 8: Claude (2026-10-27)
+- **The Windows exe builds.** `npm run dist:sequel:win` now runs `tools/dist-sequel-win.mjs`: Electron is unpacked once
+  from electron's download cache into `.electron-dist/` (`tools/electron-dist.mjs`, gitignored) and passed as
+  `electronDist`, which skips the zip-extract-and-rename that failed with EPERM here. Output:
+  `release-sequel/CAGE-BOSS-II-2.2.0-portable.exe` (icon stamped). Smoke-tested: it opens "CAGE BOSS II: THE BUYBACK".
+  The version is still package.json's (2.2.0, game 1's); give the sequel its own in `extraMetadata` if you want.
+- **Props drawn properly** (outlined, shaded, steam off the soup) and new ones: crutches. `{ do: 'drop' }` sets a thing
+  down and it stays on the floor for the shot (Han's bucket in the corner, Ray setting 1ton's empty place).
+- **More narration acts** (69 to 97 lines): laughing (new `laugh` pose), counting/reading, stools, drawing on the
+  whiteboard, crutches, making soup (ladle), setting the empty place, putting things away, taping hands (names in the
+  possessive count as the object now), "they stare at each other", "everybody has two bowls". The ~150 quiet lines left
+  are scenery and backstory.
+- Bystanders step further aside (50 px) when someone walks into their spot, on plain walks too.
+
+### Turn 7: Claude (2026-10-27)
+Riley: "work on everything". Done:
+- **Every part has a scene.** `src/ui/scenes/partlines.ts` (`PART_LINES`): 60+ parts that were one narrated card now play
+  4 to 9 lines in the room after the card, with stage actions (Ray hands 1ton the bowl, Mateo and 1ton trade hard shots
+  on "no hard shots" Thursday, the weigh-in face-off, the mullet poster). New canon in there: Gordon Vance has been
+  quietly paying Ray's rent since 2011 ("tax thing" on every cheque); Mateo's nana adopts 1ton. Foreshadowing still
+  starts at THE AUDIT (ch 6). `tests/stage.test.ts` checks every speaker and actor is in the part's cast.
+- **Cutscene props**: `{ do: 'prop' }` and `meet` with `prop` (bowl, mop, bucket, belt, card, envelope, paper, notebook,
+  clipboard, mask, phone, mic, ladle, pen, photo, tape, pot), drawn at the hand; the reader picks them up from the text
+  ("holding a bucket", "hands him the mop"). A new `offer` pose (hand out at chest height) for handovers and handshakes,
+  and bystanders step aside so nobody walks through anybody.
+- **Portraits** for hairstyles 10 (mullet), 11 (high fade + curls), 12 (slick back), 13 (afro); 14 uses the mohawk.
+- **Your creations in Promoter Mode**: `src/sequel/custom.ts`. Creator fighters walk in at the top of FREE AGENTS
+  (once each), marked YOUR CREATION.
+- **Balance**: story levels cost more as they climb (`xpForLevel`, `levelForXp`; level 10 is 637 xp in all, was 300),
+  so a grinder no longer maxes everyone by chapter 6 of 15. The crowd chants about every 25-30 s now, not every 10.
+- **Sequel icon**: `tools/make-sequel-icon.mjs` (`npm run icon:sequel`) draws `build/icon-sequel.{png,ico}` and the
+  1024 png; the sequel's window, electron-builder config and `dist:sequel:win` (now stamping the exe like game 1) use it.
+- **`npm run dist:sequel:win` does not finish here**: electron-builder fails with EPERM renaming
+  `release-sequel/win-unpacked.tmp` (twice). Probably the `%TEMP%` location or antivirus. Run it from a normal folder.
+
+### Turn 6: Claude (2026-10-27)
+- **Cutscenes do what the narration says.** Riley's example: "He takes off his blazer... steps into the cage" / "One
+  punch... The heckler does" had everyone standing still. Now 1ton's jacket comes off, he walks up, throws it, and the
+  heckler is knocked back onto the floor. The narration reader (`src/ui/sequel/stage.ts`) covers every story scene and
+  the tapes; key fights have hand-written `act` lines. About 40 narrated lines now act; most of the rest are mood.
+- Old cutman corner restored (the redone one is deleted).
+
+To do: write `act` by hand for any scene where the reader is wrong or too quiet (fight intros and highlights already
+use `poses`), and props (a bucket, a mask, a belt) so "hands him the mop" shows the mop.
+
+### Turn 5: Claude (2026-10-27)
+Riley picked nine ideas; seven are in (the map and the new corner were cut):
+- **Rivalry heat maps** (`src/sequel/rivals.ts`): grudges build from results, pressers and weigh-in face-offs; a
+  grudge match sells more and pays bigger purses; the presser asks about it.
+- **Zenith counter-promotion**: Zenith books against your big nights; you get a warning and a toast.
+- **Broadcast mode** (`src/ui/sequel/broadcast.ts`): PRODUCE THE BROADCAST on show night (booth, cameras, rating).
+- **Ray's notebook** (17 pages, across every save) and **RAY, 1987**, the Golden Gloves final against Butch.
+- **Legacy Tapes**: Tyler, Xavier, Spadam, and ALBERTO (the post-game Mexican circuit: the cantina, the abuela, the
+  Prince of Polanco, El Nieto for his old belt).
+- **Live crowd** in hands-on fights: signs in the rows, chants for whoever it's behind, boos when nothing happens,
+  a second wind on big moments, and a lean on close rounds. Home crowd in Moncton, Zenith's crowd in the parking level.
+- The redone corner was built and then **removed at Riley's request**: game 1's cutman corner is back.
+- The Moncton map was built and then **removed at Riley's request** ("lowkey ass"). Don't bring it back.
+
+Left for the next turn (Riley's plan: polish, then fill out the game):
+- **Polish pass:** the crowd's chant timing over a full five-rounder.
+- **Fill out:** most of the 80 parts are still only cards. Give them scenes of their own.
+
 ### Turn 4: Claude (2026-10-27)
 Done (Riley's open list, in order):
 - **Kits per fighter** (`kitII` in `src/ui/rig.ts`, II only): cut from style (Muay Thai / fight shorts / board shorts),
@@ -121,57 +296,27 @@ and the crew fights, a `mask` on the rig and `presentedGender`. It hit the usage
 
 ## To-do (priority order)
 
-### P1: the visual overhaul Riley asked for (not started, except the cutscenes)
-1. **Blood and bruising.** `Look2.wear` (`src/ui/rig.ts`, around lines 669 and 981) is one cut, one swell and one
-   blood line. Add a sequel-only `Look2.marks` (per-zone bruises that age purple → green → yellow, a shut eye per
-   side, a broken nose, a split lip, blood running down the face and chest, rib and thigh bruising from body and
-   leg kicks, drips). Feed it from the live engine's per-part damage in `livefight.ts` and from `FightResult.damage`
-   in `watchfight.ts`, and let cutscene actors carry marks after fights (the outros should show the damage).
-   The arena already leaves blood stains on the canvas (`arena.ts` around line 3160); make them heavier under II.
-2. **More realistic character models.** The rig is a 13-joint stick rig drawn with polys at ~1.3 scale. Under
-   `isII()`, add muscle shading (pecs, delts, abs and quad lines by `build`), proper hands and feet, ears, hair
-   strands, a two-tone skin light, and a bigger head-to-body ratio for cutscenes. Mateo has to read as **jacked
-   and tatted**. Keep game 1's look when classic.
-3. **Character customization and tattoos.** `src/ui/scenes/editor_fighter.ts` and `Look`. A sequel creator with
-   sliders for build, frame and height, per-zone tattoo slots (sleeves L/R, chest, back, neck, knuckles, script)
-   with designs, colours and fade, scars, hair and beard. It should match the new models.
-4. **Fight screen layout and controls (II).** `openLiveFight` takes options. Add `theme: 'ii'` so it draws a
-   broadcast HUD (name plates and health/gas segments over the arena, the body-damage silhouette, the clock centre
-   top), bigger move prompts, damage flashes, slow motion on knockdowns and a cleaner touch pad. Keep the
-   controls in `src/core/fightinput.ts`. Story fights in `sequelstory.ts` (`openLiveFight` around lines 292 and
-   616) and `watchfight.ts` should use it.
-5. **Remaining screens in II style.** The hub, desk, show, end, story hub, trophies and title still hard-code
-   `PAL.*` panel colours. Move them to `II.*` and give the title screen a proper sequel layout (animated
-   warehouse, a logo lockup, a menu column).
+### P1: the visual overhaul (done in this pass)
+1. **Blood and bruising:** `Look2.marks`, `src/ui/marks.ts` and the live/watch/cutscene wiring. Bruises age, eyes shut, noses break, lips split, blood runs, and body and leg kicks leave rib and thigh marks.
+2. **Models:** II muscle shading, hands, feet, ears, hair strands and two-tone skin; Mateo reads as the grown, tatted light heavyweight.
+3. **Creator and tattoos:** per-zone ink (sleeves, chest, back, ribs, knuckles, neck, script, colour), head, eye shape, iris colour, scars, hair and beard, and kit overrides.
+4. **II fight screen:** broadcast plates, segmented health and gas, body-damage silhouette, centre clock, larger prompts, stats strap, engine-ticker fallback, opaque top band, and the arena signs below it.
+5. **Remaining screens:** all eight sequel scenes use `PAL`; the title, hub, desk, show, end, story hub, trophies and creator have the II layout.
+6. **Men's tops:** six male welterweights corrected and `presentedGender` used by the rig, sprites, arena and editor.
 
 ### P2: story and content
-6. In ch4–8, Mateo is still drawn with `CAST.mateo` (the 12-year-old in the hoodie). He's 19 there: give him a
-   teen look, and use `bigMateo` from ch9 on.
-7. Han is in ch3, ch7, ch8 and ch9–11. Consider a beat with him in ch4–6 (he's the gym's champion; he'd be
-   around), and a cameo for Tyler Vance mopping, Xavier's league and Zac's Tuesday class.
-8. Achievements for the four new endings (`src/sequel/achievements.ts`, the story category) and for the secret
-   chapter. `storyend.ts` shows ranks; check that `torch` (S) displays right.
-9. Balance: Han (95) makes ch3/ch7/ch9 easy, which suits a power fantasy until the knee goes. Check 1ton's final
-   overall against Mateo's (both roughly 75–85 with training) with `npm run sequel-sim` or a story sim.
-10. The presser in story mode (`openStoryPress`) still uses the old window UI. Move it to `playCine` like the
-    promoter presser.
-11. WATCH could use the booth: `src/sim/commentary.ts` (`commentate`, Juiced Butler) is what game 1 uses on
-    broadcasts.
+7. (Done, turn 14) **Story achievements:** `TALE_ACHIEVEMENTS`, THE STORY drawer in the Buyback cabinet.
+8. (Done, turn 14) **Balance:** `npx tsx tools/story-balance.ts`; Cuchillo, Spadam and Cesar retuned under 1ton's 90.
+9. (Done, turn 14) **WATCH booth:** Juiced Butler's intro and result around game 1's booth.
+10. (Done, turn 14) **Cameos:** Han is in every chapter; Xavier, Tyler and Zac have their beats.
 
 ### P3: shipping
-12. A sequel icon (`build/icon.ico` is game 1's) and the `stamp-exe` step for the sequel exe.
-13. Test `npm run dist:sequel:win` end to end on Windows (not run yet).
-14. **Move the project out of `%TEMP%` and commit it.** Nothing from either assistant is committed.
+11. (Done) The sequel icon, version stamps and the portable exe.
+12. (Done) The project is in `C:\Users\User\Documents\Default Project` with the `sequel` branch and the uncommitted work intact. Nothing was committed or pushed.
 
 ## Known issues
-- **Game 1 test failing:** `tests/fighter.test.ts` "the whole road" fails because OpenCode changed six welterweights
-  from `gender: "W"` to `"M"` in `data/roster/ranked.json`. The data fix is correct, but it reshuffles the seeded
-  Road To Champion run. Either re-seed or adjust that test, or revert the JSON (`presentedGender` already fixes the
-  visuals). This is Riley's call because it's game 1 data.
-- `Look2.mask` and `presentedGender` changes touch game 1's shared files (`rig.ts`, `sprites.ts`, `arena.ts`,
-  `editor_fighter.ts`). They're harmless for game 1, but they are game 1 changes.
-- In promoter mode the WATCH tape is snapshotted after the records update, so the walkout record is off by the
-  result. Cosmetic.
+- `Look2.mask` and `presentedGender` touch game 1's shared files (`rig.ts`, `sprites.ts`, `arena.ts`, `editor_fighter.ts`). They are harmless for game 1, but they are game 1 changes.
+- The browser screenshot tool still fails when the desktop tab is hidden; the working check is to render the stage manually and extract the canvas.
 
 ## Notes on OpenCode's first session (from Riley's export)
 - It worked from 15 context compactions. Each summary kept the requirements but lost details, which is why the

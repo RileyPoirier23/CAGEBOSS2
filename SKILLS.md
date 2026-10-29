@@ -105,30 +105,41 @@ is **"Hands up. Chin down. Eat something."**
 - 1ton is the trainee you build into a fighter. He signs with Zenith, turns on you, and his crew kills Uncle Ray.
 - **Han Tibular comes back** in chapter 3: now the CBFC **middleweight** champion at his peak (**95 OVR**). He walks
   out on Zenith to fight for the warehouse. He fights Brick, El Cuchillo II, Duke and Rico.
-- Chapter 9: Ray is dead. Han moves up to **light heavyweight** for Cesar, and **tears his knee in camp halfway
-  through the chapter**. **Mateo**, now 21, a jacked and tattooed light heavyweight, takes the Cesar fight.
-- Chapter 10: **Mateo vs 1ton** for Zenith's light heavyweight belt, with the buyback riding on it.
+- **The chapter order** (15 + the secret 16th): 1 back_row, 2 mexican_math, 3 allstar, 4 brick_by_brick,
+  5 sparring_partner, 6 audit, 7 the_signing (1ton signs with Zenith), 8 brother (**Ray dies at the end**), 9 the_wake,
+  10 street_justice (the crew), 11 homecoming, 12 the_board, 13 rematch, 14 the_camp, 15 buyback, 16 legacy.
+- **After the gold pen (chapter 7 on) 1ton is out of the camp:** TRAIN and SPAR refuse him (`onetonTurned`), and his
+  overall follows `ONETON_TURNED_OVR` (80 at chapter 8 up to 90), whatever happened before.
+- **Ray is alive in chapters 1 to 8 only.** After that he's a memory: flashbacks, his notebook, his bucket, his
+  recipe. Never give him a present-day line or a place in a post-funeral cast. A notebook page that unlocks after
+  chapter 8 is either an old entry or in someone else's handwriting (Han's or Mateo's, like ALBERTO and THE BUYBACK).
+- Chapter 10: Han moves up to **light heavyweight** for Cesar and **tears his knee in camp halfway through the
+  chapter**. **Mateo**, now 21, a jacked and tattooed light heavyweight, takes the Cesar fight. From there Mateo
+  fights the Moncton tribute card (Lobster, Tyler), Spadam for the deed, and Cuchillo, with Han on crutches.
+- Chapter 15: **Mateo vs 1ton** for Zenith's light heavyweight belt, with the buyback riding on it.
 - If Mateo wins, he picks a road on the microphone:
-  - **call out Han** → secret chapter 11 boss fight **Mateo vs Han** → ending `torch` (Han hands down his
+  - **call out Han** → secret chapter 16 boss fight **Mateo vs Han** → ending `torch` (Han hands down his
     legacy and buckles the belt on Mateo) or `student` (Han wins and says "not yet, kid")
   - **defend the belt** → **Mateo vs Cesar II** → `champion` or `onenight`
 - If Mateo loses or draws with 1ton, the story ends on the older endings (`house`, `role`, `zenith`, `draw`).
 - Ray is **Uncle Ray** (Han's uncle). Never "Ray Whyte". He is the heart of the story: lovable, funny, a mentor to Han,
-  Mateo **and 1ton** (soup at six a.m., "Hands up. Chin down. Eat something."). Make players love him before chapter 8.
+  Mateo **and 1ton** (soup at six a.m., "Hands up. Chin down. Eat something."). Make players love him before he dies at the end of chapter 8.
 - **1ton's betrayal is foreshadowed from chapter 6 only** (the gold envelope talk, the Zenith-tower photo beat). Before
-  chapter 6 he is warm, funny and loyal (in chapter 5 he tears up Verity's black card himself). Don't add hints earlier.
+  chapter 6 he is warm, funny and loyal (even in chapter 6 he tears up Verity's black card himself). Don't add hints earlier.
 - **1ton's identity:** his press name is **Gordo "1ton" Fuente**. His real name is **Alberto Del Burrito**, once
   middleweight champion of Mexico (22-0). He lost the belt, got drunk, and lost a fistfight in a cantina to a fan's
   abuela; it went viral. He moved north, changed his name and became a sportswriter. His question ("When are you going
-  to put a Mexican fighter in the main event?") meant *himself*, every week for twelve years. Revealed in chapter 10
-  (beat `true_name`). Nobody knows before that.
+  to put a Mexican fighter in the main event?") meant *himself*, every week for twelve years. Revealed in chapter 14
+  (beat `true_name`, in the_camp). Nobody knows before that.
 - **The opening:** 1ton starts training at Ray's (chapter 1), signs with **Xavier's Allstar Fighting Championship**
-  (chapter 2, beat `xavier_league`), and Mateo signs too. 1ton only signs with Dane in chapter 5 (beat `dane_contract`).
+  (chapter 2, beat `xavier_league`), and Mateo signs too. 1ton only signs with Dane in chapter 6 (beat `dane_contract`, in the audit).
 - Han is **30-1**, hair in a **bun with a fade** (`look.hair = 7`, `look.fade = 1`).
 
 **Sequel-established canon:** Ray lost the **1987 Golden Gloves final** to **Butch** (the mullet). Han's father **Marc
 Tibular** fished lobster out of **Shediac** on the **MARIE-ANNE** and was lost in a November gale when Han was 15.
 **Tyler Vance** mops at Ray's, **Zac Buna** runs the Tuesday class, and **Xavier Cockett** runs Allstar FC out of a barn.
+In 1987 Ray was **Ray "The Electrician" Tibodeau**, 33; Butch is **Butch "The Mullet" Comeau** from Dieppe. The final
+was at the **Moncton Coliseum**; Marie met Ray at the bus with two bowls of soup.
 
 Content rule from game 1 (see `CONTENT_GUIDE.md`): parodies of real people never get crime, doping or abuse
 storylines. Original characters (1ton, the crew, Zenith) can.
@@ -162,6 +173,39 @@ storylines. Original characters (1ton, the crew, Zenith) can.
 - **Kits:** `kitII` (from the bio) or `Look.kit2` (the creator's). **Ink:** `tattooLayout` or `Look.ink2`.
 - **The phone:** `src/sequel/phone.ts` (calls, Bleeter, the plug), `src/ui/sequel/phoneui.ts`.
 - **Tutorial:** `src/ui/sequel/tutorial2.ts` (`maybeLesson2(g, key)`).
+- **Grudges, Zenith nights, the broadcast (promoter):** `src/sequel/rivals.ts` (`run.rivalries`, `isGrudge`,
+  `grudgeBoost`, `zenithCounter`, `rateBroadcast`), the truck UI in `src/ui/sequel/broadcast.ts`.
+- **Ray's notebook:** `src/sequel/notebook.ts` (`PAGES`, kept in `cageboss2.notebook` across every save). A full book
+  unlocks RAY, 1987 (`playRay1987` in `src/ui/sequel/notebookui.ts`). **Legacy Tapes:** `src/sequel/tapes.ts` (steps:
+  scenes and fights; progress in `cageboss2.tapes`), shelf in `src/ui/sequel/tapesui.ts`. ALBERTO is the post-game
+  Mexican circuit.
+- **The live crowd (II):** `LiveRules.crowd` in `src/sim/live.ts`: `L.crowd` energy/lean from events, a second wind for
+  the side it's behind, and a close round (diff < 3) leans its way on the cards (`rcrowd`). `livefight.ts` turns it
+  on for II (not at Ray's, not in a lot) and draws signs and chants (`arena.setSigns`, `arena.crowdChant`). Pass
+  `crowd: { home, signs, chants }` on `openLiveFight`; venues say `crowd: 'home' | 'away'` (`venueCrowd`).
+- **The face (II):** `LiveRules.face`: `L.face[side]` tracks swelling and cuts for six zones from where shots land
+  (`faceHit`, its own RNG). A swollen spot takes more, a swollen nose breathes worse, and `nextRound` brings it down by
+  the corner's aid. **The corner is game 1's cutman** (`src/ui/cutman.ts`): Riley had the redone one removed.
+- **Cutscenes act out their narration (CINE II):** `src/ui/sequel/stage.ts` reads a narrated line (`who: null`) for
+  stage directions (walk up, strike with a knockdown, exit, sit, kneel, hug, handshake, hand over, take off a jacket,
+  point, look down...) and `cine.ts` plays them as tasks, with the hit's shake and sound landing on the impact. Write
+  `act: [...]` on a line to say exactly what happens (key scenes do: Ray's last stand, the 1987 left hook); `act: []`
+  turns the reading off. Lines with `poses` are left alone. **When you write narration, write what we can see**, and
+  check it plays (`window.__cine.cast` shows who is where). `tests/stage.test.ts` covers the reader.
+- **Part scenes:** `PART_LINES` in `src/ui/scenes/partlines.ts` (rows of `[who, text, act?]`), played after the part
+  card by `partScene`. Who has to be in that part's `who` list (verity is `zenith`, bigmateo is `mateo`).
+- **Props in cutscenes:** `{ do: 'prop', who, prop }` (leave `prop` out to put it away), `meet` with `prop` to hand it
+  over, `{ do: 'drop', who }` to set it on the floor for the rest of the shot (`Prop` in `stage.ts`, drawn by `drawProp`
+  in `cine.ts`).
+- **Story levels:** `xpForLevel(lv)` / `levelForXp(xp)` in `story.ts` (rising cost; don't divide by XP_PER_LEVEL).
+- **Custom fighters:** `src/sequel/custom.ts` (`loadCustomFighters`, `offerCustomFighters`).
+- **Icons:** `build/icon-sequel.*` from `tools/make-sequel-icon.mjs`; game 1 keeps `build/icon.*`.
+- **Motion:** use `src/ui/motion.ts` (`easeOut`, `easeInOut`, `DUR`, `tween`, `reducedMotion`); don't invent curves.
+- **Weekly radio:** `src/sequel/radio.ts` writes it (`radioPromoter`, `radioStory`), `src/ui/sequel/radioui.ts` plays it.
+- **Theatre / album:** `remember(save, kind, title, ref)` in `src/sequel/theatre.ts`; `Line.photo = { id, title }`.
+- **Establishing shots:** add a word to `READ` in `src/ui/sequel/scenery.ts` and a case to `drawScenery`.
+- **New Game+:** the `kid` tape in `src/sequel/tapes.ts` (fighters `kid1`..`kid4`). Story free agents: `legacyfa.ts`.
+- **Windows build:** `npm run dist:sequel:win` (see `tools/dist-sequel-win.mjs`; Electron comes from `.electron-dist/`).
 - **Scenes and refresh:** `Scene.refresh()` destroys the root's children. A Graphics kept on a field must be made
   new in `build()`, or the next refresh re-adds a destroyed object (pointer events then crash).
 
@@ -170,6 +214,17 @@ storylines. Original characters (1ton, the crew, Zenith) can.
 R-rated satire with heart: cutthroat jokes, deadpan narration, then something that lands emotionally. Short
 lines. Every character has one running bit (Ray's soup, 1ton's question, Cuchillo's "metaphorical knife"). Swear
 when it's funny, not as filler.
+
+**Write like a person, not a model** (Riley ran the humanizer over the whole sequel; keep it that way):
+- People use contractions. Everybody says "don't", "it's", "I'm". **1ton is the exception**: his formal English
+  ("I do not sweep the floor") is his voice, so leave his lines uncontracted.
+- No one-line closers that restate the scene ("That's the point.", "That's the whole job.", "Nobody says anything.").
+  End on the last concrete thing that happened.
+- No "not X, it's Y" for weight, no rows of fragments ("Boots. A hat. A trailer."), no em dashes. Pick a specific
+  detail instead ("$211 in coins and an IOU from Mateo").
+- "Hands up. Chin down. Eat something." is for Ray's big moments only (his first lesson, his last words, the funeral,
+  the final walk, the endings). Don't sign off radio segments or signings with it.
+- Before you write a scene, read some of game 1's `src/ui/storyscenes.ts`: that's the voice.
 
 ## 6. Screen and text rules (Riley has complained about these)
 

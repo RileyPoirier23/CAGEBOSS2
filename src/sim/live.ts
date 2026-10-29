@@ -220,7 +220,27 @@ export interface LiveRules {
   koRules?: 'mma' | 'count';
   /** CAGE BOSS II: the special moves a side has unlocked (sparring at Ray's); see SPECIAL_MOVES */
   moves?: Partial<Record<Side, string[]>>;
+  /**
+   * CAGE BOSS II: a crowd that matters. It gets loud for big moments and picks a side; on its feet it
+   * gives the man it's behind a second wind, and on a close round the judges hear it. home: the side
+   * the building came to see (-1 = nobody).
+   */
+  crowd?: { home?: Side | -1 };
+  /**
+   * CAGE BOSS II: the face keeps score. Swelling and cuts are tracked by zone (where the shots
+   * landed) and they carry: a swollen eye takes the next one harder, a busted nose breathes worse,
+   * an open cut bleeds the doctor closer. The corner works them between rounds (see faceWorked).
+   */
+  face?: boolean;
 }
+
+/** Where a head shot lands on the face (his left and right, as you look at him). */
+export type FaceZone = 'browL' | 'browR' | 'eyeL' | 'eyeR' | 'nose' | 'mouth';
+export const FACE_ZONES: FaceZone[] = ['browL', 'browR', 'eyeL', 'eyeR', 'nose', 'mouth'];
+/** One zone: swelling 0..1, an open cut 0..1 (how much it bleeds), and how well it's been sealed (vaseline) 0..1. */
+export interface FaceSpot { swell: number; cut: number; seal: number }
+export type Face = Record<FaceZone, FaceSpot>;
+export const freshFace = (): Face => Object.fromEntries(FACE_ZONES.map((z) => [z, { swell: 0, cut: 0, seal: 0 }])) as Face;
 
 /**
  * The moves you earn sparring at Ray's. Each one upgrades an input you already know: unlock it and
@@ -280,6 +300,17 @@ export class LiveFight {
   rpts: [number, number][] = [[0, 0]];
   /** per round, per side: knockdowns scored (a round with one is a 10-8 unless the other man answered) */
   rkd: [number, number][] = [[0, 0]];
+  /** the live crowd (rules.crowd): how loud (0..100), who it's behind (-1 = side 0 .. 1 = side 1), a big moment's surge, quiet seconds */
+  crowd = { energy: 30, lean: 0, surge: 0, quiet: 0 };
+  /** per round: the crowd's lean, summed over the round (what the judges heard) */
+  rcrowd: number[] = [0];
+  /** the face, zone by zone (always tracked; it only changes the fight under rules.face) */
+  face: [Face, Face] = [freshFace(), freshFace()];
+  /** the corner minigame treated this side's face this break (nextRound leaves it as worked) */
+  faceWorked: [boolean, boolean] = [false, false];
+  private lastZone: [FaceZone, FaceZone] = ['browR', 'browR'];
+  /** the face has its own dice, so tracking it never changes a fight that ignores it */
+  private faceRng: Rng;
   result: { winner: Side | -1; method: 'KO' | 'TKO' | 'SUB' | 'DEC' | 'DRAW' | 'NC' | 'DOC' | 'DQ'; detail: string; round: number; time: string } | null = null;
   /** in-fight injuries (fighter side, name, weeks out) and fouls, like the sim keeps */
   injuries: { side: Side; name: string; weeks: number }[] = [];
@@ -298,6 +329,7 @@ export class LiveFight {
 
   constructor(public A: Fighter, public B: Fighter, skA: Skills, skB: Skills, public rounds: 3 | 5, seed: number) {
     this.rng = new Rng(seed);
+    this.faceRng = new Rng((seed ^ 0x51ace) >>> 0);
     const mk = (f: Fighter, sk: Skills, x: number): LiveFighter => ({
       id: f.id, sk, x, hp: 100, hpMax: 100, body: 100, legs: 100, gas: 100, bpm: 92, exert: 0,
       act: null, block: false, parryT: 0, parryCd: 0, evadeLast: 9, evadeChain: 0, evade: null, stun: 0, down: 0, getup: 0, kdsRound: 0, counterT: 0, buffer: null, comboT: 0, sinceHit: 9, cut: 0, grip: 0,
@@ -340,6 +372,74 @@ export class LiveFight {
 
   private ev(e: LiveEvent): void {
     this.events.push(e);
+    if (this.rules.crowd) this.crowdHears(e);
+  }
+
+  /** What gets the building up, and which way it leans. */
+  private crowdHears(e: LiveEvent): void {
+    const c = this.crowd;
+    const s = e.side === 0 ? -1 : 1;
+    const K: Partial<Record<LiveEvent['type'], [number, number]>> = {
+      kd: [32, 0.4], rocked: [20, 0.22], ko: [40, 0], tko: [40, 0], td: [7, 0.05], sub: [12, 0.08], escape: [12, 0.12],
+      sweep: [8, 0.07], counter: [6, 0.05], taunt: [5, 0.03], parry: [3, 0.02], cut: [8, 0.05], catch: [4, 0.03],
+    };
+    let k = K[e.type];
+    if (e.type === 'hit') k = e.big ? [9, 0.07] : [0.5, 0.01];
+    // they boo the man who fouls
+    if (e.type === 'foul' || e.type === 'deduction') k = [6, -0.15];
+    if (!k) return;
+    c.energy = clamp(c.energy + k[0], 0, 100);
+    c.lean = clamp(c.lean + k[1] * s, -1, 1);
+    if (k[0] >= 18) c.surge = 2;
+    if (k[0] >= 4) c.quiet = 0;
+  }
+
+  /** The crowd settles back toward who it came to see; on its feet it carries its man. */
+  private tickCrowd(dt: number): void {
+    const c = this.crowd;
+    const home = this.rules.crowd?.home ?? -1;
+    const rest = home === 0 ? -0.3 : home === 1 ? 0.3 : 0;
+    c.energy = Math.max(10, c.energy - dt * (c.energy > 60 ? 4.5 : 2.4));
+    c.lean += (rest - c.lean) * Math.min(1, dt * 0.04);
+    c.surge = Math.max(0, c.surge - dt);
+    c.quiet += dt;
+    const fav: Side | -1 = c.lean < -0.15 ? 0 : c.lean > 0.15 ? 1 : -1;
+    if (fav >= 0 && (c.surge > 0 || c.energy > 70)) {
+      const f = this.F[fav as Side];
+      f.gas = clamp(f.gas + dt * (1.5 + c.energy / 40) * Math.abs(c.lean), 0, 100);
+    }
+    this.rcrowd[this.round - 1] = (this.rcrowd[this.round - 1] ?? 0) + c.lean * (c.energy / 100) * dt;
+  }
+
+  /**
+   * A head shot lands on a zone of his face (jabs find the nose, hooks the eye on that side, elbows
+   * open the brow). Swells it, and an open cut that wasn't sealed opens up again. Returns how swollen
+   * the spot was before.
+   */
+  private faceHit(def: Side, atk: Side, name: string, dmg: number): number {
+    const r = this.faceRng.float(0, 1);
+    // his lead hand lands on your right side as you face him (both stances read the same here)
+    const hand = /jab|lead|butch/.test(name) ? 'R' : 'L';
+    const side = r < 0.5 ? hand : hand === 'R' ? 'L' : 'R';
+    const z: FaceZone = /jab|cross|front/.test(name) ? (r < 0.45 ? 'nose' : r < 0.8 ? (`eye${side}` as FaceZone) : 'mouth')
+      : /uppercut/.test(name) ? (r < 0.55 ? 'mouth' : 'nose')
+      : /elbow|backfist/.test(name) ? (`brow${side}` as FaceZone)
+      : /knee/.test(name) ? (r < 0.5 ? 'nose' : (`brow${side}` as FaceZone))
+      : /hook|overhand|superman|kick|punch|shot/.test(name) ? (r < 0.6 ? (`eye${side}` as FaceZone) : (`brow${side}` as FaceZone))
+      : FACE_ZONES[Math.floor(r * FACE_ZONES.length) % FACE_ZONES.length];
+    void atk;
+    this.lastZone[def] = z;
+    const s = this.face[def][z];
+    const before = s.swell;
+    s.swell = Math.min(1, s.swell + (dmg / 34) * (1.15 - this.F[def].sk.chin / 250));
+    // an old cut nobody greased: it opens again
+    if (s.cut > 0.05 && s.seal < 0.6 && this.faceRng.chance(0.35 * (1 - s.seal))) s.cut = Math.min(1, s.cut + 0.15);
+    return before;
+  }
+
+  /** Who the crowd is behind right now (-1: nobody, or it's split). */
+  crowdFor(): Side | -1 {
+    return this.crowd.lean < -0.15 ? 0 : this.crowd.lean > 0.15 ? 1 : -1;
   }
 
   private line(side: Side | -1, act: string, text: string, intensity = 1): void {
@@ -358,6 +458,7 @@ export class LiveFight {
     if (this.phase !== 'fight') return;
     this.clock -= dt;
     for (const i of [0, 1] as Side[]) this.tickFighter(i, dt);
+    if (this.rules.crowd) this.tickCrowd(dt);
     if (this.F.some((f) => f.down > 0)) {
       this.tickCount(dt, intents);
       this.checkEnd();
@@ -440,7 +541,8 @@ export class LiveFight {
     }
     const busy = !!f.act || f.block;
     const cardio = 0.5 + f.sk.cardio / 100;
-    f.gas = clamp(f.gas + (busy ? 1.2 : 5.5) * cardio * (0.4 + f.body / 166) * dt - (f.block ? 1.2 * dt : 0), 0, 100);
+    const nose = this.rules.face ? 1 - this.face[i].nose.swell * 0.3 : 1;
+    f.gas = clamp(f.gas + (busy ? 1.2 : 5.5) * cardio * (0.4 + f.body / 166) * nose * dt - (f.block ? 1.2 * dt : 0), 0, 100);
     if (f.sinceHit > 1.5 && f.down <= 0) f.hp = Math.min(f.hpMax, f.hp + (0.9 + f.sk.heart / 120) * dt);
     f.exert = Math.max(0, f.exert - dt * 9);
     const target = 72 + (100 - f.gas) * 0.85 + f.exert + (100 - f.hp) * 0.2 + (f.down > 0 ? 25 : 0);
@@ -1090,14 +1192,19 @@ export class LiveFight {
       // flicks chip a fresh man, they don't finish him (they still pile up on a hurt one)
       const chip = light && o.stun <= 0;
       const hp0 = o.hp;
+      // the face: where it landed, and a swollen spot takes it worse (CAGE BOSS II)
+      const swell0 = name ? this.faceHit((1 - i) as Side, i, name, dmg) : 0;
       // nowhere to go with your back on the cage: you take them flush
-      const k = (1.25 - o.sk.chin / 200) * (this.pos === 'stand' && this.onWall((1 - i) as Side) ? 1.1 : 1);
+      const k = (1.25 - o.sk.chin / 200) * (this.pos === 'stand' && this.onWall((1 - i) as Side) ? 1.1 : 1) * (this.rules.face ? 1 + swell0 * 0.35 : 1);
       o.hp -= dmg * k;
       if (chip) o.hp = Math.max(o.hp, Math.min(hp0, 12));
       o.hpMax = Math.max(35, o.hpMax - dmg * k * 0.18);
       o.stun = Math.max(o.stun, big ? 0.32 : 0.12);
       if (big && this.rng.chance(name === 'elbow' ? 0.3 : 0.12)) {
         o.cut++;
+        const fz = this.face[(1 - i) as Side][this.lastZone[(1 - i) as Side]];
+        fz.cut = Math.min(1, fz.cut + 0.45);
+        fz.seal = 0;
         this.ev({ type: 'cut', side: (1 - i) as Side });
         this.line(i, 'cut', `${this.name((1 - i) as Side)} is cut open.`, 2);
         // a gusher: the referee calls the doctor in
@@ -1397,9 +1504,22 @@ export class LiveFight {
         return;
       }
     }
+    if (this.rules.face) {
+      for (const i of [0, 1] as Side[]) {
+        if (!this.faceWorked[i]) for (const z of FACE_ZONES) {
+          const s = this.face[i][z];
+          s.swell *= 1 - 0.25 - aid[i] * 0.25;
+          s.cut *= 1 - 0.3 - aid[i] * 0.35;
+          s.seal = Math.max(s.seal, aid[i] * 0.5);
+        }
+        this.faceWorked[i] = false;
+      }
+    }
     this.round++;
     this.rpts.push([0, 0]);
     this.rkd.push([0, 0]);
+    this.rcrowd.push(0);
+    this.crowd.energy = Math.max(this.crowd.energy, 35);
     this.ded.push([0, 0]);
     this.clock = ROUND_SECONDS;
     this.pos = 'stand';
@@ -1435,7 +1555,9 @@ export class LiveFight {
         const rng = new Rng((r + 1) * 7919 + j * 104729 + Math.round(a * 13 + b * 31));
         const na = a * rng.float(0.85, 1.15);
         const nb = b * rng.float(0.85, 1.15);
-        const diff = na - nb;
+        // a close round: the judges hear the building (a crowd fully behind one man for the round is worth ~1.2 points)
+        const heard = this.rules.crowd ? clamp((-(this.rcrowd[r] ?? 0) / ROUND_SECONDS) * 2, -1, 1) * 1.2 : 0;
+        const diff = na - nb + (Math.abs(na - nb) < 3 ? heard : 0);
         const kd = this.rkd[r] ?? [0, 0];
         const sc: [number, number] = Math.abs(diff) < 0.6 ? [10, 10] : diff > 0 ? [10, diff > Math.max(12, nb * 2.5) || (kd[0] > kd[1] && diff > 3) ? 8 : 9] : [diff < -Math.max(12, na * 2.5) || (kd[1] > kd[0] && diff < -3) ? 8 : 9, 10];
         const dd = this.ded[r] ?? [0, 0];

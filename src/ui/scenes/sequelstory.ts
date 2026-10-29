@@ -5,9 +5,14 @@
  * This is the room between the cutscenes. Everything that changes a number lives
  * in sequel/story.ts; this file only draws it and points at the next scene.
  */
+import { playRadio } from '../sequel/radioui';
+import { radioStory } from '../../sequel/radio';
+import { remember } from '../../sequel/theatre';
+import { storyEndingById } from '../../sequel/story';
+import { playStoryPress } from '../sequel/storypress';
 import { Container, Graphics } from 'pixi.js';
 import { Scene, type Game } from '../app';
-import { PAL } from '../../art/palette';
+import { PAL } from '../theme';
 import { W, H, SW, OX, text, button, box, meterBar, clearChildren } from '../kit';
 import { openWindow, alertBox } from '../widgets';
 import { isTouchDevice } from '../../core/platform';
@@ -16,7 +21,7 @@ import { sfx } from '../../audio/sfx';
 import { fighterPortrait } from '../sprites';
 import { seqVenueArt } from '../sequelart';
 import { playCine as playCutscene } from '../sequel/cine';
-import { storyVenue } from '../sequel/venues';
+import { storyVenue, venueCrowd } from '../sequel/venues';
 import { openDrill, type DrillKind } from '../sequel/drills';
 import { openSpar } from '../sequel/spar';
 import { II } from '../theme';
@@ -29,16 +34,17 @@ import type { Bout, FightResult } from '../../core/types';
 import { overall } from '../../sim/fighters';
 import {
   STORY_CHAPTERS, buildOneTon, cornerFighter, cornerName, cornerKey, chapterFights, nextChapterFight, storyProgress, storyCorner, storyOverall, storyChapter, storyNextLabel,
-  storyRecord, storyDoc, resolveStoryDoc, pressQuestions, applyPressAnswer, finishPressDay,
+  storyRecord, storyDoc, resolveStoryDoc,
   canAct, mediaDay, dinnerWithOneTon, applyTalkChoice, applyChapterChoice, talkTo,
   dueBeat, movesOf, storyDate, storyPart, storyWeek, chapterWeeks, fightDue, fightThisWeek, endStoryWeek, restDay, talkedThisChapter, chapterReady,
-  trainSession, gradeFor, TRAIN_TIERS, DAYS_PER_WEEK, type TrainTier, type OneTonTrack,
+  trainSession, gradeFor, xpForLevel, TRAIN_TIERS, trainTierBlurb, DAYS_PER_WEEK, onetonTurned, type TrainTier, type OneTonTrack,
   fightDone, recordStoryFight, advanceStoryChapter, sideOffers, sideFightReady,
   recordSideFight, type StoryFightDef, type StorySideOpponent, type StoryDocMode,
 } from '../../sequel/story';
 import { beatScene, chapterIntro, chapterOutro, fightHighlight, fightIntro, partScene, partTitle, storyEndingScene, talkScene } from './storycuts';
 import { newStorySave } from '../../sequel/story';
 import { readStory, writeStory, addStoryTrophy, forgetStory, takeNewPages } from '../../sequel/storysession';
+import { toastTaleAchievements } from './sequelachievements';
 import { openNotebook } from '../sequel/notebookui';
 import { newSlot, listSlots } from '../../sequel/slots';
 import type { StorySave } from '../../sequel/types';
@@ -100,6 +106,7 @@ export class SequelStoryHubScene extends Scene {
     this.chapterPanel(save, ch);
     this.menPanel(save);
     this.buttons(save, ch);
+    toastTaleAchievements(this.g, save);
   }
 
   private header(save: StorySave, ch: ReturnType<typeof storyChapter>): void {
@@ -265,10 +272,12 @@ export class SequelStoryHubScene extends Scene {
       const beat = dueBeat(save);
       const scene = beat ? beatScene(save, beat) : null;
       if (beat) save.flags[`beat_${beat}`] = true;
+      if (scene && beat) remember(save, 'beat', scene.title ?? beat.replace(/_/g, ' ').toUpperCase(), beat);
       if (scene) playCutscene(this.g, scene, () => { writeStory(save); this.refresh(); });
       return;
     }
     const intro = chapterIntro(save);
+    remember(save, 'intro', ch.title);
     playCutscene(this.g, intro, (choice) => {
       const after = () => {
         save.flags[`intro_${ch.id}`] = true;
@@ -349,16 +358,26 @@ export class SequelStoryHubScene extends Scene {
   }
 
   private doEndWeek(save: StorySave): void {
+    // this week's log, for the radio (everything since the mark the last week left)
+    const mark = save.flags.radioMark;
+    const cut = save.log.findIndex((l) => l === mark);
+    const week = cut < 0 ? save.log.slice(0, 12) : save.log.slice(0, cut);
     const res = endStoryWeek(save);
     if (!res.ok) {
       alertBox(this.g, 'Not yet', res.msg);
       return;
     }
+    save.flags.radioMark = save.log[0] ?? '';
     writeStory(save);
     sfx('bell');
     this.g.toast(res.msg, PAL.gold);
     this.refresh();
-    setTimeout(() => this.maybeIntro(save), 280);
+    // Juiced Butler's week in review, then the story carries on
+    if (save.flags.demo) {
+      setTimeout(() => this.maybeIntro(save), 280);
+      return;
+    }
+    setTimeout(() => playRadio(this.g, radioStory(save, week), `JUICED BUTLER'S WEEK IN REVIEW  /  ${storyDate(save)}`, () => setTimeout(() => this.maybeIntro(save), 200)), 280);
   }
 
   private doSpar(save: StorySave): void {
@@ -387,7 +406,7 @@ export class SequelStoryHubScene extends Scene {
         plan: 'balanced', oppPlan: 'balanced', cutTier: 3, seed,
         event: def.venue, judges: ['Lenny Pratt', 'Marla Cross', 'Dexter Bell'], referee: where.referee,
         canvas: where.canvas, refLook: where.refLook, bare: where.bare,
-        rules: { moves: { 0: movesOf(save, def.player === 'oneton' ? 'oneton' : 'corner') } },
+        rules: { moves: { 0: movesOf(save, def.player === 'oneton' ? 'oneton' : 'corner') } }, crowd: venueCrowd(where), theme: 'ii',
         done: (r) => this.afterStoryFight(save, def, player.id, opponent.id, r),
       });
     });
@@ -407,14 +426,14 @@ export class SequelStoryHubScene extends Scene {
         : `${def.name}: LOST. ${r.method} R${r.round} ${r.time}. The building makes a different sound.`;
     sfx(won ? 'roar' : 'thud');
     // the moment, shot like a broadcast package, then the card
-    playCutscene(this.g, fightHighlight(save, def, won, r.method, r.round), () => {
+    playCutscene(this.g, fightHighlight(save, def, won, r.method, r.round, r.damage, r.cuts), () => {
       alertBox(this.g, won ? 'WON' : drawn ? 'DRAW' : 'LOST', line, () => this.playOutroAndAdvance(save));
     });
   }
 
   private playOutroAndAdvance(save: StorySave): void {
     const ch = storyChapter(save);
-    // chapter nine has three fights: the outro waits for the last of them
+    // chapter ten has three fights: the outro waits for the last of them
     if (nextChapterFight(save)) {
       this.refresh();
       return;
@@ -424,6 +443,7 @@ export class SequelStoryHubScene extends Scene {
       return;
     }
     const outro = chapterOutro(save);
+    remember(save, 'outro', ch.title);
     playCutscene(this.g, outro, (choice) => {
       const after = () => {
         save.flags[`outro_${ch.id}`] = true;
@@ -478,6 +498,7 @@ export class SequelStoryHubScene extends Scene {
       save.flags.trophySaved = true;
       writeStory(save);
     }
+    remember(save, 'ending', save.ending ? storyEndingById(save.ending)?.title ?? 'AFTER THE BELL' : 'AFTER THE BELL');
     playCutscene(this.g, storyEndingScene(save), () => {
       this.g.goto(new StoryEndScene(this.g));
     });
@@ -526,7 +547,7 @@ function openStoryTraining(g: Game, save: StorySave, after: () => void): void {
     alertBox(g, 'No days left', 'The week is spent. END WEEK and start again on Monday.');
     return;
   }
-  let who: 'oneton' | 'corner' = 'oneton';
+  let who: 'oneton' | 'corner' = onetonTurned(save) ? 'corner' : 'oneton';
   let tier: TrainTier = 'full';
   maybeLesson2(g, 'training');
   const win = openWindow(g, 'THE CAMP', 400, 232);
@@ -536,10 +557,15 @@ function openStoryTraining(g: Game, save: StorySave, after: () => void): void {
     const f = who === 'oneton' ? buildOneTon(save) : cornerFighter(save);
     const tr = (who === 'oneton' ? save.training : save.daneTraining) as unknown as Record<string, number>;
     b.addChild(text(`${save.actionsLeft} DAY${save.actionsLeft === 1 ? '' : 'S'} LEFT THIS WEEK  /  FATIGUE ${Math.round(save.fatigue)}`, 6, 2, { small: true, color: II.sodium }));
-    // who: 1ton, or the corner's man (Han, then Mateo)
-    (['oneton', 'corner'] as const).forEach((w, i) => {
-      b.addChild(button(w === 'oneton' ? '1TON' : cornerName(save), 6 + i * 64, 12, 60, 14, () => { who = w; draw(); }, { small: true, fill: who === w ? II.blood : II.steel, border: who === w ? II.sodium : undefined }));
-    });
+    // who: 1ton, or the corner's man (Han, then Mateo). After the gold pen, only the corner.
+    if (!onetonTurned(save)) {
+      (['oneton', 'corner'] as const).forEach((w, i) => {
+        b.addChild(button(w === 'oneton' ? '1TON' : cornerName(save), 6 + i * 64, 12, 60, 14, () => { who = w; draw(); }, { small: true, fill: who === w ? II.blood : II.steel, border: who === w ? II.sodium : undefined }));
+      });
+    } else {
+      b.addChild(button(cornerName(save), 6, 12, 60, 14, () => { who = 'corner'; draw(); }, { small: true, fill: II.blood, border: II.sodium }));
+      b.addChild(text('1TON IS WITH ZENITH NOW', 72, 16, { small: true, color: II.ash, width: 200, maxLines: 1 }));
+    }
     // how hard: light (1 day), full (2), camp (3)
     (Object.keys(TRAIN_TIERS) as TrainTier[]).forEach((t, i) => {
       const def = TRAIN_TIERS[t];
@@ -547,7 +573,7 @@ function openStoryTraining(g: Game, save: StorySave, after: () => void): void {
         small: true, fill: tier === t ? II.blood : II.steel, border: tier === t ? II.sodium : undefined, disabled: !canAct(save, def.days),
       }));
     });
-    b.addChild(text(TRAIN_TIERS[tier].blurb + ' Play the drill for your own grade, or sim it for a C.', 6, 30, { width: 386, small: true, color: II.ash, maxLines: 2 }));
+    b.addChild(text(trainTierBlurb(save, tier) + ' Play the drill for your own grade, or sim it for a C.', 6, 30, { width: 386, small: true, color: II.ash, maxLines: 2 }));
     const tracks: [OneTonTrack, string, DrillKind][] = [
       ['striking', 'STRIKING', 'striking'],
       ['grappling', 'GRAPPLING', 'grappling'],
@@ -557,13 +583,16 @@ function openStoryTraining(g: Game, save: StorySave, after: () => void): void {
     tracks.forEach(([track, label, kind], i) => {
       const y = 48 + i * 38;
       const lv = tr[track] ?? 0;
-      const xp = (save.xp ?? {})[`${who}.${track}`] ?? lv * 30;
+      const xp = (save.xp ?? {})[`${who}.${track}`] ?? xpForLevel(lv);
+      // how far into this level, out of what it costs
+      const into = xp - xpForLevel(lv);
+      const need = xpForLevel(lv + 1) - xpForLevel(lv);
       b.addChild(box(388, 34, II.panelHi, II.edge, { bevel: true })).position.set(0, y);
       b.addChild(text(label, 8, y + 4, { small: true, color: II.gold }));
       b.addChild(text(`LEVEL ${lv}/10`, 8, y + 13, { small: true, color: II.bone }));
-      const bar = new Graphics().rect(8, y + 23, 120, 4).fill(0x221e28).rect(8, y + 23, Math.round(120 * Math.min(1, (xp % 30) / 30)), 4).fill(lv >= 10 ? II.gold : II.sodium);
+      const bar = new Graphics().rect(8, y + 23, 120, 4).fill(0x221e28).rect(8, y + 23, Math.round(120 * Math.min(1, into / need)), 4).fill(lv >= 10 ? II.gold : II.sodium);
       b.addChild(bar);
-      b.addChild(text(lv >= 10 ? 'MAXED' : `${xp % 30}/30 XP TO LEVEL ${lv + 1}`, 134, y + 21, { small: true, color: II.ash }));
+      b.addChild(text(lv >= 10 ? 'MAXED' : `${into}/${need} XP TO LEVEL ${lv + 1}`, 134, y + 21, { small: true, color: II.ash }));
       b.addChild(button('TRAIN', 316, y + 9, 64, 16, () => {
         const days = TRAIN_TIERS[tier].days;
         if (!canAct(save, days)) return alertBox(g, 'Not enough days', `A ${TRAIN_TIERS[tier].label} session takes ${days} day${days === 1 ? '' : 's'}.`);
@@ -670,56 +699,12 @@ export function openStoryPress(g: Game, save: StorySave, after: () => void): voi
     alertBox(g, 'No sessions', 'The cameras have gone home. Some of them were never here.');
     return;
   }
-  const qs = pressQuestions(save);
-  const replies: string[] = [];
-  const ask = (i: number): void => {
-    if (i >= qs.length) {
-      finishPressDay(save);
-      writeStory(save);
-      showPressReport(g, save, replies, after);
-      return;
-    }
-    const q = qs[i];
-    const win = openWindow(g, `PRESS DAY ${i + 1} / ${qs.length}`, 430, 232, { paper: 'cream' });
-    const b = win.body;
-    b.addChild(text('THE MICROPHONE IS ON. THE ROOM IS NOT YOUR FRIEND.', 6, 2, { small: true, color: PAL.blood }));
-    b.addChild(text(q.q, 6, 14, { width: 414, color: PAL.ink, maxLines: 3 }));
-    q.options.forEach((o, k) => {
-      const y = 57 + k * 48;
-      const bg = box(414, 44, 0xd8cdae, 0xb3a685);
-      bg.position.set(0, y);
-      b.addChild(bg);
-      b.addChild(text(o.label, 6, y + 4, { small: true, width: 400, color: PAL.ink, maxLines: 2 }));
-      b.addChild(text(`TRUST ${o.trust >= 0 ? '+' : ''}${o.trust}  EGO ${o.ego >= 0 ? '+' : ''}${o.ego}  BRAND ${o.brand >= 0 ? '+' : ''}${o.brand}  HEAT ${o.heat >= 0 ? '+' : ''}${o.heat}`, 6, y + 20, { small: true, color: PAL.slate }));
-      const hit = button('ANSWER', 330, y + 14, 78, 16, () => {
-        sfx('click');
-        applyPressAnswer(save, o);
-        replies.push(o.reply);
-        writeStory(save);
-        win.close();
-        ask(i + 1);
-      }, { small: true, fill: i === 0 ? PAL.rust : PAL.shadow, border: PAL.ink });
-      b.addChild(hit);
-    });
-    b.addChild(button('LEAVE THE ROOM', 6, 208, 116, 14, () => win.close(), { small: true, fill: PAL.shadow }));
-  };
-  ask(0);
-}
-
-function showPressReport(g: Game, save: StorySave, replies: string[], after: () => void): void {
-  const win = openWindow(g, 'THE DAY AFTER THE PRESSER', 396, 216, { paper: 'news' });
-  const b = win.body;
-  b.addChild(text('WHAT THEY RAN', 6, 2, { small: true, color: PAL.blood }));
-  replies.slice(0, 3).forEach((line, i) => {
-    b.addChild(text(`• ${line}`, 6, 14 + i * 25, { width: 382, small: true, color: PAL.ink, maxLines: 2, lineGap: 0 }));
+  // on screen, like Promoter Mode's: the table, the fighter, the back row
+  playStoryPress(g, save, () => {
+    writeStory(save);
+    after();
   });
-  b.addChild(new Graphics().rect(6, 92, 382, 1).fill(PAL.paperDark));
-  b.addChild(text(`BRAND ${save.brand}  /  TRUST ${save.trust}  /  HEAT ${save.heat}`, 6, 100, { small: true, color: PAL.ink }));
-  b.addChild(text(`THE PAPERWORK PAID $${(1200 + save.brand * 12).toLocaleString('en-US')}. THE QUOTES COST MORE.`, 6, 114, { width: 382, small: true, color: PAL.slate, maxLines: 2 }));
-  b.addChild(button('BACK TO THE OFFICE', 118, 184, 160, 16, () => { win.close(); after(); }, { small: true, fill: PAL.moss, border: PAL.ink }));
 }
-
-// ---------------------------------------------------------------- undercard
 
 export function openStoryUndercard(g: Game, save: StorySave, after: () => void): void {
   if (!sideFightReady(save)) {
@@ -756,7 +741,7 @@ function startSideFight(g: Game, save: StorySave, opp: StorySideOpponent, after:
     bout, A: player, B: opp.fighter, skills: [player.skills, opp.fighter.skills], player: 0,
     plan: 'balanced', oppPlan: 'balanced', cutTier: 2, seed,
     event: 'THE WAREHOUSE UNDERCARD', judges: ['Marla Cross', 'Dexter Bell', 'Lenny Pratt'], referee: storyVenue('THE WAREHOUSE').referee,
-    canvas: storyVenue('THE WAREHOUSE').canvas,
+    canvas: storyVenue('THE WAREHOUSE').canvas, theme: 'ii',
     done: (r) => {
       const rec = recordSideFight(save, opp, {
         winner: r.winner, method: r.method, round: r.round, time: r.time, detail: r.detail,

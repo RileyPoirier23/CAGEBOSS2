@@ -13,18 +13,23 @@
  *
  *   playCine(g, scene, (choice) => ...)
  */
-import { ColorMatrixFilter, Container, Graphics, type Ticker } from 'pixi.js';
+import { ColorMatrixFilter, Container, Graphics, Rectangle, type Ticker } from 'pixi.js';
+import { addPhoto } from '../../sequel/photos';
 import type { Game } from '../app';
 import { W, H, SW, OX, text, button } from '../kit';
 import { POSES, drawRig, lerpRig, lookFor, tauntRig, type Look2, type Rig } from '../rig';
 import { input } from '../../core/input';
-import { sfx } from '../../audio/sfx';
+import { sfx, blip } from '../../audio/sfx';
 import { drawShow, showLabels, type TvShow } from '../tvshows';
 import { isTouchDevice } from '../../core/platform';
 import { clearOfProps, drawBg, setDressing, tvScreen, FLOOR, type Actor, type Bg, type Cutscene } from '../cutscene';
 import { II } from '../theme';
 import type { PixelText } from '../text';
 import { lerpColor as lerpRGB, shade as shadeRGB } from '../../art/palette';
+import { readStage, type Prop, type StageAct, type StageCtx } from './stage';
+import { drawScenery, sceneryTags, type SceneryTag } from './scenery';
+import { DUR, reducedMotion, tween } from '../motion';
+import type { Line } from '../cutscene';
 
 /** How each room is lit: the grade (top/bottom multiply), the key light colour and where the light comes from. */
 interface Light { top: number; bottom: number; key: number; keyA: number; dir: 1 | -1; shafts: boolean; rim: number }
@@ -62,7 +67,10 @@ function shadowFilter(): ColorMatrixFilter {
   return f;
 }
 
-type Live = Actor & { cx: number; look2: Look2; rig: Rig; phase: number; walkPh: number };
+/** noWalk: a shove or a knockback slides him without a walk cycle (seconds) */
+type Live = Actor & { cx: number; look2: Look2; rig: Rig; phase: number; walkPh: number; noWalk: number; prop?: Prop };
+/** One stage direction playing out: tick until done; instant() jumps to how it ends. */
+interface Task { tick: (dt: number) => boolean; instant: () => void }
 
 /** People are drawn at 1.3 for a 180 cm man; a fighter stands at his own height (Mateo is not a kid any more). */
 const actorScale = (a: Actor): number => (a.fighter ? 1.3 * Math.max(0.86, Math.min(1.16, a.fighter.height / 180)) : a.scale ?? 1.3);
@@ -87,6 +95,121 @@ function alive(r: Rig, t: number, ph: number, talking: boolean, standing: boolea
     }
   }
   return o;
+}
+
+/** How each character sounds while his line types out: pitch, timbre, a blip every N letters. */
+const VOICES: Record<string, { f: number; type: OscillatorType; every: number }> = {
+  ray: { f: 140, type: 'triangle', every: 4 }, ray87: { f: 170, type: 'triangle', every: 3 },
+  xavier: { f: 330, type: 'square', every: 2 }, oneton: { f: 165, type: 'triangle', every: 3 }, alberto: { f: 165, type: 'triangle', every: 3 },
+  dane: { f: 205, type: 'square', every: 3 }, han: { f: 195, type: 'square', every: 3 }, mateo: { f: 235, type: 'triangle', every: 3 },
+  zenith: { f: 392, type: 'sine', every: 3 }, verity: { f: 392, type: 'sine', every: 3 }, reporter: { f: 360, type: 'sine', every: 3 },
+  bradie: { f: 300, type: 'square', every: 2 }, tyler: { f: 255, type: 'square', every: 3 }, gordon: { f: 180, type: 'sine', every: 4 },
+  zac: { f: 220, type: 'square', every: 3 }, butch: { f: 150, type: 'sawtooth', every: 3 }, chairman: { f: 160, type: 'sine', every: 4 },
+};
+const voiceOf = (a: Live): { f: number; type: OscillatorType; every: number } =>
+  VOICES[a.id] ?? (a.look2.female ? { f: 350, type: 'sine', every: 3 } : { f: 215 + (a.id.length * 17) % 50, type: 'square', every: 3 });
+
+/** A thing in a hand (or on the floor), drawn at (x, y) facing the way he faces: outlined, lit from above. */
+function drawProp(g: Graphics, p: Prop, x: number, y: number, f: 1 | -1, t: number, floor = false): void {
+  const X = (dx: number) => Math.round(x + dx * f);
+  const L = (a: number, b: number) => Math.min(X(a), X(b));
+  const INK = 0x0a0608;
+  const box = (dx0: number, dx1: number, y0: number, h: number, c: number, hi?: number) => {
+    const w = Math.abs(dx1 - dx0);
+    g.rect(L(dx0, dx1) - 1, y0 - 1, w + 2, h + 2).fill(INK).rect(L(dx0, dx1), y0, w, h).fill(c);
+    if (hi !== undefined) g.rect(L(dx0, dx1), y0, w, 1).fill(hi);
+  };
+  switch (p) {
+    case 'bowl': {
+      // a soup bowl: rim, the soup, steam curling up
+      g.poly([X(-7), y - 3, X(7), y - 3, X(5), y + 3, X(-5), y + 3]).fill(INK);
+      g.poly([X(-6), y - 2, X(6), y - 2, X(4), y + 2, X(-4), y + 2]).fill(0xe0d4b8);
+      g.rect(L(-5, 5), y - 2, 10, 1).fill(0xc87a2a).rect(L(-4, 4), y + 1, 8, 1).fill(0xb8a888);
+      for (let k = 0; k < 3; k++) {
+        const sy = y - 5 - ((t * 9 + k * 4) % 10);
+        g.rect(X(-3 + k * 3) + Math.round(Math.sin(t * 3 + k * 2) * 1.5), Math.round(sy), 1, 2).fill({ color: 0xffffff, alpha: 0.4 * (1 - ((t * 9 + k * 4) % 10) / 10) });
+      }
+      break;
+    }
+    case 'pot':
+      box(-9, 9, y - 6, 11, 0x8a8a92, 0xc0c0c8);
+      g.rect(L(-11, -9), y - 4, 2, 2).fill(INK).rect(L(9, 11), y - 4, 2, 2).fill(INK);
+      break;
+    case 'mop':
+      // the handle runs from above the hand down to the floor; the head is a grey tangle
+      g.rect(X(0) - 1, y - 38, 3, 56).fill(INK).rect(X(0), y - 37, 1, 54).fill(0xc09a6a);
+      for (let k = -6; k <= 6; k++) g.rect(X(k), y + 16, 1, 5 + ((k * 7 + 3) % 3)).fill(k % 2 ? 0xb8b0a0 : 0xd8d0c0);
+      g.rect(L(-6, 6), y + 15, 12, 2).fill(0x6a6058);
+      break;
+    case 'bucket': {
+      const top = floor ? y - 12 : y + 2;
+      g.poly([X(-7), top - 1, X(7), top - 1, X(6), top + 13, X(-6), top + 13]).fill(INK);
+      g.poly([X(-6), top, X(6), top, X(5), top + 12, X(-5), top + 12]).fill(0xa8aeb6);
+      g.rect(L(-6, 6), top, 12, 1).fill(0xe0e4e8).rect(L(-5, 5), top + 5, 10, 1).fill(0x8a9098).rect(L(-5, 5), top + 9, 10, 1).fill(0x8a9098);
+      g.moveTo(X(-6), top).lineTo(X(0), top - 6).lineTo(X(6), top).stroke({ color: 0x3a3a40, width: 1 });
+      break;
+    }
+    case 'belt': {
+      // leather strap, a gold plate with a red jewel
+      g.rect(L(-16, 16), y - 3, 32, 6).fill(INK).rect(L(-15, 15), y - 2, 30, 4).fill(0x3a2214);
+      g.ellipse(X(0), y, 8, 6).fill(INK).ellipse(X(0), y, 7, 5).fill(0xd8a830).ellipse(X(0), y - 1, 5, 3).fill(0xf8e070).circle(X(0), y, 1.5).fill(0xc4202c);
+      g.rect(L(-12, -9), y - 2, 3, 4).fill(0xd8a830).rect(L(9, 12), y - 2, 3, 4).fill(0xd8a830);
+      break;
+    }
+    case 'card':
+      box(-1, 9, y - 7, 6, 0x141414, 0x4a4a50);
+      g.rect(L(1, 7), y - 5, 4, 1).fill(0xd8b040);
+      break;
+    case 'envelope':
+      box(-1, 10, y - 7, 7, 0xd8b040, 0xf0d070);
+      g.moveTo(X(-1), y - 7).lineTo(X(4.5), y - 3).lineTo(X(10), y - 7).stroke({ color: 0x8a6a20, width: 1 });
+      break;
+    case 'paper':
+      box(0, 8, y - 9, 10, 0xf0ece0);
+      for (let k = 0; k < 4; k++) g.rect(L(1, 7), y - 7 + k * 2, 5, 1).fill(0x9a9488);
+      break;
+    case 'photo':
+      box(-1, 9, y - 8, 7, 0xe8e0d0);
+      g.rect(L(0, 8), y - 7, 7, 5).fill(0x7a6a58).rect(L(2, 4), y - 6, 2, 3).fill(0xc8a888);
+      break;
+    case 'notebook': case 'clipboard': {
+      const c = p === 'clipboard' ? 0x8a6a40 : 0x3a2a20;
+      box(-1, 8, y - 10, 11, c);
+      g.rect(L(0, 7), y - 9, 6, 9).fill(0xe8e4d8);
+      for (let k = 0; k < 3; k++) g.rect(L(1, 6), y - 7 + k * 2, 4, 1).fill(0x8a8478);
+      if (p === 'clipboard') g.rect(L(2, 5), y - 11, 3, 2).fill(0xb0b0b8);
+      break;
+    }
+    case 'mask':
+      g.ellipse(X(3), y - 4, 6, 7).fill(INK).ellipse(X(3), y - 4, 5, 6).fill(0xc4202c);
+      g.rect(L(0, 6), y - 6, 7, 2).fill(0xe0e0e8).rect(L(1, 2), y - 5, 1, 1).fill(INK).rect(L(4, 5), y - 5, 1, 1).fill(INK);
+      g.moveTo(X(3), y - 11).lineTo(X(3), y + 2).stroke({ color: 0xe0e0e8, width: 1 });
+      break;
+    case 'phone':
+      box(0, 4, y - 8, 8, 0x101014);
+      g.rect(L(1, 3), y - 7, 2, 5).fill(0x5a8ac0);
+      break;
+    case 'mic':
+      g.rect(X(0) - 1, y - 6, 3, 8).fill(INK).rect(X(0), y - 5, 1, 6).fill(0x2a2a30);
+      g.circle(X(0.5), y - 8, 3).fill(INK).circle(X(0.5), y - 8, 2).fill(0x8a8a94);
+      break;
+    case 'ladle':
+      g.rect(X(0) - 1, y - 15, 3, 15).fill(INK).rect(X(0), y - 14, 1, 13).fill(0xc0c0c8);
+      g.ellipse(X(1), y + 1, 4, 3).fill(INK).ellipse(X(1), y + 1, 3, 2).fill(0xd0d0d8);
+      break;
+    case 'pen':
+      g.rect(X(0) - 1, y - 7, 3, 9).fill(INK).rect(X(0), y - 6, 1, 7).fill(0xe8c040);
+      break;
+    case 'crutches':
+      for (const dx of [6, -4]) {
+        g.moveTo(X(dx), y - 6).lineTo(X(dx + 5), y + 52).stroke({ color: INK, width: 3 }).moveTo(X(dx), y - 6).lineTo(X(dx + 5), y + 52).stroke({ color: 0xb0b4bc, width: 1 });
+        g.rect(L(dx - 3, dx + 3), y - 7, 6, 2).fill(0x3a3a40);
+      }
+      break;
+    case 'tape':
+      g.circle(X(3), y - 3, 4).fill(INK).circle(X(3), y - 3, 3).fill(0xece8dc).circle(X(3), y - 3, 1.2).fill(0x8a7a60);
+      break;
+  }
 }
 
 export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null) => void): void {
@@ -116,7 +239,9 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   lightG.blendMode = 'add';
   const fgG = new Graphics();
   const fx = new Graphics();
-  world.addChild(bgG, dress, tvG, tvWords, shadowC, rimC, actorsG, fgG, lightG, fx);
+  // establishing details: the back layer sits behind the people, the front one over them (with fx)
+  const sceneryBack = new Graphics();
+  world.addChild(bgG, dress, tvG, tvWords, sceneryBack, shadowC, rimC, actorsG, fgG, lightG, fx);
   // screen space: the grade, the vignette, the film, the bars, the words
   const gradeG = new Graphics();
   gradeG.blendMode = 'multiply';
@@ -150,11 +275,241 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   let show: TvShow | null = null;
   let showWords: ReturnType<typeof showLabels> | null = null;
   const camS = { x: W / 2, y: 140, z: 1.04 };
+  // ------------------------------------------------------------ stage directions: what the narration says happens, happens
+  let tasks: Task[] = [];
+  let blipN = 0;
+  let photoPending: { id: string; title: string; t: number } | null = null;
+  let stageCtx: StageCtx = { speaker: null, subject: null, object: null };
+  /** what the narration has put on screen (rain, the goat, the skyline) and how far it has faded in */
+  let scenery: SceneryTag[] = [];
+  let sceneryK = 0;
+  /** things set down in this shot: they stay where they were left */
+  let floorProps: { p: Prop; x: number; f: 1 | -1 }[] = [];
+  const byId = (id: string) => cast.find((c) => c.id === id);
+  const clampX = (v: number) => Math.max(26, Math.min(W - 26, v));
+  const sideOf = (a: Live, b: Live): 1 | -1 => (b.x >= a.x ? 1 : -1);
+  const wait = (cond: () => boolean, max: number) => {
+    let e = 0;
+    return (dt: number) => (e += dt) >= max || cond();
+  };
+  const arrived = (a: Live) => Math.abs(a.cx - a.x) < 3;
+  /** Whoever is standing where he's going steps aside (nobody walks through anybody). */
+  const makeRoom = (x: number, a: Live, b?: Live) => {
+    for (const c of cast) {
+      if (c === a || c === b || c.pose === 'ko' || Math.abs(c.x - x) > 34) continue;
+      const away = c.x >= x ? 1 : -1;
+      const nx = clampX(x + away * 50);
+      c.x = Math.abs(nx - x) < 34 ? clampX(x - away * 50) : nx;
+    }
+  };
+  const impact = (ln: Line | undefined, ko: boolean) => {
+    shake = ko ? 0.5 : 0.35;
+    punch = 1;
+    if (ko || ln?.flash) flash = 0.4;
+    sfx(ln?.sfx ?? 'punch');
+  };
+  const makeTask = (act: StageAct, ln: Line | undefined): Task | null => {
+    if (act.do === 'jolt') return { tick: () => { shake = 0.35; sfx('thud'); return true; }, instant: () => {} };
+    const a = byId(act.who);
+    if (!a) return null;
+    switch (act.do) {
+      case 'pose':
+        return { tick: () => { a.pose = act.pose; return true; }, instant: () => { a.pose = act.pose; } };
+      case 'prop':
+        return { tick: () => { a.prop = act.prop; return true; }, instant: () => { a.prop = act.prop; } };
+      case 'drop': {
+        // set it down at his feet (it stays there for the rest of the shot)
+        const put = () => {
+          const p = act.prop ?? a.prop;
+          if (!p) return;
+          floorProps.push({ p, x: Math.round(a.x + a.facing * 24), f: a.facing });
+          if (a.prop === p) a.prop = undefined;
+        };
+        return { tick: () => { put(); return true; }, instant: put };
+      }
+      case 'strip': {
+        const off = () => {
+          const o = a.look2.outfit;
+          if (o) a.look2 = { ...a.look2, outfit: { ...o, top: o.shirt ?? shadeRGB(o.top, 0.3), shirt: undefined, tie: undefined } };
+        };
+        return { tick: () => { off(); return true; }, instant: off };
+      }
+      case 'face': {
+        const turn = () => {
+          const b = act.to ? byId(act.to) : null;
+          if (b) a.facing = sideOf(a, b);
+          else if (act.away) {
+            const others = cast.filter((c) => c !== a);
+            const mid = others.length ? others.reduce((s, c) => s + c.x, 0) / others.length : W / 2;
+            a.facing = a.x >= mid ? 1 : -1;
+          }
+        };
+        return { tick: () => { turn(); return true; }, instant: turn };
+      }
+      case 'exit': {
+        const side = act.side ?? (a.x < W / 2 ? 'left' : 'right');
+        const go = () => {
+          a.pose = undefined;
+          a.x = side === 'left' ? -70 : W + 70;
+        };
+        // he walks off while the scene goes on
+        return { tick: () => { go(); return true; }, instant: () => { go(); a.cx = a.x; } };
+      }
+      case 'walk': {
+        const b = act.to ? byId(act.to) : null;
+        const tx = () => clampX(b ? b.x - sideOf(a, b) * (act.gap ?? 40) : act.x ?? a.x);
+        let started = false;
+        let done: ((dt: number) => boolean) | null = null;
+        const settle = () => {
+          if (b) a.facing = sideOf(a, b);
+        };
+        return {
+          tick: (dt) => {
+            if (a.pose === 'ko') return true;
+            if (!started) {
+              started = true;
+              a.pose = undefined;
+              a.x = tx();
+              makeRoom(a.x, a, b ?? undefined);
+              done = wait(() => arrived(a), 2.6);
+            }
+            const fin = done!(dt);
+            if (fin) settle();
+            return fin;
+          },
+          instant: () => {
+            if (a.pose === 'ko') return;
+            a.pose = undefined;
+            a.x = a.cx = tx();
+            settle();
+          },
+        };
+      }
+      case 'meet': {
+        const b = byId(act.target);
+        if (!b) return null;
+        const gap = act.pose === 'clinch' ? 24 : act.pose === 'guard' ? 34 : 54;
+        let phase = 0;
+        let w: ((dt: number) => boolean) | null = null;
+        const end = () => {
+          a.facing = sideOf(a, b);
+          b.facing = (-a.facing) as 1 | -1;
+          a.pose = act.pose;
+          if (act.both) b.pose = act.pose;
+          // it changes hands
+          if (act.prop) {
+            b.prop = act.prop;
+            if (a.prop === act.prop) a.prop = undefined;
+            // he holds it out in front of him, where you can see it
+            if (!act.both) b.pose = 'offer';
+          }
+        };
+        return {
+          tick: (dt) => {
+            if (phase === 0) {
+              phase = 1;
+              a.pose = undefined;
+              if (act.prop) a.prop = act.prop;
+              a.x = clampX(b.x - sideOf(a, b) * gap);
+              makeRoom(a.x, a, b);
+              w = wait(() => arrived(a), 2.6);
+            }
+            if (phase === 1 && w!(dt)) {
+              end();
+              return true;
+            }
+            return false;
+          },
+          instant: () => {
+            a.x = a.cx = clampX(b.x - sideOf(a, b) * gap);
+            end();
+          },
+        };
+      }
+      case 'strike': {
+        const b = byId(act.target);
+        if (!b || b.pose === 'ko') return null;
+        const pose = act.pose ?? 'cross';
+        let phase = 0;
+        let w: ((dt: number) => boolean) | null = null;
+        let tt = 0;
+        const spot = () => (Math.abs(b.x - a.x) > 44 ? clampX(b.x - sideOf(a, b) * 36) : a.x);
+        return {
+          tick: (dt) => {
+            if (phase === 0) {
+              // close the distance
+              phase = 1;
+              a.pose = undefined;
+              a.x = spot();
+              makeRoom(a.x, a, b);
+              w = wait(() => arrived(a), 2.2);
+            }
+            if (phase === 1) {
+              if (!w!(dt)) return false;
+              const d = sideOf(a, b);
+              a.facing = d;
+              b.facing = (-d) as 1 | -1;
+              a.pose = pose;
+              phase = 2;
+              tt = 0;
+            }
+            tt += dt;
+            if (phase === 2 && tt >= 0.13) {
+              // it lands: the camera jolts, he's knocked back, and down if it's that kind of punch
+              const d = sideOf(a, b);
+              b.pose = act.ko ? 'ko' : 'rocked';
+              b.x = clampX(b.x + d * (act.ko ? 24 : 12));
+              b.noWalk = 0.8;
+              impact(ln, !!act.ko);
+              phase = 3;
+              tt = 0;
+            }
+            if (phase === 3 && tt >= 0.55) {
+              a.pose = undefined;
+              if (!act.ko) b.pose = undefined;
+              return true;
+            }
+            return false;
+          },
+          instant: () => {
+            a.x = a.cx = spot();
+            const d = sideOf(a, b);
+            a.facing = d;
+            b.facing = (-d) as 1 | -1;
+            a.pose = undefined;
+            if (act.ko) {
+              b.pose = 'ko';
+              b.x = b.cx = clampX(b.x + d * 24);
+            }
+          },
+        };
+      }
+    }
+    return null;
+  };
+  /** The stage directions for a line (written, or read from the narration), and the context moved on. */
+  const actsFor = (ln: Line): StageAct[] => {
+    const acts = ln.act ?? (ln.who || ln.poses ? [] : readStage(ln.text, cast.map((c) => ({ id: c.id, name: c.name, female: !!c.look2.female })), stageCtx));
+    if (ln.who) {
+      stageCtx.speaker = ln.who;
+      stageCtx.subject = ln.who;
+    }
+    return acts;
+  };
+  const finishTasks = () => {
+    for (const k of tasks) k.instant();
+    tasks = [];
+  };
 
   const lookOf = (a: Actor): Look2 => {
-    if (a.look) return { ...a.look };
-    const L = lookFor(a.fighter!, a.x < W / 2 ? 0 : 1);
-    return a.clothes ? { ...L, outfit: { top: a.clothes.top, bottom: a.clothes.bottom, bulk: 1, hands: L.skin } } : L;
+    const L = a.look ? { ...a.look } : (() => {
+      const base = lookFor(a.fighter!, a.x < W / 2 ? 0 : 1);
+      return a.clothes ? { ...base, outfit: { top: a.clothes.top, bottom: a.clothes.bottom, bulk: 1, hands: base.skin } } : base;
+    })();
+    if (a.marks) L.marks = a.marks;
+    // CINE II's framing gives every character a touch more head, so a close-up reads
+    L.headScale = a.headScale ?? (L.headScale ?? 1.06);
+    return L;
   };
 
   const setupShot = (i: number, instant = false) => {
@@ -180,8 +535,13 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     cast = s.cast.map((a, k) => {
       const x = clearOfProps(s.bg, a.x, a.scale ?? 1.3);
       const p = POSES[a.pose ?? 'stand'];
-      return { ...a, scale: actorScale(a), x, cx: instant ? x : a.enter === 'left' ? -40 : a.enter === 'right' ? W + 40 : x, look2: lookOf(a), rig: { ...p }, phase: k * 1.7, walkPh: 0 };
+      return { ...a, scale: actorScale(a), x, cx: instant ? x : a.enter === 'left' ? -40 : a.enter === 'right' ? W + 40 : x, look2: lookOf(a), rig: { ...p }, phase: k * 1.7, walkPh: 0, noWalk: 0 };
     });
+    tasks = [];
+    stageCtx = { speaker: null, subject: null, object: null };
+    floorProps = [];
+    scenery = [];
+    sceneryK = 0;
     drawGrade();
     drawCaption(s.caption);
     if (!instant) fade = 1;
@@ -339,24 +699,47 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       return end();
     }
     const ln = s.lines[lineIdx];
+    // whatever the last line was still acting out finishes now
+    finishTasks();
     for (const [id, p] of Object.entries(ln.poses ?? {})) {
       const a = cast.find((c) => c.id === id);
       if (a) a.pose = p;
     }
-    if (ln.shake) {
+    // a line that sets the scene puts it on screen (it stays up until another one changes it)
+    if (!ln.who) {
+      const tags = sceneryTags(ln.text);
+      if (tags.length) scenery = tags;
+    }
+    const acts = actsFor(ln);
+    tasks = acts.map((x) => makeTask(x, ln)).filter((x): x is Task => !!x);
+    // a punch on this line brings its own jolt, sound and flash when it lands
+    const lands = acts.some((x) => x.do === 'strike') && tasks.length > 0;
+    if (ln.shake && !lands) {
       shake = 0.45;
       punch = 1; // the camera jolts in on the hit
     }
-    if (ln.flash) flash = 0.4;
-    if (ln.sfx) sfx(ln.sfx);
+    if (ln.flash && !lands) flash = 0.4;
+    if (ln.sfx && !lands) sfx(ln.sfx);
+    // a photo: give the moment a beat to happen, then the flash
+    photoPending = ln.photo ? { ...ln.photo, t: 1.1 } : null;
   };
-  const reapplyPoses = () => {
+  /** Back or skip: the shot from the top, every line up to here acted out at once. */
+  const replayTo = (idx: number) => {
+    setupShot(shotIdx, true);
     const s = scene.shots[shotIdx];
-    for (const a of cast) a.pose = s.cast.find((x) => x.id === a.id)?.pose;
-    for (let k = 0; k <= lineIdx && k < s.lines.length; k++) for (const [id, p] of Object.entries(s.lines[k].poses ?? {})) {
-      const a = cast.find((c) => c.id === id);
-      if (a) a.pose = p;
+    for (let k = 0; k <= idx && k < s.lines.length; k++) {
+      const ln = s.lines[k];
+      for (const [id, p] of Object.entries(ln.poses ?? {})) {
+        const a = cast.find((c) => c.id === id);
+        if (a) a.pose = p;
+      }
+      if (!ln.who) {
+        const tags = sceneryTags(ln.text);
+        if (tags.length) scenery = tags;
+      }
+      for (const act of actsFor(ln)) makeTask(act, ln)?.instant();
     }
+    lineIdx = idx;
   };
   const back = () => {
     if (titleT > 0) return;
@@ -364,6 +747,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       if (!scene.choices?.length) return;
       finished = false;
       choicesBox.removeChildren().forEach((c) => c.destroy({ children: true }));
+      choicesIn = false;
       lineIdx = scene.shots[shotIdx].lines.length - 1;
     } else if (lineIdx > 0) lineIdx--;
     else if (shotIdx > 0) {
@@ -372,7 +756,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     } else return;
     wordsKey = '';
     shown = 1e9;
-    reapplyPoses();
+    replayTo(lineIdx);
     sfx('click');
   };
   const advance = () => {
@@ -388,17 +772,31 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
   const choicesBox = new Container();
   ui.addChild(choicesBox);
   let choiceSel = 0;
+  /** the choice list has made its entrance */
+  let choicesIn = false;
   const drawChoices = () => {
     choicesBox.removeChildren().forEach((c) => c.destroy({ children: true }));
     const ch = scene.choices ?? [];
     const rowH = touch ? 19 : 16;
     const y0 = H - 18 - ch.length * (rowH + 3);
     choicesBox.addChild(new Graphics().rect(-OX, y0 - 10, SW, H - y0 + 10).fill({ color: 0x000000, alpha: 0.7 }).rect(-OX, y0 - 10, SW, 1).fill(II.edge));
+    const arrive = !choicesIn;
+    choicesIn = true;
     ch.forEach((c, i) => {
       const sel = i === choiceSel;
-      choicesBox.addChild(button(`${i + 1}   ${c.label}`, 40, y0 + i * (rowH + 3), W - 80, rowH, () => pick(i), {
+      const b = choicesBox.addChild(button(`${i + 1}   ${c.label}`, 40, y0 + i * (rowH + 3), W - 80, rowH, () => pick(i), {
         small: !touch, align: 'left', fill: sel ? II.blood : II.steel, border: sel ? II.sodium : undefined,
       }));
+      // the answers arrive one after another the first time (moving the selection redraws in place)
+      if (arrive) {
+        const by = b.y;
+        const rise = reducedMotion() ? 0 : 6;
+        b.alpha = 0;
+        tween(0.16, (k) => {
+          b.alpha = k;
+          b.y = by + rise * (1 - k);
+        }, { delay: i * DUR.stagger });
+      }
     });
   };
   const pick = (i: number) => {
@@ -412,6 +810,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       scene.choices = undefined;
       scene.shots.push({ bg: cur.bg, cast: cast.map((a) => ({ ...a, x: a.x, enter: undefined })), lines: c.reply, caption: c.label });
       choicesBox.removeChildren().forEach((ch) => ch.destroy({ children: true }));
+      choicesIn = false;
       finished = false;
       setupShot(scene.shots.length - 1, true);
       fade = 0.5;
@@ -442,7 +841,7 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     titleT = 0;
     setupShot(scene.shots.length - 1, true);
     lineIdx = scene.shots[shotIdx].lines.length - 1;
-    reapplyPoses();
+    replayTo(lineIdx);
     end();
   };
 
@@ -473,6 +872,8 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
 
   setupShot(0);
   nextLine();
+  // debug / automated testing hook: who is where, doing what
+  (window as unknown as { __cine?: unknown }).__cine = { get cast() { return cast.map((c) => ({ id: c.id, x: Math.round(c.x), cx: Math.round(c.cx), pose: c.pose ?? 'stand', facing: c.facing })); }, get tasks() { return tasks.length; }, get photo() { return photoPending; }, get line() { return lineIdx; }, get done() { return finished; } };
 
   const tick = (tk: Ticker) => {
     const dt = Math.min(0.05, tk.deltaMS / 1000);
@@ -497,7 +898,19 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     bars.rect(-OX, 0, SW, bh).fill(0x000000).rect(-OX, H - Math.round(6 * barsK), SW, Math.round(6 * barsK)).fill(0x000000);
 
     const ln = scene.shots[shotIdx]?.lines[lineIdx];
-    if (ln && !finished && titleT <= 0) shown = Math.min(ln.text.length, shown + dt * 52);
+    if (ln && !finished && titleT <= 0) {
+      const was = Math.floor(shown);
+      shown = Math.min(ln.text.length, shown + dt * 52);
+      // the speaker's voice: a blip every few letters, at his pitch
+      const sp0 = speaker();
+      if (sp0 && Math.floor(shown) > was) {
+        const v = voiceOf(sp0);
+        for (let c = was; c < Math.floor(shown); c++) {
+          if (!/[a-z0-9]/i.test(ln.text[c] ?? '')) continue;
+          if (++blipN % v.every === 0) blip(v.f * (0.94 + Math.random() * 0.12), v.type);
+        }
+      }
+    }
     if (screen && show) {
       tvG.clear();
       drawShow(tvG, show, screen.x, screen.y, screen.w, screen.h, t);
@@ -508,9 +921,36 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     actorsG.clear();
     rimG.clear();
     shadowG.clear();
+    // the photo: the room without the subtitles, shrunk into the album
+    if (photoPending && !finished && titleT <= 0 && (photoPending.t -= dt) <= 0) {
+      const p = photoPending;
+      photoPending = null;
+      try {
+        const hide = [ui, bars, filmG, fadeG, titleC];
+        const vis = hide.map((c) => c.visible);
+        for (const c of hide) c.visible = false;
+        const src = g.app.renderer.extract.canvas({ target: root, frame: new Rectangle(0, 0, W, H), resolution: 1 }) as HTMLCanvasElement;
+        hide.forEach((c, i) => (c.visible = vis[i]));
+        const cv = document.createElement('canvas');
+        cv.width = 240;
+        cv.height = 135;
+        cv.getContext('2d')?.drawImage(src, 0, 0, 240, 135);
+        addPhoto({ id: p.id, title: p.title, data: cv.toDataURL('image/jpeg', 0.82), taken: Date.now() });
+        flash = 0.55;
+        sfx('snap');
+        g.toast(`PHOTO ADDED TO RAY'S NOTEBOOK  /  ${p.title}`, II.gold);
+      } catch (e) {
+        // no renderer to read back (tests, old GPUs): the moment still happened
+        console.warn('photo not taken', e);
+      }
+    }
+    // the line's stage directions, one after another
+    while (tasks.length && !finished && titleT <= 0 && tasks[0].tick(dt)) tasks.shift();
     for (const a of cast) {
-      a.cx = ease(a.cx, a.x, dt, 2.4);
-      const walking = Math.abs(a.x - a.cx) > 1.5;
+      const sliding = a.noWalk > 0;
+      a.noWalk = Math.max(0, a.noWalk - dt);
+      a.cx = ease(a.cx, a.x, dt, sliding ? 9 : 2.4);
+      const walking = !sliding && Math.abs(a.x - a.cx) > 1.5;
       const talking = ln?.who === a.id && shown < (ln?.text.length ?? 0);
       let target: Rig;
       if (walking) {
@@ -529,7 +969,10 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
       drawRig(shadowG, r, x, 0, face, a.look2, sc);
       drawRig(rimG, r, x - light.dir, FLOOR + bob, face, a.look2, sc);
       drawRig(actorsG, r, x, FLOOR + bob, face, a.look2, sc);
+      if (a.prop && a.pose !== 'ko') drawProp(actorsG, a.prop, x + r.haF[0] * face * sc, FLOOR + bob + r.haF[1] * sc, face, t);
     }
+    // what's been set down sits in front of everybody
+    for (const fp of floorProps) drawProp(actorsG, fp.p, fp.x, fp.p === 'bucket' ? FLOOR : FLOOR - 2, fp.f, t, true);
     // the long shadow, thrown away from the light
     shadowG.position.set(0, FLOOR + 1);
     shadowG.scale.set(1, -0.26);
@@ -570,6 +1013,9 @@ export function playCine(g: Game, scene0: Cutscene, done: (choice: string | null
     }
     if (bg === 'gym' || bg === 'tv') for (let k = 0; k < 5; k++) fx.circle(400 + Math.sin(t * 1.5 + k) * 6, 110 - ((t * 14 + k * 9) % 36), 3).fill({ color: 0xffffff, alpha: 0.12 });
     if (bg === 'lucha') for (let k = 0; k < 24; k++) fx.rect((k * 59 + t * 9) % W, 6 + (k * 17) % 40, 2, 1).fill({ color: [0xe0559a, 0xf2c12e, 0x2a8a6a][k % 3], alpha: 0.4 });
+    sceneryBack.clear();
+    sceneryK = ease(sceneryK, scenery.length ? 1 : 0, dt, 2.5);
+    drawScenery(sceneryBack, fx, scenery, t, sceneryK, W, H, FLOOR);
     if (flash > 0) {
       fx.rect(-OX, 0, SW, H).fill({ color: 0xffffff, alpha: Math.min(0.6, flash) });
       flash -= dt;

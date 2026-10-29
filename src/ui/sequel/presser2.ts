@@ -30,7 +30,7 @@ export function playWeighIn(g: Game, run: SeqRun, card: PresserCard, meeting: nu
         { who: 'a', text: `Last time was luck.`, poses: { a: 'guard', b: 'guard' } },
         { who: 'b', text: `Last time was a warning.`, poses: { b: 'point' } },
         { who: null, text: "Nose to nose. Somebody's cap comes off. Somebody else's mother is mentioned.", shake: true, flash: true, sfx: 'crowd', poses: { a: 'guard', b: 'guard' } },
-        { who: 'dane', text: 'Save it for Saturday. Both of you. I am not paying for the stage twice.' },
+        { who: 'dane', text: 'Save it for Saturday. Both of you. I\'m not paying for the stage twice.' },
       ],
     }],
   }, () => done());

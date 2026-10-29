@@ -4,7 +4,7 @@
  */
 import { Container, Graphics } from 'pixi.js';
 import { Scene, type Game } from '../app';
-import { PAL } from '../../art/palette';
+import { PAL } from '../theme';
 import { W, H, SW, OX, text, button, box } from '../kit';
 import { isTouchDevice } from '../../core/platform';
 import { sfx } from '../../audio/sfx';

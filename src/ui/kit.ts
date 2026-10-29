@@ -214,9 +214,19 @@ export class Button extends Container {
     });
     this.on('pointerout', () => {
       this.hovered = false;
+      this.pivot.y = 0;
       this.draw();
       if (opts.tooltip) tooltip.hide();
     });
+    // CAGE BOSS II: the button goes down a pixel while it's held (no tween: it's clicked all day)
+    if (isII()) {
+      this.on('pointerdown', () => {
+        if (!this.disabled) this.pivot.y = -1;
+      });
+      const up = () => (this.pivot.y = 0);
+      this.on('pointerup', up);
+      this.on('pointerupoutside', up);
+    }
     this.on('pointertap', (e: FederatedPointerEvent) => {
       e.stopPropagation();
       if (this.disabled) {

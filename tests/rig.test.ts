@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { frameFor, stanceGuard, lookFor, type Look2 } from '../src/ui/rig';
+import { frameFor, stanceGuard, lookFor, tattooLayout, IRIS_COLORS, type Look2 } from '../src/ui/rig';
 import { content as loadTestContent } from './setup';
 import { createFighterGame, me } from '../src/sim/fighter';
 
@@ -21,6 +21,27 @@ describe('the fighter models', () => {
     const s = createFighterGame({ seed: 2, first: 'Test', last: 'Guy', nick: '', gender: 'M', culture: 'us_urban', division: 'light', archetype: 'striker', look: { head: 0, skin: 1, hair: 1, hairColor: 1, beard: 0, brows: 0, eyes: 0, nose: 0, ears: 0, scar: 0, tattoo: 0, build: 1 } as never });
     const f = me(s);
     expect(lookFor(f, 0).frame).toBe(frameFor(f.division));
+  });
+
+  it('the creator\'s skull, eyes, iris and ink survive into the rig', () => {
+    const s = createFighterGame({
+      seed: 9, first: 'Ink', last: 'Test', nick: '', gender: 'M', culture: 'us_urban',
+      division: 'light', archetype: 'striker',
+      look: {
+        head: 2, eyes: 1, iris: 3, skin: 1, hair: 1, hairColor: 1, beard: 0, brows: 0,
+        nose: 0, ears: 0, scar: 0, tattoo: 0, build: 1,
+        ink2: { sleeveF: 2, sleeveB: 3, chest: 1, back: 2, ribs: true, knuckles: true, neck: true, script: true, color: 0x2a3a6a },
+      } as never,
+    });
+    const f = me(s);
+    const look = lookFor(f, 0);
+    expect(look.headShape).toBe(2);
+    expect(look.eyeShape).toBe(1);
+    expect(look.eyeColor).toBe(IRIS_COLORS[3 % IRIS_COLORS.length]);
+    expect(tattooLayout(f)).toEqual({
+      sleeveF: 2, sleeveB: 3, chest: 1, back: 2,
+      ribs: true, knuckles: true, neck: true, script: true, color: 0x2a3a6a,
+    });
   });
 
   it('a gassed man\'s hands come down and his head drops', () => {

@@ -9,6 +9,9 @@ import { SKIN_TONES, HAIR_COLORS, shade, lerpColor, PAL } from '../art/palette';
 import { presentedGender } from '../sim/fighters';
 import { isII } from './theme';
 
+/** The creator's eye colours, in the same order as the contract photo (art/portrait.ts). */
+export const IRIS_COLORS = [0x3a2a1c, 0x4a3420, 0x2c4a6a, 0x3a5a3a, 0x5a4428, 0x6a8698];
+
 export type Joint = 'head' | 'neck' | 'shF' | 'elF' | 'haF' | 'shB' | 'elB' | 'haB' | 'hip' | 'knF' | 'ftF' | 'knB' | 'ftB';
 export type Rig = Record<Joint, [number, number]>;
 export const JOINTS: Joint[] = ['head', 'neck', 'shF', 'elF', 'haF', 'shB', 'elB', 'haB', 'hip', 'knF', 'ftF', 'knB', 'ftB'];
@@ -27,6 +30,8 @@ export type Pose =
   // the clinch: dominant ties, the man in them, the fence, knees and trips
   | 'collar' | 'plum' | 'underhook' | 'clinchDef' | 'cageBack' | 'plumKnee' | 'trip' | 'falling' | 'techUp'
   | 'stand' | 'armUp' | 'headDown' | 'refHold' | 'refRaise' | 'mic' | 'point' | 'flex'
+  // CAGE BOSS II's cutscenes: a hand held out at chest height (handing something over, a handshake)
+  | 'offer' | 'laugh'
   // taunts: every fighter has his own
   | 'flipoff' | 'beckon' | 'beckon2' | 'handsDown' | 'chestPound' | 'shrug' | 'pointUp'
   // defence that reads: the head moves, the shin comes up, the kick gets caught (and its owner hops)
@@ -212,6 +217,8 @@ export const POSES: Record<Pose, Rig> = {
   mic: P({ elB: [8, -58], haB: [6, -72], head: [3, -77] }, STAND),
   point: P({ elF: [18, -68], haF: [34, -72], elB: [8, -58], haB: [6, -72], head: [5, -77] }, STAND),
   flex: P({ elF: [16, -72], haF: [12, -86], elB: [-12, -72], haB: [-8, -86], head: [2, -78] }, STAND),
+  offer: P({ elF: [14, -54], haF: [26, -52], head: [4, -77] }, STAND),
+  laugh: P({ head: [-1, -79], neck: [1, -68], elF: [12, -46], haF: [7, -40], elB: [-8, -46], haB: [-1, -40] }, STAND),
   // ---- taunts
   // the bird: near hand up in his face, chin up (the finger is drawn when Look2.bird is set)
   flipoff: P({ head: [6, -78], neck: [3, -68], elF: [18, -66], haF: [25, -76], elB: [-3, -54], haB: [-2, -44] }, STAND),
@@ -290,6 +297,27 @@ export const CELEB_ALIAS: Record<string, string> = {
   dances: 'dances',
 };
 
+/**
+ * CAGE BOSS II: the damage a fighter carries out of a bout, zone by zone. Unlike `wear`
+ * (four coarse dials for the live arena), marks survive the fight: they are drawn on the
+ * post-fight cutscenes and in the corner, and they age from fresh red to purple to green.
+ * All values are 0..1; `age` is 0 (fresh) to 1 (a week old).
+ */
+export interface Marks {
+  browL: number;
+  browR: number;
+  eyeL: number;
+  eyeR: number;
+  nose: number;
+  mouth: number;
+  ribs: number;
+  liver: number;
+  thighL: number;
+  thighR: number;
+  blood: number;
+  age: number;
+}
+
 export interface Look2 {
   skin: number;
   hairStyle: number;
@@ -331,7 +359,7 @@ export interface Look2 {
    * Sleeves: 1 koi and waves, 2 tribal, 3 roses and script, 4 a menu (Mateo's arm: Ray's soup, line by line).
    * Chest: 1 wings, 2 an eagle, 3 a medallion, 4 script on the collarbones. Back: 1 a cross, 2 wings.
    */
-  tats?: { sleeveF: number; sleeveB: number; chest: number; back: number; ribs: boolean; knuckles: boolean; color: number };
+  tats?: { sleeveF: number; sleeveB: number; chest: number; back: number; ribs: boolean; knuckles: boolean; neck?: boolean; script?: boolean; color: number };
   /** CAGE BOSS II's kit: a cut, a pattern, an accent, a waistband and ankle wraps, all from the fighter's bio (kitII) */
   kit2?: KitII;
   /** the middle finger is up (the flip-off taunt) */
@@ -354,6 +382,16 @@ export interface Look2 {
   sweat?: number;
   /** the fight on his face and body: cuts over the eye, swelling, blood running, a bruised body (0..1s, cuts a count) */
   wear?: { cuts: number; swell: number; blood: number; body: number };
+  /** CAGE BOSS II: where the damage landed, carried out of the fight (drawn with or without wear) */
+  marks?: Partial<Marks>;
+  /** CAGE BOSS II: cutscene head-to-body ratio (1 = the fight rig, 1.08 = a little more presence) */
+  headScale?: number;
+  /** the creator's skull (0 round, 1 square, 2 long, 3 wide) */
+  headShape?: number;
+  /** the creator's eyes (0 normal, 1 narrow, 2 wide) */
+  eyeShape?: number;
+  /** the creator's iris colour */
+  eyeColor?: number;
   /** how gassed he is, 0..1: the mouth hangs open and the hands come down */
   gassed?: number;
   /** clothing for non-fighters (referee, ring announcer, cutmen) */
@@ -480,6 +518,9 @@ export function lookFor(f: Fighter, corner: 0 | 1, champ = false): Look2 {
     nose: f.look.nose,
     ears: Math.min(3, f.look.ears + (f.styles.includes('Wrestler') || f.styles.includes('Sub Hunter') ? 1 : 0)),
     brows: f.look.brows,
+    headShape: f.look.head,
+    eyeShape: f.look.eyes,
+    eyeColor: IRIS_COLORS[(f.look.iris ?? 0) % IRIS_COLORS.length],
     scar: f.look.scar,
     hat: f.look.hat,
     chain: !!f.look.chain,
@@ -559,7 +600,15 @@ export function tauntRig(L: Look2, t: number): Rig {
 export function tattooLayout(f: Fighter): Look2['tats'] {
   // a fighter from the creator wears exactly the ink they chose
   const own = f.look.ink2;
-  if (own) return own.sleeveF || own.sleeveB || own.chest || own.back ? { ...own, ribs: false, knuckles: false, color: 0x1a1a22 } : undefined;
+  if (own) {
+    const any = own.sleeveF || own.sleeveB || own.chest || own.back || own.ribs || own.knuckles || own.neck || own.script;
+    if (!any) return undefined;
+    return {
+      sleeveF: own.sleeveF, sleeveB: own.sleeveB, chest: own.chest, back: own.back,
+      ribs: !!own.ribs, knuckles: !!own.knuckles, neck: !!own.neck, script: !!own.script,
+      color: own.color ?? 0x1a1a22,
+    };
+  }
   const lvl = f.look.tattoo ?? 0;
   if (!lvl) return undefined;
   let h = [...f.id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 17);
@@ -752,6 +801,23 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
   const wear = L.wear ?? { cuts: 0, swell: 0, blood: 0, body: 0 };
   const sweat = L.sweat ?? 0;
   const gassed = L.gassed ?? 0;
+  // CAGE BOSS II: per-zone damage. Fresh is red and violet; a day later it goes green-yellow.
+  const marks = L.marks;
+  const mk = (k: keyof Marks): number => Math.max(0, Math.min(1, marks?.[k] ?? 0));
+  const markAge = mk('age');
+  const bruise = markAge > 0.55
+    ? { edge: 0x8a8a3a, core: 0x5a5a26, hot: 0x3a3a1a }
+    : markAge > 0.25
+      ? { edge: 0x6a3a6a, core: 0x4a2a52, hot: 0x2e1a36 }
+      : { edge: 0xa83a3a, core: 0x7a2438, hot: 0x4a1220 };
+  const bruiseAt = (p: V, r: number, k: number) => {
+    if (k < 0.08) return;
+    const q = T(p);
+    const a = 0.18 + Math.min(1, k) * 0.42;
+    g.circle(q[0], q[1], r * 1.8 * s).fill({ color: bruise.edge, alpha: a * 0.38 });
+    g.circle(q[0], q[1], r * s).fill({ color: bruise.core, alpha: a });
+    g.circle(q[0] + 0.3 * s, q[1] - 0.3 * s, r * 0.42 * s).fill({ color: bruise.hot, alpha: a * 0.7 });
+  };
   /** a bead of sweat / a sheen: a soft white dot */
   const sheen = (p: V, r: number, a: number) => {
     const Q = T(p);
@@ -932,6 +998,7 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
       if (t.chest === 4) line(P(0.05, tw * 0.42), P(0.1, -tw * 0.1), tc, 0.6); // script on the collarbones
       if (t.back) line(P(0.15, -tw * 0.46), P(0.62, -tw * 0.4), tc, 1.3);
       if (t.ribs) for (let k = 0; k < 3; k++) line(P(0.42 + k * 0.07, tw * 0.36), P(0.44 + k * 0.07, tw * 0.5), tc, 0.5);
+      if (t.script) for (let k = 0; k < 4; k++) line(P(0.08 + k * 0.045, tw * 0.46), P(0.11 + k * 0.045, tw * 0.28), tc, 0.5);
     }
     if (isII()) {
       // bruises age: fresh red, then purple, then green and yellow at the edges. The liver and the ribs.
@@ -957,6 +1024,23 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
       const k = Math.min(1, (wear.body - 0.25) * 1.3);
       g.circle(...T(P(0.5, tw * 0.34)), (1.8 + k * 1.2) * s).fill({ color: k > 0.6 ? 0x6a3050 : 0xa83a3a, alpha: 0.22 + k * 0.35 });
       g.circle(...T(P(0.62, tw * 0.42)), (1.2 + k) * s).fill({ color: 0x8a3040, alpha: 0.18 + k * 0.3 });
+    }
+    // CAGE BOSS II: the marks from the fight, kept after the bell. The liver, the ribs and the
+    // old ones that are already going green.
+    if (marks) {
+      const ribs = Math.max(mk('ribs'), mk('liver') * 0.9);
+      const liver = mk('liver');
+      if (ribs > 0.05) {
+        for (let k = 0; k < 3; k++) bruiseAt(P(0.42 + k * 0.09, tw * (0.34 + k * 0.025)), 1.5 + ribs * 1.7, ribs * (0.8 - k * 0.08));
+      }
+      if (liver > 0.05) bruiseAt(P(0.6, tw * 0.38), 2.1 + liver * 2.2, liver);
+      // blood that ran from the face and dried on the chest
+      const b = mk('blood');
+      if (b > 0.05) {
+        line(P(0.02, tw * 0.28), P(0.16 + b * 0.3, tw * 0.31), 0x7a1010, 0.6 + b * 0.6);
+        line(P(0.08, tw * 0.12), P(0.2 + b * 0.24, tw * 0.14), 0x6a0c0c, 0.45 + b * 0.5);
+        g.circle(...T(P(0.16 + b * 0.3, tw * 0.31)), (0.5 + b * 0.5) * s).fill(0x7a1010);
+      }
     }
     // sweat: a sheen on the shoulders and the chest, beads on the collarbone
     if (sweat > 0.15) {
@@ -1033,6 +1117,14 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
     line(lerp(rig.knF, rig.ftF, 0.82), lerp(rig.knF, rig.ftF, 0.9), shade(skin, -0.22), 0.8); // ankle bone
   }
   foot(rig.ftF, rig.knF, skin);
+  if (!o && marks) {
+    // leg kicks: the near thigh and the outside of the calf, where the checks land
+    const th = Math.max(mk('thighL'), mk('thighR'));
+    if (th > 0.05) {
+      bruiseAt(lerp(rig.hip, rig.knF, 0.36), 2.1 + th * 2, th);
+      bruiseAt(lerp(rig.hip, rig.knF, 0.48), 1.5 + th * 1.4, th * 0.72);
+    }
+  }
   if (!o) {
     // fight shorts: waist block + near leg, waistband trim, side stripe, little logo
     const wb: V[] = [P(0.86, tw * 0.5), P(0.86, -tw * 0.5), P(1.08, -tw * 0.5), P(1.08, tw * 0.5)];
@@ -1112,8 +1204,16 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
   // ------------------------------------------------------------ neck & head
   const hd = rig.head;
   group([{ a: lerp(nk, hd, -0.1), b: lerp(nk, hd, 0.75), wa: 6 + build, wm: 5.6 + build, wb: 5.2 + build * 0.5, color: skin, shadow: shade(skin, -0.16) }]);
+  if (!o && isII() && L.tats?.neck) {
+    // a band of ink around the throat, the way the contract photo catches it
+    const tc = L.tats.color;
+    line(lerp(nk, hd, 0.12), lerp(nk, hd, 0.58), tc, 1.3);
+    line(lerp(nk, hd, 0.24), lerp(nk, hd, 0.42), tc, 0.55);
+  }
   const H = T(hd);
-  const hr = 7 * s;
+  const hs = L.headScale ?? 1;
+  const skull = L.headShape ?? 0;
+  const hr = (skull === 3 ? 7.5 : skull === 1 ? 7.1 : 7) * s * hs;
   // The head is drawn in its own frame so it can lie down with the body: "fwd" is where the
   // face points, "dn" is towards the chin. Upright fighters get the old side-on head; on the
   // mat the head follows the neck, face to the ceiling (on the back) or to the floor (on top).
@@ -1124,8 +1224,8 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
   const cs = Math.cos(tilt);
   const sn = Math.sin(tilt);
   const hpt = (fw: number, dn: number): [number, number] => {
-    const lx = fw * mir * facing;
-    const ly = dn;
+    const lx = fw * hs * mir * facing;
+    const ly = dn * hs;
     const rx = lx * cs - ly * sn * facing;
     const ry = lx * sn * facing + ly * cs;
     return [H[0] + rx * s, H[1] + ry * s];
@@ -1136,7 +1236,14 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
     const B = hpt(b[0], b[1]);
     g.moveTo(A[0], A[1]).lineTo(B[0], B[1]).stroke({ color: c, width: w * s, cap: 'round' });
   };
-  const jaw: [number, number][] = [[-3, 4], [3, 7], [6.6, 5], [7.4, 1], [2, -2]];
+  // the creator's four skulls: round, square, long and wide (the contract photo uses the same set)
+  const jaw: [number, number][] = skull === 1
+    ? [[-3.4, 4], [3.4, 7.2], [7.4, 5.4], [8, 1], [2, -2]]
+    : skull === 2
+      ? [[-2.6, 4.6], [2.6, 8], [6.2, 5.8], [6.8, 1], [2, -2]]
+      : skull === 3
+        ? [[-4, 4], [4, 7.2], [7.8, 4.6], [8, 0.6], [2, -2]]
+        : [[-3, 4], [3, 7], [6.6, 5], [7.4, 1], [2, -2]];
   g.circle(H[0], H[1], hr + 1 * s).fill(OUT);
   g.poly(poly(jaw)).fill(OUT).stroke({ color: OUT, width: 2 * s, join: 'round' });
   g.circle(H[0], H[1], hr).fill(skin);
@@ -1147,10 +1254,13 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
   const noseShape: [number, number][] = L.nose === 1 ? [[6.6, -1.2], [9.4, 1.8], [6.4, 2.6]] : L.nose === 2 ? [[6.8, -1.5], [8.4, 0], [9.2, 2], [6.6, 2.4]] : [[6.8, -1.5], [9, 1.6], [6.6, 2.2]];
   g.poly(poly(noseShape)).fill(skin).stroke({ color: OUT, width: 1 * s, join: 'round' });
   g.poly(poly(noseShape)).fill(skin);
-  // eye: white, pupil, lid; brow (heavier brows for some)
-  g.circle(...hpt(4.6, -1.2), 0.95 * s).fill(0xd6cec2);
-  g.circle(...hpt(5.1, -1.2), 0.55 * s).fill(0x14100e);
-  hl([3.6, -2.1], [5.8, -2.1], shade(skin, -0.4), 0.7);
+  // eye: white, iris, pupil, lid; brow (heavier brows for some)
+  const eyeShape = L.eyeShape ?? 0;
+  const eyeR = eyeShape === 2 ? 1.15 : eyeShape === 1 ? 0.82 : 0.95;
+  g.circle(...hpt(4.6, -1.2), eyeR * s).fill(0xd6cec2);
+  g.circle(...hpt(5.1, -1.2), (eyeShape === 1 ? 0.44 : 0.55) * s).fill(L.eyeColor ?? 0x14100e);
+  g.circle(...hpt(5.15, -1.25), 0.22 * s).fill(0x0a0808);
+  hl([3.6, -2.1], [5.8, -2.1], shade(skin, -0.4), eyeShape === 1 ? 1 : 0.7);
   hl([2.6, -3.6], [6.4, -3.2], shade(L.hairColor, -0.1), 1.2 + (L.brows ?? 0) * 0.35);
   if (L.tattoo === 3 && !o) g.circle(...hpt(4.4, 0.6), 0.55 * s).fill(shade(skin, -0.65)); // teardrop ink, as on the contract photo
   // scar across the brow
@@ -1181,6 +1291,58 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
     if (sweat > 0.3) {
       g.circle(...hpt(3.2, -4.4), 0.5 * s).fill({ color: 0xffffff, alpha: 0.5 * sweat });
       g.circle(...hpt(5.6, -3.8), 0.4 * s).fill({ color: 0xffffff, alpha: 0.45 * sweat });
+    }
+    // CAGE BOSS II: the damage by zone. A brow that is open, an eye that has closed, a nose
+    // that is not straight any more, a lip split on the mouthguard, blood still running.
+    if (marks) {
+      const faceSpot = (fw: number, dn: number, k: number, r: number, cut: number) => {
+        if (k < 0.06) return;
+        const q = hpt(fw, dn);
+        const rr = (r + k * r * 0.7) * s;
+        g.circle(q[0], q[1], rr * 1.5).fill({ color: bruise.edge, alpha: 0.2 + k * 0.25 });
+        g.circle(q[0], q[1], rr).fill({ color: k > 0.62 ? 0x5a2a4a : bruise.core, alpha: 0.3 + k * 0.35 });
+        if (cut > 0.12) {
+          const cw = 0.7 + cut * 1.1;
+          hl([fw - 1.3, dn - 0.3], [fw + 1.2 + cut, dn + 0.9], 0x8a1016, cw);
+          hl([fw - 0.9, dn - 0.2], [fw + 0.9 + cut, dn + 0.6], 0xb02028, cw * 0.45);
+        }
+      };
+      const browL = mk('browL');
+      const browR = mk('browR');
+      const eyeL = mk('eyeL');
+      const eyeR = mk('eyeR');
+      const nose = mk('nose');
+      const mouth = mk('mouth');
+      const blood = mk('blood');
+      faceSpot(3.4, -4.1, Math.max(browL, eyeL * 0.55), 1.1, Math.max(browL, eyeL * 0.35));
+      faceSpot(6.0, -3.9, Math.max(browR, eyeR * 0.55), 1.1, Math.max(browR, eyeR * 0.35));
+      // a shut eye: the socket fills, and the lid is a dark line
+      if (eyeL > 0.42) {
+        g.circle(...hpt(4.4, -1.1), (1.15 + eyeL * 0.5) * s).fill(shade(skin, -0.18));
+        hl([3.6, -1.15], [5.2, -1.0], shade(skin, -0.58), 0.9);
+      }
+      if (eyeR > 0.55) {
+        g.circle(...hpt(5.5, -1.0), (1 + eyeR * 0.45) * s).fill(shade(skin, -0.22));
+        hl([4.8, -0.8], [6.2, -0.7], shade(skin, -0.6), 0.8);
+      }
+      // a broken nose: kinked bridge, blood from the near nostril, the swell under both eyes
+      if (nose > 0.4) {
+        hl([6.9, -1.2], [7.7, 0.7 + nose * 0.5], shade(skin, -0.55), 0.9);
+        hl([7.7, 0.7 + nose * 0.5], [8.6, 1.8], shade(skin, -0.4), 0.8);
+        hl([7.2, 2.1], [7.6, 2.1 + nose * 1.7], 0x8a1016, 0.55 + nose * 0.7);
+        g.circle(...hpt(7.6, 2.2 + nose * 1.7), (0.35 + nose * 0.4) * s).fill(0x8a1016);
+      }
+      // split lip: a red line through the mouth, a bead at the corner
+      if (mouth > 0.35) {
+        hl([4.8, 3.35], [6.4, 3.2], 0x8a1016, 0.6 + mouth * 0.8);
+        g.circle(...hpt(6.3, 3.5), (0.3 + mouth * 0.35) * s).fill(0x9a1218);
+      }
+      // blood running off the jaw, and a drip hanging under the chin
+      if (blood > 0.12) {
+        hl([4.2, 2.6], [4.7, 5.3], 0x7a0e12, 0.55 + blood * 0.55);
+        hl([6.0, 3.6], [6.4, 6.0], 0x7a0e12, 0.4 + blood * 0.5);
+        g.circle(...hpt(4.7, 6.0 + blood * 1.2), (0.4 + blood * 0.5) * s).fill(0x7a0e12);
+      }
     }
   }
   // luchador eye mask: covers the brow and cheekbones, leaves the mouth and beard
@@ -1470,6 +1632,15 @@ export function drawRig(g: Graphics, rig: Rig, x: number, y: number, facing: 1 |
       for (let k = 0; k < 6; k++) line(along(rig.shF, rig.elF, 0.1 + k * 0.14), along(rig.shF, rig.elF, 0.15 + k * 0.14), tc, 1.6);
       for (let k = 0; k < 4; k++) line(along(rig.elF, rig.haF, 0.1 + k * 0.18), along(rig.elF, rig.haF, 0.16 + k * 0.18), tc, 1.3);
       g.circle(...T(along(rig.shF, rig.elF, 0.05)), 1 * s).fill(0xc8a040); // the soup pot, gold
+    }
+  }
+  if (!o && isII() && L.tats?.knuckles) {
+    // letters across the knuckles: three short strokes on each fist
+    const tc = L.tats.color;
+    for (const hand of [rig.haF, rig.haB]) {
+      for (let k = -1; k <= 1; k++) {
+        line([hand[0] + k * 1.1 * s, hand[1] - 1.1 * s], [hand[0] + k * 1.1 * s, hand[1] + 1.1 * s], tc, 0.45);
+      }
     }
   }
   if (!o && isII() && build >= 2) {

@@ -168,6 +168,12 @@ export function stopRing(): void {
   ringGain = null;
 }
 
+/** CAGE BOSS II: one short voice blip while dialogue types out (each character has a pitch and a timbre). */
+export function blip(freq: number, type: OscillatorType = 'square', vol = 0.045): void {
+  if (muted) return;
+  tone(freq, 0.04, type, vol);
+}
+
 export type Sfx =
   | 'click' | 'stamp' | 'paper' | 'crowd' | 'roar' | 'boo' | 'phone' | 'cash' | 'punch' | 'bell'
   | 'error' | 'citation' | 'type' | 'good' | 'bad' | 'thud' | 'whoosh' | 'kick' | 'snap'

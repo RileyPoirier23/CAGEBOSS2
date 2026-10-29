@@ -10,7 +10,7 @@ import { Scene } from '../app';
 import type { Fighter } from '../../core/types';
 import { W, H, OX, SW, text, button } from '../kit';
 import { domInput, alertBox } from '../widgets';
-import { POSES, drawRig, lerpRig, lookFor, tauntRig, type Rig } from '../rig';
+import { POSES, drawRig, lerpRig, lookFor, tauntRig, IRIS_COLORS, type Rig } from '../rig';
 import { generateFighter } from '../../sim/generate';
 import { content } from '../../core/content';
 import { Rng } from '../../core/rng';
@@ -21,8 +21,8 @@ import { sfx } from '../../audio/sfx';
 import { II } from '../theme';
 import { HAIR_COLORS, SKIN_TONES } from '../../art/palette';
 
-const CUSTOM_KEY = 'cageboss2.custom';
-export const loadCustomFighters = (): Fighter[] => loadJSON<Fighter[]>(CUSTOM_KEY, []);
+import { loadCustomFighters, storeCustomFighters } from '../../sequel/custom';
+export { loadCustomFighters };
 
 type Tab = 'body' | 'hair' | 'face' | 'ink' | 'kit';
 const HAIR_NAMES = ['BALD', 'BUZZ', 'SHORT', 'SWEPT', 'CROP', 'LONG', 'BRAIDS', 'BUN', 'CURLY MOP', 'LONG WAVES', 'MULLET', 'HIGH FADE CURLS', 'SLICK BACK', 'AFRO', 'MOHAWK'];
@@ -32,6 +32,11 @@ const BACKS = ['BARE', 'CROSS', 'WINGS'];
 const CUTS = ['short', 'thai', 'board'] as const;
 const PATTERNS = ['plain', 'chevron', 'flames', 'stripes', 'split', 'stars', 'checker', 'camo', 'tiger'];
 const KIT_COLORS = [0x141416, 0x9e2a2a, 0x1f3a6e, 0x1e7a3c, 0xf2c12e, 0xe0559a, 0x7a3fb0, 0xf2f2f2, 0xe8822a, 0x2aa0d8];
+const INK_COLORS = [0x1a1a22, 0x2a3a6a, 0x6a2a2a, 0x2a4a32, 0x4a3a2a, 0x5a3a6a];
+const INK_NAMES = ['BLACK', 'BLUE', 'RED', 'GREEN', 'BROWN', 'VIOLET'];
+const HEAD_NAMES = ['ROUND', 'SQUARE', 'LONG', 'WIDE'];
+const EYE_NAMES = ['NORMAL', 'NARROW', 'WIDE'];
+const EYE_COLORS = ['BROWN', 'DARK BROWN', 'STEEL BLUE', 'GREEN', 'HAZEL', 'BLUE-GREY'];
 const STYLES = ['Pressure Striker', 'Counter Striker', 'Kickboxer', 'Muay Thai', 'Wrestler', 'Sub Hunter', 'Brawler', 'Grinder'];
 
 export class SequelCreateScene extends Scene {
@@ -112,6 +117,10 @@ export class SequelCreateScene extends Scene {
       row('FADE', L.fade ? 'FADED SIDES' : 'NO FADE', () => (L.fade = L.fade ? 0 : 1), () => (L.fade = L.fade ? 0 : 1));
       row('BEARD', ['CLEAN', 'STUBBLE', 'SHORT', 'FULL', 'GOATEE', 'MOUSTACHE', 'BIG'][L.beard] ?? 'CLEAN', () => (L.beard = cyc(L.beard, 7, -1)), () => (L.beard = cyc(L.beard, 7, 1)));
     } else if (this.tab === 'face') {
+      row('HEAD', HEAD_NAMES[L.head] ?? 'ROUND', () => (L.head = cyc(L.head, HEAD_NAMES.length, -1)), () => (L.head = cyc(L.head, HEAD_NAMES.length, 1)));
+      row('EYES', EYE_NAMES[L.eyes] ?? 'NORMAL', () => (L.eyes = cyc(L.eyes, EYE_NAMES.length, -1)), () => (L.eyes = cyc(L.eyes, EYE_NAMES.length, 1)));
+      const ei = Math.max(0, Math.min(EYE_COLORS.length - 1, L.iris ?? 0));
+      row('EYE COLOUR', EYE_COLORS[ei], () => (L.iris = cyc(ei, EYE_COLORS.length, -1)), () => (L.iris = cyc(ei, EYE_COLORS.length, 1)));
       row('BROWS', ['LIGHT', 'MEDIUM', 'HEAVY'][L.brows] ?? 'MEDIUM', () => (L.brows = cyc(L.brows, 3, -1)), () => (L.brows = cyc(L.brows, 3, 1)));
       row('NOSE', ['STRAIGHT', 'WIDE', 'BROKEN'][L.nose] ?? 'STRAIGHT', () => (L.nose = cyc(L.nose, 3, -1)), () => (L.nose = cyc(L.nose, 3, 1)));
       row('EARS', ['CLEAN', 'A BIT', 'CAULIFLOWER', 'FULL CAULI'][L.ears] ?? 'CLEAN', () => (L.ears = cyc(L.ears, 4, -1)), () => (L.ears = cyc(L.ears, 4, 1)));
@@ -126,7 +135,14 @@ export class SequelCreateScene extends Scene {
       row('FAR SLEEVE', SLEEVES[ink.sleeveB], () => (ink.sleeveB = cyc(ink.sleeveB, SLEEVES.length, -1)), () => (ink.sleeveB = cyc(ink.sleeveB, SLEEVES.length, 1)));
       row('CHEST', CHESTS[ink.chest], () => (ink.chest = cyc(ink.chest, CHESTS.length, -1)), () => (ink.chest = cyc(ink.chest, CHESTS.length, 1)));
       row('BACK', BACKS[ink.back], () => (ink.back = cyc(ink.back, BACKS.length, -1)), () => (ink.back = cyc(ink.back, BACKS.length, 1)));
-      L.tattoo = ink.sleeveF || ink.sleeveB || ink.chest || ink.back ? 3 : 0;
+      row('RIBS', ink.ribs ? 'RIB PIECE' : 'BARE', () => (ink.ribs = !ink.ribs), () => (ink.ribs = !ink.ribs));
+      row('KNUCKLES', ink.knuckles ? 'LETTERED' : 'BARE', () => (ink.knuckles = !ink.knuckles), () => (ink.knuckles = !ink.knuckles));
+      row('NECK', ink.neck ? 'NECK BAND' : 'BARE', () => (ink.neck = !ink.neck), () => (ink.neck = !ink.neck));
+      row('SCRIPT', ink.script ? 'SCRIPT' : 'BARE', () => (ink.script = !ink.script), () => (ink.script = !ink.script));
+      const ci = Math.max(0, INK_COLORS.indexOf(ink.color ?? INK_COLORS[0]));
+      row('INK COLOUR', INK_NAMES[ci], () => (ink.color = INK_COLORS[cyc(ci, INK_COLORS.length, -1)]), () => (ink.color = INK_COLORS[cyc(ci, INK_COLORS.length, 1)]));
+      panel.addChild(new Graphics().rect(160, y - 14, 10, 9).fill(ink.color ?? INK_COLORS[0]).stroke({ color: 0x000000, width: 1 }));
+      L.tattoo = ink.sleeveF || ink.sleeveB || ink.chest || ink.back || ink.ribs || ink.knuckles || ink.neck || ink.script ? 3 : 0;
     } else {
       const kit = (L.kit2 ??= { cut: 'short', pattern: 'plain', main: 0x141416, trim: 0xc8202a, accent: 0xc8202a });
       const ci = CUTS.indexOf(kit.cut);
@@ -148,7 +164,12 @@ export class SequelCreateScene extends Scene {
     const L = this.f.look;
     L.build = r.int(0, 3); L.skin = r.int(0, SKIN_TONES.length - 1); L.hair = r.int(0, HAIR_NAMES.length - 1); L.hairColor = r.int(0, HAIR_COLORS.length - 1);
     L.fade = r.int(0, 1); L.beard = r.int(0, 6); L.scar = r.int(0, 3); L.nose = r.int(0, 2);
-    L.ink2 = { sleeveF: r.int(0, 4), sleeveB: r.int(0, 4), chest: r.int(0, 4), back: r.int(0, 2) };
+    L.head = r.int(0, HEAD_NAMES.length - 1); L.eyes = r.int(0, EYE_NAMES.length - 1); L.iris = r.int(0, IRIS_COLORS.length - 1);
+    L.ink2 = {
+      sleeveF: r.int(0, 4), sleeveB: r.int(0, 4), chest: r.int(0, 4), back: r.int(0, 2),
+      ribs: r.int(0, 1) === 1, knuckles: r.int(0, 1) === 1, neck: r.int(0, 1) === 1, script: r.int(0, 1) === 1,
+      color: INK_COLORS[r.int(0, INK_COLORS.length - 1)],
+    };
     L.kit2 = { cut: CUTS[r.int(0, 2)], pattern: PATTERNS[r.int(0, PATTERNS.length - 1)], main: KIT_COLORS[r.int(0, KIT_COLORS.length - 1)], trim: KIT_COLORS[r.int(0, KIT_COLORS.length - 1)], accent: KIT_COLORS[r.int(0, KIT_COLORS.length - 1)] };
     sfx('click');
     this.refresh();
@@ -157,9 +178,9 @@ export class SequelCreateScene extends Scene {
   private save(): void {
     const list = loadCustomFighters().filter((x) => x.id !== this.f.id);
     if (list.length >= 40) return alertBox(this.g, 'Full', 'Forty custom fighters is the limit. Delete one in Quick Fight first.');
-    storeJSON(CUSTOM_KEY, [...list, this.f]);
+    storeCustomFighters([...list, this.f]);
     sfx('cash');
-    this.g.toast(`${this.f.first} ${this.f.last} IS READY. FIND THEM IN QUICK FIGHT UNDER CUSTOM.`, II.gold);
+    this.g.toast(`${this.f.first} ${this.f.last} IS READY: QUICK FIGHT (CUSTOM) AND PROMOTER FREE AGENTS.`, II.gold);
     this.leave();
   }
 
