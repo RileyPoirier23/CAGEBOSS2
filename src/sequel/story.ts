@@ -1119,6 +1119,8 @@ function buildCuchillo(save: StorySave, rematch = false): Fighter {
   f.manager = rematch ? 'Lenny Pratt' : 'self';
   f.promotion = rematch ? 'zenith' : 'free-agent';
   f.starPower = rematch ? 62 : 44;
+  // the rematch is chapter thirteen: a Zenith camp, a weight class up, and a real step for Mateo
+  if (rematch) setOverall(f.skills, 80);
   return f;
 }
 
@@ -1442,7 +1444,7 @@ const GUESTS: Record<string, { div: string; tier: 'journeyman' | 'gatekeeper' | 
   buck: { div: 'middle', tier: 'gatekeeper', first: 'Buck', last: 'Harlan', nick: 'Two Hats', country: 'USA', hometown: 'Tulsa, Oklahoma', age: 35, height: 185, reach: 188, styles: ['Wrestler', 'Grinder'], traits: ['Veteran'], rec: [14, 6], look: { hair: 0, beard: 3, build: 2, scar: 1 }, boost: -2 },
   tyler: { div: 'light', tier: 'contender', first: 'Tyler', last: 'Vance', nick: 'Trust Fund', country: 'Canada', hometown: 'Moncton, New Brunswick (the nice part)', age: 30, height: 178, reach: 182, styles: ['Counter Striker'], traits: ['Showman', 'Loyal'], rec: [24, 4], look: { hair: 3, hairColor: 3, beard: 0, build: 1 }, boost: 8 },
   toro: { div: 'middle', tier: 'gatekeeper', first: 'Rafa', last: 'Medina', nick: 'El Toro', country: 'Mexico', hometown: 'Tijuana, Baja California', age: 31, height: 182, reach: 186, styles: ['Pressure Striker'], traits: ['Hungry'], rec: [15, 4], look: { hair: 11, beard: 1, build: 2, tattoo: 2 }, boost: 0 },
-  spadam: { div: 'welter', tier: 'elite', first: 'Spadam', last: 'Biggs', nick: 'The White Beast', country: 'USA', hometown: 'Halifax (he says Boston)', age: 31, height: 201, reach: 208, styles: ['Kickboxer', 'Pressure Striker'], traits: ['Showman', 'Trash Talker'], rec: [27, 1], look: { hair: 12, hairColor: 4, beard: 0, build: 2, tattoo: 1 }, boost: 14 },
+  spadam: { div: 'welter', tier: 'elite', first: 'Spadam', last: 'Biggs', nick: 'The White Beast', country: 'USA', hometown: 'Halifax (he says Boston)', age: 31, height: 201, reach: 208, styles: ['Kickboxer', 'Pressure Striker'], traits: ['Showman', 'Trash Talker'], rec: [27, 1], look: { hair: 12, hairColor: 4, beard: 0, build: 2, tattoo: 1 }, boost: 10 },
   synergy: { div: 'middle', tier: 'contender', first: 'Kyle', last: 'Brandt', nick: 'Synergy', country: 'USA', hometown: 'Scottsdale, Arizona', age: 26, height: 186, reach: 190, styles: ['Point Fighter'], traits: ['Clout Chaser'], rec: [11, 0], look: { hair: 12, hairColor: 4, beard: 0, build: 1 }, boost: 4 },
   intern: { div: 'middle', tier: 'gatekeeper', first: 'Brock', last: 'Hale', nick: 'The Intern', country: 'USA', hometown: 'Greenwich, Connecticut', age: 29, height: 186, reach: 188, styles: ['Wrestler', 'Grinder'], traits: ['Clout Chaser'], rec: [12, 3], look: { hair: 12, hairColor: 2, beard: 0, build: 1 }, boost: 2 },
   prince: { div: 'middle', tier: 'contender', first: 'Nico', last: 'Sandoval', nick: 'The Prince', country: 'Mexico', hometown: 'Polanco, Mexico City', age: 25, height: 184, reach: 189, styles: ['Counter Striker', 'Kickboxer'], traits: ['Showman'], rec: [14, 0], look: { hair: 11, hairColor: 0, beard: 0, build: 1, chain: 1 }, boost: 6 },
@@ -1505,6 +1507,8 @@ export function buildOpponent(save: StorySave, key: string): Fighter {
       const f = buildCesar(save);
       f.id = 'story_cesar_2';
       for (const k of ['striking', 'power', 'cardio', 'fightIQ'] as const) f.skills[k] = skill(f.skills[k] + 4);
+      // the number one contender for Mateo's first defense: under 1ton's 90, well over the street
+      setOverall(f.skills, 85);
       return f;
     }
     case 'han':

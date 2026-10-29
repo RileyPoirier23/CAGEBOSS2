@@ -243,7 +243,7 @@ function introBrick(save: StorySave): Cutscene {
         { who: 'gordon', text: 'You\'re under contract to Zenith.' },
         { who: 'han', text: 'I read it. Paragraph thirty-one says I can fight anywhere my uncle cooks. He cooks here.' },
         { who: 'brick', text: 'I don\'t care who you are.' },
-        { who: 'han', text: 'You\'ll in about four minutes.' },
+        { who: 'han', text: 'You will. In about four minutes.' },
       ], 'THE PRIDE OF THE MARITIMES'),
     ],
     choices: [
@@ -287,16 +287,17 @@ function introSparring(save: StorySave): Cutscene {
     title: 'CHAPTER 5: THE SPARRING PARTNER',
     film: true,
     shots: [
-      shot('gym', [oneton(140, 1), mateo(260, -1), ray(360, 1)], [
+      shot('gym', [oneton(130, 1), mateo(230, -1), ray(320, 1), han(save, 410, -1)], [
         { who: 'mateo', text: 'You\'re the reporter.' },
         { who: 'oneton', text: 'You are the kid from the soup line.' },
         { who: 'mateo', text: 'I\'m the kid who owns the soup line now. Ray gave me a key.' },
         { who: 'ray', text: 'I gave him a key to the mop closet.' },
         { who: 'mateo', text: 'It\'s a start.' },
-        { who: 'dane', text: 'You two are sparring. No hard shots. No egos.' },
+        { who: 'han', text: 'You two are sparring. No hard shots. No egos. I\'m holding the clock.' },
         { who: 'oneton', text: 'I do not have an ego.' },
         { who: 'mateo', text: 'He has a notebook.' },
         { who: 'oneton', text: 'The notebook has an ego.' },
+        { who: 'han', text: 'Three rounds. If either of you hits the other one hard, you\'re both doing dishes.' },
       ], 'THE KID COMES HOME'),
     ],
   };
@@ -369,6 +370,15 @@ function outroAudit(save: StorySave): Cutscene {
         { who: 'dane', text: 'You didn\'t have to do that.' },
         { who: 'oneton', text: 'You gave me a locker. Ray gave me soup. Nobody else in this country ever gave me anything.' },
       ], 'WHAT DID SHE WANT'),
+      shot('gym', [han(save, 170, 1), oneton(290, -1)], [
+        { who: null, text: 'Ray\'s, after the late class. Han is unwrapping his hands. 1ton is writing, and a torn corner of black card is tucked into the notebook.' },
+        { who: 'han', text: 'Verity gave me one of those the week I signed with Zenith.' },
+        { who: 'oneton', text: 'Did you call?' },
+        { who: 'han', text: 'Everybody calls once. They send a car and put you in a suite with a fridge you\'re not allowed to open.' },
+        { who: 'oneton', text: 'What was in the fridge?' },
+        { who: 'han', text: 'I never found out. I came home and Ray made soup.' },
+        { who: null, text: '1ton writes that down. He keeps the corner of the card.' },
+      ], 'THE LATE CLASS'),
     ],
     choices: [
       { id: 'confront', label: 'THANK HIM. MEAN IT.' },

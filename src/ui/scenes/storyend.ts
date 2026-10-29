@@ -12,6 +12,7 @@ import { money } from '../../core/format';
 import { sfx } from '../../audio/sfx';
 import { seqTitleBackdrop } from '../sequelart';
 import { readStory, loadStoryTrophy, addStoryTrophy, writeStory } from '../../sequel/storysession';
+import { toastTaleAchievements } from './sequelachievements';
 import { MAIN_CHAPTERS, STORY_ENDINGS, storyEndingById, storyProgress, storyRecord } from '../../sequel/story';
 
 export class StoryEndScene extends Scene {
@@ -28,6 +29,7 @@ export class StoryEndScene extends Scene {
       save.flags.trophySaved = true;
       writeStory(save);
     }
+    toastTaleAchievements(this.g, save);
     const e = storyEndingById(save.ending);
     const trophy = loadStoryTrophy();
 
@@ -148,6 +150,6 @@ export function openStoryTrophies(g: Game): void {
     root.addChild(text(e.kicker, x + 6, y + 14, { small: true, color: got ? PAL.ash : II.ash, width: 208, maxLines: 1 }));
     root.addChild(text(got ? `WON  /  RANK ${e.rank}` : 'NOT FOUND YET', x + 6, y + 26, { small: true, color: got ? PAL.moss : II.ash }));
   });
-  root.addChild(text('THE PROMOTER SEASON KEEPS ITS OWN CABINET. THIS ONE IS FOR THE STORY.', 12, H - 28, { small: true, color: II.ash }));
+  root.addChild(text("THE STORY'S TROPHIES ARE IN THE BUYBACK CABINET, IN THE STORY DRAWER.", 12, H - 28, { small: true, color: II.ash }));
   root.addChild(button('CLOSE', W - 54, 8, 44, 14, () => g.closeModal(wrap), { small: true, fill: II.steel, border: II.gold }));
 }

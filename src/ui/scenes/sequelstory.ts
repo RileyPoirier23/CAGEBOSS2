@@ -44,6 +44,7 @@ import {
 import { beatScene, chapterIntro, chapterOutro, fightHighlight, fightIntro, partScene, partTitle, storyEndingScene, talkScene } from './storycuts';
 import { newStorySave } from '../../sequel/story';
 import { readStory, writeStory, addStoryTrophy, forgetStory, takeNewPages } from '../../sequel/storysession';
+import { toastTaleAchievements } from './sequelachievements';
 import { openNotebook } from '../sequel/notebookui';
 import { newSlot, listSlots } from '../../sequel/slots';
 import type { StorySave } from '../../sequel/types';
@@ -105,6 +106,7 @@ export class SequelStoryHubScene extends Scene {
     this.chapterPanel(save, ch);
     this.menPanel(save);
     this.buttons(save, ch);
+    toastTaleAchievements(this.g, save);
   }
 
   private header(save: StorySave, ch: ReturnType<typeof storyChapter>): void {

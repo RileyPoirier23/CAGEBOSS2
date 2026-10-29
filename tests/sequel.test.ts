@@ -6,7 +6,7 @@ import {
 } from '../src/sequel/model';
 import { availableVenues, currentVenue } from '../src/sequel/model';
 import { BUYBACK_BUZZ, BUYBACK_CASH, SEASON_WEEKS, type SeqDeskDoc, type SeqRun } from '../src/sequel/types';
-import { claimSeqAchievements, SEQ_ACHIEVEMENTS } from '../src/sequel/achievements';
+import { claimSeqAchievements, claimTaleAchievements, SEQ_ACHIEVEMENTS, TALE_ACHIEVEMENTS } from '../src/sequel/achievements';
 import { addStoryTrophy, loadStoryTrophy } from '../src/sequel/storysession';
 import { setStorage, type KV } from '../src/core/save';
 import { Rng } from '../src/core/rng';
@@ -831,5 +831,65 @@ describe('NEW GAME+: the kid at the door', () => {
     const ovrs = [1, 2, 3, 4].map((n) => ovr(tapeFighter(`kid${n}`).skills));
     expect([...ovrs].sort((a, b) => a - b)).toEqual(ovrs);
     expect(ovrs[3]).toBeGreaterThan(ovrs[0] + 10);
+  });
+});
+
+describe('WATCH', () => {
+  it('walks the fighters out with the records they had before the bell', async () => {
+    const { runShow, ensureCard } = await import('../src/sequel/model');
+    const run = newSequelRun(63);
+    ensureCard(run);
+    run.desk.done = true;
+    const show = runShow(run);
+    const r = show.results.find((x) => x.replay)!;
+    expect(r).toBeTruthy();
+    const a = run.roster.find((x) => x.f.id === r.aId)!.f.record;
+    const tape = r.replay!.A.record;
+    const total = (x: { w: number; l: number; d: number }) => x.w + x.l + x.d;
+    expect(total(tape)).toBe(total(a) - 1);
+    if (r.winner === 'a') expect(tape.w).toBe(a.w - 1);
+    if (r.winner === 'b') expect(tape.l).toBe(a.l - 1);
+  });
+});
+
+describe('the WATCH broadcast', () => {
+  it('opens on Juiced Butler, carries the booth, and ends on his call of the result', async () => {
+    const { withBooth } = await import('../src/ui/sequel/watchfight');
+    const { runShow, ensureCard } = await import('../src/sequel/model');
+    const run = newSequelRun(64);
+    ensureCard(run);
+    run.desk.done = true;
+    const show = runShow(run);
+    const r = show.results.find((x) => x.replay)!;
+    const tape = r.replay!;
+    const lines = withBooth({
+      A: tape.A, B: tape.B, rounds: tape.rounds, ticker: tape.ticker, slot: 'MAIN EVENT', venue: 'THE WAREHOUSE', verdict: '', verdictColor: 0,
+      result: { winner: r.winner, method: r.method, round: r.round, time: r.time, detail: r.detail, referee: tape.referee },
+    });
+    expect(lines.length).toBeGreaterThan(tape.ticker.length);
+    expect(lines[0].speaker).toBe('__butler');
+    expect(lines[lines.length - 1].speaker).toBe('__butler');
+    const winner = r.winner === 'a' ? tape.A : r.winner === 'b' ? tape.B : null;
+    if (winner) expect(lines.slice(-3).map((l) => l.text).join(' ')).toContain(winner.last.toUpperCase());
+  });
+});
+
+describe('the story trophies', () => {
+  it('unlock off a Tales of Legacy save, once, and point at fights that exist', () => {
+    setStorage(memoryKV());
+    const save = newStorySave(77);
+    expect(claimTaleAchievements(save)).toEqual([]);
+    save.chapter = 1;
+    save.flags.won_allstar_title = true;
+    save.stats.catches = 10;
+    expect(claimTaleAchievements(save).map((a) => a.id)).toEqual(['tale_first', 'tale_allstar', 'tale_red_pen']);
+    expect(claimTaleAchievements(save)).toEqual([]);
+    save.flags.demo = true;
+    save.flags.finalWinner = 'player';
+    expect(claimTaleAchievements(save)).toEqual([]);
+    expect(new Set(TALE_ACHIEVEMENTS.map((a) => a.id)).size).toBe(TALE_ACHIEVEMENTS.length);
+    // every won_<fight> trophy names a real story fight
+    const fights = new Set(STORY_CHAPTERS.flatMap((c) => chapterFights(c).map((f) => f.id)));
+    for (const id of ['allstar_title', 'moncton_undercard', 'crew_duke', 'crew_rico', 'crew_cesar']) expect(fights.has(id)).toBe(true);
   });
 });

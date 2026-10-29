@@ -9,10 +9,10 @@ import { II } from '../theme';
 import { W, H, SW, OX, text, button, box, clearChildren } from '../kit';
 import { drawTrophy } from '../trophyart';
 import {
-  SEQ_ACHIEVEMENTS, claimSeqAchievements, hasSeqAchievement, seqAchievementProgress,
-  type SeqAchCategory, type SeqAchievement,
+  SEQ_ACHIEVEMENTS, TALE_ACHIEVEMENTS, claimSeqAchievements, claimTaleAchievements, hasSeqAchievement, seqAchievementProgress,
+  type SeqAchCategory,
 } from '../../sequel/achievements';
-import type { SeqRun } from '../../sequel/types';
+import type { SeqRun, StorySave } from '../../sequel/types';
 
 /** Check the run, remember what it earned, and let the player know with a toast. */
 export function toastSeqAchievements(g: Game, run: SeqRun): void {
@@ -22,24 +22,36 @@ export function toastSeqAchievements(g: Game, run: SeqRun): void {
   });
 }
 
-const TABS: { id: SeqAchCategory; label: string }[] = [
+/** The same, for a Tales of Legacy save. */
+export function toastTaleAchievements(g: Game, save: StorySave): void {
+  claimTaleAchievements(save).forEach((a, i) => {
+    setTimeout(() => g.toast(`TROPHY: ${a.name}`, II.gold), 650 + i * 950);
+  });
+}
+
+/** The cabinet's drawers: the promoter season's four, and the story's. */
+type Drawer = SeqAchCategory | 'tales';
+
+const TABS: { id: Drawer; label: string }[] = [
   { id: 'season', label: 'THE SEASON' },
   { id: 'fighting', label: 'THE FIGHTS' },
   { id: 'business', label: 'THE BUSINESS' },
   { id: 'story', label: 'THE ENDINGS' },
+  { id: 'tales', label: 'THE STORY' },
 ];
 
-const CAT_COLOR: Record<SeqAchCategory, number> = {
+const CAT_COLOR: Record<Drawer, number> = {
   season: II.gold,
   fighting: II.blood,
   business: PAL.moss,
   story: PAL.ember,
+  tales: II.neon,
 };
 
 export function openSequelAchievements(g: Game): void {
   const root = new Container();
   const wrap = g.modal(root, { dim: 0.98 });
-  let tab: SeqAchCategory = 'season';
+  let tab: Drawer = 'season';
   let pick = 0;
 
   const draw = (): void => {
@@ -66,7 +78,7 @@ export function openSequelAchievements(g: Game): void {
       }, { small: true, fill: on ? CAT_COLOR[t.id] : II.steel, border: on ? II.gold : II.ash }));
     });
 
-    const items = SEQ_ACHIEVEMENTS.filter((a) => a.category === tab);
+    const items: { id: string; name: string; desc: string; art: string }[] = tab === 'tales' ? TALE_ACHIEVEMENTS : SEQ_ACHIEVEMENTS.filter((a) => a.category === tab);
     const cols = 7;
     const cellW = Math.floor((W - 24) / cols);
     const rowH = 41;
@@ -88,7 +100,7 @@ export function openSequelAchievements(g: Game): void {
       const shelfY = y0 + (r + 1) * rowH - 8;
       const lit = hasSeqAchievement(a.id);
       if (lit) art.ellipse(cx, shelfY - 13, 15, 12).fill({ color: 0xffe0a0, alpha: 0.07 });
-      drawTrophy(art, a.id, cx, shelfY, !lit, 1.15);
+      drawTrophy(art, a.art, cx, shelfY, !lit, 1.15);
       root.addChild(text(a.name, x0 + c * cellW + 1, shelfY + 1, {
         small: true, width: cellW - 2, align: 'center', color: lit ? PAL.bone : II.ash, maxLines: 1,
       }));
@@ -103,7 +115,7 @@ export function openSequelAchievements(g: Game): void {
       hitLayer.addChild(hit);
     });
 
-    const sel: SeqAchievement | undefined = items[pick];
+    const sel = items[pick];
     const py = Math.max(y0 + rows * rowH + 8, 208);
     root.addChild(box(W - 24, 50, II.panelHi, II.edge)).position.set(12, py);
     if (sel) {

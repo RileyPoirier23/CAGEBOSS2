@@ -109,6 +109,7 @@ export class SequelShowScene extends Scene {
           row.addChild(button('> WATCH', 226, 15, 48, 11, () => watchFight(this.g, {
             A: tape.A, B: tape.B, rounds: tape.rounds, ticker: tape.ticker, slot: slotName, venue: currentVenue(run).name.toUpperCase(),
             verdict: `${verdict}  /  ${res.method} R${res.round}`, verdictColor: draw ? PAL.ash : win ? PAL.moss : PAL.blood,
+            result: { winner: res.winner, method: res.method, round: res.round, time: res.time, detail: res.detail, referee: tape.referee },
           }), { small: true, fill: PAL.blood, border: PAL.gold }));
         }
         left.addChild(row);

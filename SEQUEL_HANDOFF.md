@@ -7,6 +7,34 @@ broken, and what to do next.** Add an entry to the turn log every turn (newest o
 
 ## Turn log
 
+### Turn 14: Claude (2026-10-29)
+Cleared the P2 to-do list:
+- **WATCH walks out on the right record.** `runShow` updated both records before saving the tape, so the replay
+  showed tonight's result before the bell. The tape now keeps the pre-fight copies (`beforeBell` in `model.ts`).
+- **WATCH has a booth.** `withBooth` in `watchfight.ts` opens with Juiced Butler (the bell, the corners and the names
+  only; heights and fun facts are cut for a replay), then two lines from game 1's booth, the play-by-play with
+  `commentate`, and Butler reading the result (`butlerDecision`/`butlerFinish`, three cards made up to match the
+  detail). Callers pass `result`. The booth box labels him JUICED BUTLER. If the booth throws, the bare tape plays
+  and a warning goes to the console.
+- **Story trophies.** `TALE_ACHIEVEMENTS` in `achievements.ts` (15: chapter one, Xavier's belt, Moncton, the crew,
+  ALBERTO, the buyback, the hidden chapter, S rank, contracts, walking out, undercard, finishes, trust, pressers).
+  They're checked on a Tales of Legacy save (`claimTaleAchievements`, toasted from the story hub and the ending), live
+  in the same cabinet key, and have their own drawer, THE STORY, in the Buyback trophy case. The cabinet now draws
+  each trophy's `art` (it was passing the id, so every one was a cup).
+- **Balance.** `tools/story-balance.ts` prints the corner against 1ton's curve and sims every late story fight at
+  three camp levels. Mateo is 84/87/91 (low/mid/full camp) by the final. Three fights were off the curve and are
+  fixed: Cuchillo's rematch was 65 (now `setOverall` 80), Spadam in chapter 12 was 88, above the final (guest boost
+  14 to 10, now 84), and Cesar's title defense was 70 (now 85). Sim win rates for Mateo: Cuchillo 72-85%, Spadam
+  43-62%, 1ton 28-54%, the defense 63-79%. The fights are played by hand, so those are a floor. Han's chapter 9-10
+  fights are still walkovers (96 against the low 60s); that's the story (the champion against a street crew).
+- **Cameos.** Xavier's league (`xavier_league`), Tyler mopping (`first_day`, the camp) and Zac's Tuesday class
+  (`tuesday_class`) were already in. Han now runs the clock in chapter 5's opening (Dane had a line there without being
+  in the shot) and has a scene in chapter 6, THE LATE CLASS: Verity gave him a black card too. Han is now in every
+  chapter.
+- Fixed a humanizer misfire: Han's "You'll in about four minutes" is "You will. In about four minutes." No others.
+- Tests: the WATCH walkout, the booth bookends and the story trophies. Typecheck clean, 187/187, both builds pass.
+  Checked in the browser: the cabinet's STORY drawer, the chapter 6 scene and the WATCH booth.
+
 ### Turn 13: Claude (2026-10-28)
 Reviewed OpenCode's turn 12 (claims hold: typecheck clean, tests pass, both builds), committed it as it was
 (`0681bf1`), then fixed what the review found (`1e9ca0e`):
@@ -277,10 +305,10 @@ and the crew fights, a `mask` on the rig and `presentedGender`. It hit the usage
 6. **Men's tops:** six male welterweights corrected and `presentedGender` used by the rig, sprites, arena and editor.
 
 ### P2: story and content
-7. **Story achievements:** the trophy case tracks the four endings and the secret chapter; `SEQ_ACHIEVEMENTS` is promoter-mode only. Add story achievements if the trophy case is not enough.
-8. **Balance:** 1ton's final OVR is fixed at 90; check Mateo and Han across the later chapters with `npm run sequel-sim` or a story sim.
-9. **WATCH booth:** the tape has the broadcast strip and marks but no commentary; `src/sim/commentary.ts` is what game 1 uses.
-10. **Optional cameos:** Han in chapters 4–6, Tyler mopping, Xavier's league and Zac's Tuesday class. Han already appears in 1–3 and 7–16.
+7. (Done, turn 14) **Story achievements:** `TALE_ACHIEVEMENTS`, THE STORY drawer in the Buyback cabinet.
+8. (Done, turn 14) **Balance:** `npx tsx tools/story-balance.ts`; Cuchillo, Spadam and Cesar retuned under 1ton's 90.
+9. (Done, turn 14) **WATCH booth:** Juiced Butler's intro and result around game 1's booth.
+10. (Done, turn 14) **Cameos:** Han is in every chapter; Xavier, Tyler and Zac have their beats.
 
 ### P3: shipping
 11. (Done) The sequel icon, version stamps and the portable exe.
@@ -288,7 +316,6 @@ and the crew fights, a `mask` on the rig and `presentedGender`. It hit the usage
 
 ## Known issues
 - `Look2.mask` and `presentedGender` touch game 1's shared files (`rig.ts`, `sprites.ts`, `arena.ts`, `editor_fighter.ts`). They are harmless for game 1, but they are game 1 changes.
-- In promoter mode the WATCH tape is snapshotted after the records update, so the walkout record is off by the result. Cosmetic.
 - The browser screenshot tool still fails when the desktop tab is hidden; the working check is to render the stage manually and extract the canvas.
 
 ## Notes on OpenCode's first session (from Riley's export)

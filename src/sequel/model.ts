@@ -568,6 +568,13 @@ function resultInjury(run: SeqRun, a: SeqFighter, res: ReturnType<typeof simulat
   return `${a.f.last}: ${name} (${weeks}w)`;
 }
 
+/** A copy of the fighter with tonight's result taken back off his record (how he walked out). */
+function beforeBell(f: Fighter, took: 'w' | 'l' | 'd'): Fighter {
+  const c = structuredClone(f);
+  c.record[took] = Math.max(0, c.record[took] - 1);
+  return c;
+}
+
 export function runShow(run: SeqRun): SeqShow {
   ensureCard(run);
   pruneBelts(run);
@@ -675,8 +682,9 @@ export function runShow(run: SeqRun): SeqShow {
       aStarBefore,
       bStarBefore,
       injury,
+      // the tape walks out with the records as they were before the bell (both were updated above)
       replay: res.ticker?.length
-        ? { A: structuredClone(a.f), B: structuredClone(opp), rounds: slot === 0 ? 5 : 3, referee: referee.name, ticker: res.ticker }
+        ? { A: beforeBell(a.f, winner === 'a' ? 'w' : winner === 'b' ? 'l' : 'd'), B: beforeBell(opp, winner === 'b' ? 'w' : winner === 'a' ? 'l' : 'd'), rounds: slot === 0 ? 5 : 3, referee: referee.name, ticker: res.ticker }
         : undefined,
     });
     if (injury) notes.push(injury);

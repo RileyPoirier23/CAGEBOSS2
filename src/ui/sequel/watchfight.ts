@@ -8,7 +8,7 @@ import { Container, Graphics, type Ticker } from 'pixi.js';
 import type { Game } from '../app';
 import type { Bout, Fighter, FightEvent, GameState, TickerLine } from '../../core/types';
 import { content } from '../../core/content';
-import { commentate } from '../../sim/commentary';
+import { boothOpen, butlerDecision, butlerFinish, butlerIntro, commentate, type AnnounceLine } from '../../sim/commentary';
 import { W, H, SW, OX, text, button } from '../kit';
 import { ArenaView, AH, AW } from '../arena';
 import { fighterPortrait } from '../sprites';
@@ -31,23 +31,55 @@ export interface WatchOpts {
   verdictColor: number;
   /** the broadcast's camera package: side on, the broadcast push-in, or the overhead */
   camera?: 'side' | 'tv' | 'top';
+  /** how it ended, for Juiced Butler's announcement (left out: the verdict banner alone) */
+  result?: { winner: 'a' | 'b' | 'draw'; method: string; round: number; time: string; detail: string; referee?: string };
   done?: () => void;
 }
 
 const SPEEDS = [1, 2, 4];
 
+/** The card the booth thinks it's sitting at: the two fighters, the bout and a night at the warehouse. */
+function fakeCard(o: WatchOpts): { s: GameState; ev: FightEvent; bout: Bout } {
+  // the booth calls Dane the president (he isn't, any more; the booth didn't get the memo)
+  const s = { fighters: { [o.A.id]: o.A, [o.B.id]: o.B }, flags: {}, week: 0, belts: {}, rankings: {}, president: { name: 'Dane Whyte' } } as unknown as GameState;
+  const ev = { id: `watch_${o.A.id}`, name: 'CAGE BOSS II', number: null, venue: o.venue, week: 0, bouts: [] } as unknown as FightEvent;
+  const bout = { id: `watch_${o.A.id}_${o.B.id}`, a: o.A.id, b: o.B.id, division: o.A.division, title: null, rounds: o.rounds, position: o.slot === 'MAIN EVENT' ? 0 : 2 } as unknown as Bout;
+  return { s, ev, bout };
+}
+
+/** Juiced Butler, on the microphone: an AnnounceLine as a line on the tape. */
+const BUTLER = '__butler';
+const announce = (lines: AnnounceLine[]): TickerLine[] =>
+  lines.filter((l) => !l.stage && l.text).map((l) => ({ t: 0, round: 1, side: -1, act: 'butler', text: l.text, hp: [100, 100], speaker: BUTLER }) as unknown as TickerLine);
+
 /**
- * The first game's booth on the tape: the play-by-play plus whoever is calling it (Blow Hogan,
- * Sandwich Cormier, the rest). The booth only needs the two fighters, the bout and a card to sit on.
+ * The tape as a broadcast: Juiced Butler's introductions and the booth's opening chat, the
+ * play-by-play with the booth talking over it (game one's booth), and Butler reading the result.
  */
-function withBooth(o: WatchOpts): TickerLine[] {
+export function withBooth(o: WatchOpts): TickerLine[] {
   try {
-    // the booth calls Dane the president (he isn't, any more; the booth didn't get the memo)
-    const s = { fighters: { [o.A.id]: o.A, [o.B.id]: o.B }, flags: {}, week: 0, belts: {}, president: { name: 'Dane Whyte' } } as unknown as GameState;
-    const ev = { id: `watch_${o.A.id}`, name: o.venue, number: null, venue: 'warehouse', week: 0, bouts: [] } as unknown as FightEvent;
-    const bout = { id: `watch_${o.A.id}_${o.B.id}`, a: o.A.id, b: o.B.id, division: o.A.division, title: null, rounds: o.rounds, position: o.slot === 'MAIN EVENT' ? 0 : 2 } as unknown as Bout;
-    return commentate(s, ev, bout, o.ticker, o.ticker.length * 7919 + o.A.id.length);
-  } catch {
+    const { s, ev, bout } = fakeCard(o);
+    const seed = o.ticker.length * 7919 + o.A.id.length;
+    // a replay, not a live card: Butler keeps the bell, the corners and the names, and skips the heights and the fun facts
+    const intro = butlerIntro(s, ev, bout, seed).filter((l, i) => i === 0 || /corner|!!!$/i.test(l.text));
+    const open = [...announce(intro), ...boothOpen(s, ev, bout, seed).filter((l) => l.speaker).slice(0, 2)];
+    const fight = commentate(s, ev, bout, o.ticker, seed);
+    const close: TickerLine[] = [];
+    if (o.result) {
+      const r = o.result;
+      const winner = r.winner === 'a' ? o.A.id : r.winner === 'b' ? o.B.id : null;
+      const per = o.rounds * 10;
+      // a decision needs three cards: the winner's two (or three), the third going whichever way the detail says
+      const won: [number, number] = r.winner === 'b' ? [per - 2, per - 1] : [per - 1, per - 2];
+      const lost: [number, number] = [won[1], won[0]];
+      const scores: [number, number][] = r.winner === 'draw' ? [[per - 1, per - 1], [per - 1, per - 2], [per - 2, per - 1]]
+        : /split/i.test(r.detail) ? [won, won, lost] : /majority/i.test(r.detail) ? [won, won, [per - 1, per - 1]] : [won, won, won];
+      const decided = { ...bout, result: { winner, method: r.method, detail: r.detail, round: r.round, time: r.time, scores, judges: ['Marla Cross', 'Dexter Bell', 'Lenny Pratt'], referee: r.referee } } as unknown as Bout;
+      close.push(...announce(/DEC|DRAW/i.test(r.method) ? butlerDecision(s, ev, decided, seed).lines : butlerFinish(s, decided, seed)));
+    }
+    return [...open, ...fight, ...close];
+  } catch (e) {
+    console.warn('WATCH: the booth fell back to the bare tape', e);
     return o.ticker;
   }
 }
@@ -101,7 +133,7 @@ export function watchFight(g: Game, o: WatchOpts): void {
   let boothT = 0;
   const say = (l: TickerLine) => {
     boothBox.removeChildren().forEach((c) => c.destroy());
-    const who = speakers[l.speaker!];
+    const who = l.speaker === BUTLER ? { short: 'JUICED BUTLER', color: 'e8c060' } : speakers[l.speaker!];
     const name = (who?.short ?? l.speaker ?? '').toUpperCase();
     const t = text(l.text, 0, 0, { width: 300, small: true, color: II.bone, maxLines: 3 });
     const h = t.textHeight + 14;
